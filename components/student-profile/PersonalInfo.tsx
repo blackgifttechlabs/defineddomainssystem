@@ -1,16 +1,27 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Student, Staff } from '../../types';
+import { Camera, ImagePlus, Loader2, Sparkles, Wand2 } from 'lucide-react';
+import { processStudentImage } from '../../utils/imageProcessor';
 
 interface Props {
   student: Student;
   isEditing: boolean;
   editForm: Partial<Student>;
-  setEditForm: (form: Partial<Student>) => void;
+  setEditForm: React.Dispatch<React.SetStateAction<Partial<Student>>>;
   staff: Staff[];
   settings: any;
   isAdmin: boolean;
 }
+
+const RecordSection = ({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) => (
+  <section className="overflow-hidden border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <header className="border-b border-slate-200 bg-slate-50/80 px-4 py-3 sm:px-5 dark:border-slate-800 dark:bg-slate-800/50">
+      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">{eyebrow}</p>
+      <h3 className="mt-0.5 text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
+    </header>
+    {children}
+  </section>
+);
 
 const InfoField = ({
   label,
@@ -26,7 +37,7 @@ const InfoField = ({
   field?: keyof Student;
   isEditing: boolean;
   editForm: Partial<Student>;
-  setEditForm: (form: Partial<Student>) => void;
+  setEditForm: React.Dispatch<React.SetStateAction<Partial<Student>>>;
   options?: any[];
 }) => {
   return (
@@ -38,7 +49,10 @@ const InfoField = ({
         options ? (
           <select
             value={(editForm as any)[field] || ''}
-            onChange={e => setEditForm({ ...editForm, [field]: e.target.value })}
+            onChange={e => {
+              const val = e.target.value;
+              setEditForm(prev => ({ ...prev, [field]: val }));
+            }}
             className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
           >
             <option value="">Select...</option>
@@ -52,7 +66,10 @@ const InfoField = ({
           <input
             type="text"
             value={(editForm as any)[field] !== undefined ? (editForm as any)[field] : (value || '')}
-            onChange={e => setEditForm({ ...editForm, [field]: e.target.value })}
+            onChange={e => {
+              const val = e.target.value;
+              setEditForm(prev => ({ ...prev, [field]: val }));
+            }}
             placeholder={`Enter ${label.toLowerCase()}...`}
             className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
           />
@@ -75,6 +92,31 @@ export const PersonalInfo: React.FC<Props> = ({
   settings,
   isAdmin
 }) => {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [photoMode, setPhotoMode] = useState<'original' | 'remove-bg' | 'studio-white'>('original');
+  const [rawFile, setRawFile] = useState<File | null>(null);
+
+  const handlePhotoSelect = async (file?: File, mode: 'original' | 'remove-bg' | 'studio-white' = photoMode) => {
+    if (!file) return;
+    setIsProcessing(true);
+    try {
+      const res = await processStudentImage(file, {
+        maxDimension: 700,
+        quality: 0.85,
+        mode: mode,
+      });
+      setEditForm(prev => ({
+        ...prev,
+        imageUrl: res.base64,
+        idCardImageUrl: res.base64,
+      }));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   // Calculate approximate age from DOB
   const calculateAge = (dobString?: string) => {
     if (!dobString) return '---';
@@ -92,19 +134,76 @@ export const PersonalInfo: React.FC<Props> = ({
 
   const assignedStaffMember = staff.find(s => s.id === student.assignedStaffId);
 
-  const RecordSection = ({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) => (
-    <section className="overflow-hidden border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-      <header className="border-b border-slate-200 bg-slate-50/80 px-4 py-3 sm:px-5 dark:border-slate-800 dark:bg-slate-800/50">
-        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">{eyebrow}</p>
-        <h3 className="mt-0.5 text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
-      </header>
-      {children}
-    </section>
-  );
-
   return (
     <div className="grid w-full grid-cols-1 items-start gap-5 animate-in fade-in duration-300 xl:grid-cols-2">
       <RecordSection eyebrow="Student record" title="Identity information">
+        <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-4 bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800">
+          <div className="relative w-16 h-16 rounded-full border border-slate-200 dark:border-slate-700 bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200 overflow-hidden flex items-center justify-center font-bold text-lg shrink-0">
+            {(editForm.imageUrl || editForm.idCardImageUrl || student.imageUrl || student.idCardImageUrl) ? (
+              <img
+                src={editForm.imageUrl || editForm.idCardImageUrl || student.imageUrl || student.idCardImageUrl}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              (student.fullName || 'S')[0]
+            )}
+            {isEditing && isProcessing && (
+              <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center text-white">
+                <Loader2 size={16} className="animate-spin" />
+              </div>
+            )}
+          </div>
+          <div className="flex-1 text-center sm:text-left min-w-0">
+            <h4 className="text-xs font-bold text-slate-900 dark:text-white">Student Portrait & ID Photo</h4>
+            <p className="text-[11px] text-slate-500 mt-0.5">Stored as Base64 in database. Applies to ID cards, directory, and tables.</p>
+            {isEditing && isAdmin && (
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-[8px] text-[11px] font-bold cursor-pointer transition-all shadow-sm">
+                  <ImagePlus size={13} />
+                  <span>Choose Photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={e => {
+                      const f = e.target.files?.[0];
+                      if (f) {
+                        setRawFile(f);
+                        handlePhotoSelect(f, photoMode);
+                      }
+                    }}
+                  />
+                </label>
+                {rawFile && (
+                  <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-[8px] p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => { setPhotoMode('original'); handlePhotoSelect(rawFile, 'original'); }}
+                      className={`px-2 py-1 text-[10px] font-bold rounded-[6px] ${photoMode === 'original' ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}
+                    >
+                      Original
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setPhotoMode('remove-bg'); handlePhotoSelect(rawFile, 'remove-bg'); }}
+                      className={`px-2 py-1 text-[10px] font-bold rounded-[6px] flex items-center gap-1 ${photoMode === 'remove-bg' ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}
+                    >
+                      <Wand2 size={10} /> Remove BG
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setPhotoMode('studio-white'); handlePhotoSelect(rawFile, 'studio-white'); }}
+                      className={`px-2 py-1 text-[10px] font-bold rounded-[6px] flex items-center gap-1 ${photoMode === 'studio-white' ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-300'}`}
+                    >
+                      <Sparkles size={10} /> Studio White
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
         <div className="grid grid-cols-1 divide-y divide-slate-100 dark:divide-slate-800 sm:grid-cols-2 sm:[&>*:nth-child(even)]:border-l sm:[&>*:nth-child(even)]:border-slate-100 sm:dark:[&>*:nth-child(even)]:border-slate-800">
           <InfoField
             label="First Name"

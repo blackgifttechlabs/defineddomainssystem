@@ -235,9 +235,9 @@ export const LessonLogs: React.FC = () => {
 
                         <td className="py-4 px-5">
                           <div className="flex items-center gap-2.5">
-                            {student.imageUrl ? (
+                            {(student.imageUrl || student.idCardImageUrl) ? (
                               <img 
-                                src={student.imageUrl} 
+                                src={student.imageUrl || student.idCardImageUrl} 
                                 alt={student.fullName} 
                                 className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700" 
                               />

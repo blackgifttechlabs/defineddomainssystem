@@ -265,7 +265,7 @@ export const Dashboard: React.FC = () => {
                          <td className="px-8 py-6">
                             <div className="flex items-center gap-4">
                                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center font-black text-xs uppercase text-blue-600">
-                                  {student.imageUrl ? <img src={student.imageUrl} className="w-full h-full object-cover" alt={student.fullName} /> : student.fullName[0]}
+                                  {(student.imageUrl || student.idCardImageUrl) ? <img src={student.imageUrl || student.idCardImageUrl} className="w-full h-full object-cover" alt={student.fullName} /> : student.fullName[0]}
                                </div>
                                <div>
                                   <p className="text-[11px] font-black uppercase tracking-tight text-slate-950 dark:text-white leading-none">{student.fullName}</p>

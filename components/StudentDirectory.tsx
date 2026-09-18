@@ -3,9 +3,10 @@ import React, { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { 
   Search, ChevronRight, X, LayoutGrid, List, 
-  Trash2, Edit2, ArrowLeft, Loader2, Save, History, Image as ImageIcon
+  Trash2, Edit2, ArrowLeft, Loader2, Save, History, Image as ImageIcon, Camera
 } from 'lucide-react';
 import { Student, Role } from '../types';
+import { processStudentImage } from '../utils/imageProcessor';
 import { PersonalInfo } from './student-profile/PersonalInfo';
 import { HealthRecord } from './student-profile/HealthRecord';
 import { PerformanceMatrix } from './student-profile/PerformanceMatrix';
@@ -27,7 +28,7 @@ const getStudentColor = (id: string) => {
 };
 
 export const StudentDirectory: React.FC = () => {
-  const { students, staff, updateStudent, deleteStudent, settings, user, clinicalLogs, milestoneRecords, parents, payments } = useStore();
+  const { students, staff, updateStudent, deleteStudent, settings, user, clinicalLogs, milestoneRecords, parents, payments, notify } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [activeProfileTab, setActiveProfileTab] = useState<'personal' | 'health' | 'records' | 'payments' | 'security'>('personal');
@@ -180,27 +181,88 @@ export const StudentDirectory: React.FC = () => {
     }, 180);
   }
 
-  function handleStudentImageSelect(file?: File) {
+  async function handleStudentImageSelect(file?: File) {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      setNewStudent(prev => ({ ...prev, imageUrl: String(reader.result || '') }));
-      setStudentImageName(file.name);
-    };
-    reader.readAsDataURL(file);
+    setStudentImageName(file.name);
+    try {
+      const res = await processStudentImage(file, { maxDimension: 700, quality: 0.85 });
+      setNewStudent(prev => ({ 
+        ...prev, 
+        imageUrl: res.base64,
+        idCardImageUrl: res.base64
+      }));
+    } catch {
+      notify('error', 'Could not process image.');
+    }
   }
+
+  const handleProfilePhotoUpload = async (file?: File) => {
+    if (!file || !selectedStudent?.firebaseUid) return;
+    try {
+      const res = await processStudentImage(file, { maxDimension: 700, quality: 0.85 });
+      await updateStudent(selectedStudent.firebaseUid, {
+        imageUrl: res.base64,
+        idCardImageUrl: res.base64,
+      });
+      setSelectedStudent({
+        ...selectedStudent,
+        imageUrl: res.base64,
+        idCardImageUrl: res.base64,
+      });
+      setEditForm(prev => ({
+        ...prev,
+        imageUrl: res.base64,
+        idCardImageUrl: res.base64,
+      }));
+      notify('success', 'Student profile and ID photo updated in database.');
+    } catch (err: any) {
+      notify('error', 'Failed to update student photo: ' + err.message);
+    }
+  };
 
   const [statusFilter, setStatusFilter] = useState('All');
   const [classFilter, setClassFilter] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 8;
+  const pageSize = 10;
+
+  // Reset to page 1 whenever the search term or class filter changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, classFilter]);
 
   const filteredStudents = useMemo(() => {
+    const rawQuery = searchTerm.trim().toLowerCase();
+    const cleanQuery = rawQuery.replace(/^[#\s]+/, '');
+
     return (myStudents || []).filter(s => {
-      const matchSearch = s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          s.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (s.parentPhone && s.parentPhone.includes(searchTerm));
-      const matchClass = classFilter === 'All' || s.assignedClass === classFilter;
+      if (!rawQuery) {
+        return classFilter === 'All' || s.assignedClass === classFilter;
+      }
+
+      const idLower = (s.id || '').toLowerCase();
+      const cleanId = idLower.replace(/^#/, '');
+      const numOnlyId = cleanId.replace(/^dd0*/, '');
+      const queryNumOnly = cleanQuery.replace(/^dd0*/, '');
+
+      const matchSearch =
+        (s.fullName || '').toLowerCase().includes(rawQuery) ||
+        (s.firstName || '').toLowerCase().includes(rawQuery) ||
+        (s.lastName || '').toLowerCase().includes(rawQuery) ||
+        cleanId.includes(cleanQuery) ||
+        (queryNumOnly.length > 0 && numOnlyId.includes(queryNumOnly)) ||
+        (s.assignedClass || '').toLowerCase().includes(rawQuery) ||
+        (s.parentName || '').toLowerCase().includes(rawQuery) ||
+        (s.parentPhone || '').includes(rawQuery) ||
+        (s.parentEmail || '').toLowerCase().includes(rawQuery) ||
+        (s.email || '').toLowerCase().includes(rawQuery) ||
+        (s.diagnosis || '').toLowerCase().includes(rawQuery) ||
+        (s.medicalRecords || '').toLowerCase().includes(rawQuery) ||
+        (s.homeAddress || '').toLowerCase().includes(rawQuery) ||
+        (s.dob || '').includes(rawQuery) ||
+        (s.gender || '').toLowerCase() === rawQuery;
+
+      // When searching, search across all classes so no student is missed
+      const matchClass = classFilter === 'All' || s.assignedClass === classFilter || (s.assignedClass || '').toLowerCase().includes(rawQuery);
       return matchSearch && matchClass;
     });
   }, [myStudents, searchTerm, classFilter]);
@@ -215,17 +277,17 @@ export const StudentDirectory: React.FC = () => {
         <div className="px-6 md:px-8 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white dark:bg-slate-950">
         <div className="flex items-center gap-2">
           <h2 className="text-sm md:text-base font-bold text-slate-800 dark:text-white">
-            {filteredStudents.length} All Students
+            {filteredStudents.length} {searchTerm.trim() ? 'Matching' : 'All'} Students
           </h2>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Search Input */}
-          <div className="relative min-w-[220px]">
+          <div className="relative min-w-[260px]">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Search all students (name, ID, class, parent)..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[9px] text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600"
@@ -316,9 +378,9 @@ export const StudentDirectory: React.FC = () => {
 
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-2.5">
-                          {student.imageUrl ? (
+                          {(student.imageUrl || student.idCardImageUrl) ? (
                             <img
-                              src={student.imageUrl}
+                              src={student.imageUrl || student.idCardImageUrl}
                               alt={student.fullName}
                               className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700"
                             />
@@ -386,9 +448,9 @@ export const StudentDirectory: React.FC = () => {
                 className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[9px] p-5 shadow-sm hover:shadow-md hover:border-blue-500 transition-all cursor-pointer flex flex-col justify-between"
               >
                 <div className="flex items-center gap-3 mb-4">
-                  {student.imageUrl ? (
+                  {(student.imageUrl || student.idCardImageUrl) ? (
                     <img
-                      src={student.imageUrl}
+                      src={student.imageUrl || student.idCardImageUrl}
                       alt={student.fullName}
                       className="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-700"
                     />
@@ -493,13 +555,32 @@ export const StudentDirectory: React.FC = () => {
         {/* Student Profile Hero Header Bar */}
         <div className="flex flex-col justify-between gap-4 border-b border-slate-200 bg-white px-5 py-5 sm:px-6 md:flex-row md:items-center md:px-8 dark:border-slate-800 dark:bg-slate-950">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900/50 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex items-center justify-center font-bold text-lg text-blue-700 dark:text-blue-200 shrink-0">
-              {selectedStudent.imageUrl ? (
-                <img src={selectedStudent.imageUrl} alt={selectedStudent.fullName} className="w-full h-full object-cover" />
+            <label
+              className={`relative group w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900/50 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex items-center justify-center font-bold text-lg text-blue-700 dark:text-blue-200 shrink-0 ${
+                isAdmin ? 'cursor-pointer' : ''
+              }`}
+              title={isAdmin ? 'Click to change student photo' : undefined}
+            >
+              {isAdmin && (
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={e => handleProfilePhotoUpload(e.target.files?.[0])}
+                />
+              )}
+              {(selectedStudent.imageUrl || selectedStudent.idCardImageUrl) ? (
+                <img src={selectedStudent.imageUrl || selectedStudent.idCardImageUrl} alt={selectedStudent.fullName} className="w-full h-full object-cover" />
               ) : (
                 selectedStudent.fullName[0]
               )}
-            </div>
+              {isAdmin && (
+                <div className="absolute inset-0 bg-slate-950/60 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera size={16} />
+                  <span className="text-[8px] font-bold">Edit</span>
+                </div>
+              )}
+            </label>
             <div>
               <div className="flex items-center gap-2.5">
                 <h2 className="text-base md:text-lg font-bold text-slate-900 dark:text-white">

@@ -470,6 +470,7 @@ export const useStore = create<AppState>((set, get) => {
           const finalStudent = { 
             ...studentData, 
             imageUrl: finalImageUrl, 
+            idCardImageUrl: finalImageUrl || studentData.idCardImageUrl || '',
             fullName, 
             id: formattedId, 
             email: studentEmail,
@@ -543,6 +544,14 @@ export const useStore = create<AppState>((set, get) => {
       try {
         const processed = { ...data };
         if (data.imageUrl) processed.imageUrl = extractSrcFromHtml(data.imageUrl);
+        if (data.idCardImageUrl) processed.idCardImageUrl = extractSrcFromHtml(data.idCardImageUrl);
+
+        // Keep imageUrl and idCardImageUrl in sync so that updating one updates the ID card, tables, and profile
+        if (processed.imageUrl && !processed.idCardImageUrl) {
+          processed.idCardImageUrl = processed.imageUrl;
+        } else if (processed.idCardImageUrl && !processed.imageUrl) {
+          processed.imageUrl = processed.idCardImageUrl;
+        }
 
         const studentRef = doc(db, 'students', uid);
         const studentSnap = await getDoc(studentRef);
@@ -554,6 +563,12 @@ export const useStore = create<AppState>((set, get) => {
         if (studentPass && studentEmail) {
           await syncAuthPassword(studentEmail, studentPass, [existingStudent?.password || '', '000000']);
           await setDoc(doc(db, 'users', uid), { password: studentPass }, { merge: true });
+        }
+
+        // Sync avatar in users collection
+        const effectiveAvatar = processed.imageUrl || processed.idCardImageUrl;
+        if (effectiveAvatar) {
+          await setDoc(doc(db, 'users', uid), { avatar: effectiveAvatar }, { merge: true });
         }
 
         const parentEmail = (processed.parentEmail || existingStudent?.parentEmail || '').toLowerCase().trim();
@@ -570,6 +585,9 @@ export const useStore = create<AppState>((set, get) => {
         }
 
         await updateDoc(studentRef, processed);
+        set(state => ({
+          students: state.students.map(s => (s.firebaseUid === uid || s.id === uid) ? { ...s, ...processed } : s)
+        }));
         get().notify('success', 'Student profile updated.');
       } catch (err: any) { get().notify('error', err.message); }
     },

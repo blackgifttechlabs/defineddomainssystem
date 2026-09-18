@@ -3,6 +3,7 @@ import html2canvas from 'html2canvas';
 import QRCode from 'qrcode';
 import {
   BadgeCheck,
+  Camera,
   ChevronRight,
   Download,
   ExternalLink,
@@ -14,11 +15,14 @@ import {
   Search,
   ShieldCheck,
   Save,
+  Sparkles,
   User,
   Users,
+  Wand2,
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { Student } from '../../types';
+import { processStudentImage } from '../../utils/imageProcessor';
 
 import {
   IdentityCard,
@@ -44,6 +48,10 @@ export const IdCardManagement: React.FC = () => {
   const [editedIdImageName, setEditedIdImageName] = useState('');
   const [editedIdForm, setEditedIdForm] = useState<Partial<Student>>({});
   const [isSavingId, setIsSavingId] = useState(false);
+  const [bgMode, setBgMode] = useState<'original' | 'remove-bg' | 'studio-white'>('original');
+  const [rawSource, setRawSource] = useState<File | string | null>(null);
+  const [imageSizeKb, setImageSizeKb] = useState<number | null>(null);
+  const [isProcessingImg, setIsProcessingImg] = useState(false);
   const [scale, setScale] = useState(1);
   const cardRef = useRef<HTMLDivElement>(null);
   const frontExportRef = useRef<HTMLDivElement>(null);
@@ -169,10 +177,33 @@ export const IdCardManagement: React.FC = () => {
     }
   };
 
+  const applyImageMode = async (mode: 'original' | 'remove-bg' | 'studio-white', source = rawSource) => {
+    if (!source) return;
+    setBgMode(mode);
+    setIsProcessingImg(true);
+    try {
+      const res = await processStudentImage(source, {
+        maxDimension: 700,
+        quality: 0.85,
+        mode: mode,
+      });
+      setEditedIdImage(res.base64);
+      setImageSizeKb(res.sizeKb);
+    } catch {
+      notify('error', 'Could not process image.');
+    } finally {
+      setIsProcessingImg(false);
+    }
+  };
+
   const openIdEditor = () => {
     if (!selectedStudent) return;
-    setEditedIdImage(selectedStudent.idCardImageUrl || selectedStudent.imageUrl || '');
+    const initialImg = selectedStudent.idCardImageUrl || selectedStudent.imageUrl || '';
+    setEditedIdImage(initialImg);
+    setRawSource(initialImg || null);
     setEditedIdImageName('');
+    setBgMode('original');
+    setImageSizeKb(initialImg ? Math.round((initialImg.length * 0.75) / 1024) : null);
     setEditedIdForm({
       ...selectedStudent,
       firstName: selectedStudent.firstName || selectedStudent.fullName.split(' ')[0] || '',
@@ -181,31 +212,33 @@ export const IdCardManagement: React.FC = () => {
     setIsEditingId(true);
   };
 
-  const handleIdImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleIdImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setEditedIdImageName(file.name);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const image = new Image();
-      image.onload = () => {
-        const maxDimension = 700;
-        const ratio = Math.min(1, maxDimension / Math.max(image.width, image.height));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round(image.width * ratio));
-        canvas.height = Math.max(1, Math.round(image.height * ratio));
-        const context = canvas.getContext('2d');
-        if (!context) {
-          notify('error', 'The selected image could not be processed.');
-          return;
-        }
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        setEditedIdImage(canvas.toDataURL('image/jpeg', 0.82));
-      };
-      image.onerror = () => notify('error', 'Please select a valid image file.');
-      image.src = reader.result as string;
-    };
-    reader.readAsDataURL(file);
+    setRawSource(file);
+    await applyImageMode(bgMode, file);
+  };
+
+  const handleDirectStudentPhotoUpload = async (student: Student, file?: File) => {
+    if (!file || !student.firebaseUid) return;
+    try {
+      const res = await processStudentImage(file, { maxDimension: 700, quality: 0.85 });
+      await updateStudent(student.firebaseUid, {
+        imageUrl: res.base64,
+        idCardImageUrl: res.base64,
+      });
+      if (selectedStudent?.id === student.id) {
+        setSelectedStudent({
+          ...selectedStudent,
+          imageUrl: res.base64,
+          idCardImageUrl: res.base64,
+        });
+      }
+      notify('success', `Photo for ${student.fullName} updated in database.`);
+    } catch (err: any) {
+      notify('error', 'Failed to update student photo: ' + err.message);
+    }
   };
 
   const saveIdChanges = async () => {
@@ -232,12 +265,13 @@ export const IdCardManagement: React.FC = () => {
         idCardIssuedAt: editedIdForm.idCardIssuedAt,
         idCardExpiresAt: editedIdForm.idCardExpiresAt,
         idCardImageUrl: editedIdImage,
+        imageUrl: editedIdImage,
       };
       await updateStudent(selectedStudent.firebaseUid, changes);
       setSelectedStudent({ ...selectedStudent, ...changes });
       setIsEditingId(false);
       setEditedIdImageName('');
-      notify('success', 'Student ID details saved to the database.');
+      notify('success', 'Student ID and profile photo saved to the database.');
     } finally {
       setIsSavingId(false);
     }
@@ -273,7 +307,40 @@ export const IdCardManagement: React.FC = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredStudents.map(student => (
                 <tr key={student.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-900/60">
-                  <td className="px-6 py-4"><div className="flex items-center gap-3"><div className="h-9 w-9 overflow-hidden rounded-full bg-blue-50 text-blue-600 grid place-items-center font-bold">{student.imageUrl ? <img src={student.imageUrl} alt="" className="h-full w-full object-cover" /> : student.fullName[0]}</div><span className="text-sm font-bold text-slate-900 dark:text-white">{student.fullName}</span></div></td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <label className="relative group cursor-pointer h-9 w-9 shrink-0" title="Click to upload/update student photo">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={e => handleDirectStudentPhotoUpload(student, e.target.files?.[0])}
+                        />
+                        <div className="h-9 w-9 overflow-hidden rounded-full bg-blue-50 text-blue-600 grid place-items-center font-bold border border-slate-200 dark:border-slate-700">
+                          {(student.idCardImageUrl || student.imageUrl) ? (
+                            <img src={student.idCardImageUrl || student.imageUrl} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            student.fullName[0]
+                          )}
+                        </div>
+                        <div className="absolute inset-0 rounded-full bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Camera size={13} />
+                        </div>
+                      </label>
+                      <div className="min-w-0">
+                        <span className="text-sm font-bold text-slate-900 dark:text-white block truncate">{student.fullName}</span>
+                        <label className="text-[10px] text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium cursor-pointer inline-flex items-center gap-1">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={e => handleDirectStudentPhotoUpload(student, e.target.files?.[0])}
+                          />
+                          <span>{(student.idCardImageUrl || student.imageUrl) ? 'Update photo' : '+ Add photo'}</span>
+                        </label>
+                      </div>
+                    </div>
+                  </td>
                   <td className="px-6 py-4 font-mono text-xs font-bold text-slate-500">{student.id}</td>
                   <td className="px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-300">{student.assignedClass || 'General'}</td>
                   <td className="px-6 py-4 text-xs text-slate-500">{student.parentName || 'Not recorded'}</td>
@@ -323,12 +390,70 @@ export const IdCardManagement: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-bold text-slate-900 dark:text-white">ID portrait</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">Choose a separate portrait for this student’s ID card. It will be compressed and stored as Base64 in the student database record.</p>
-                      <label className="mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-[9px] border-2 border-dashed border-blue-200 bg-blue-50 px-4 py-3 text-xs font-bold text-blue-700 transition-colors hover:border-blue-500 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
+                      <p className="mt-1 text-xs leading-5 text-slate-500">Choose a portrait for this student. It will be compressed and stored as Base64 in the database, applying to their ID card, profile, and tables.</p>
+                      <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-[9px] border-2 border-dashed border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 transition-colors hover:border-blue-500 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
                         <ImagePlus size={16} />Choose image from files
                         <input type="file" accept="image/*" onChange={handleIdImageUpload} className="hidden" />
                       </label>
-                      {editedIdImageName && <p className="mt-2 truncate text-[10px] font-medium text-slate-500">Selected: {editedIdImageName}</p>}
+                      {editedIdImageName && <p className="mt-1.5 truncate text-[10px] font-medium text-slate-500">Selected: {editedIdImageName}</p>}
+
+                      {editedIdImage && (
+                        <div className="mt-3 space-y-2">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="font-semibold text-slate-600 dark:text-slate-400">Image processing:</span>
+                            {imageSizeKb !== null && (
+                              <span className="rounded bg-emerald-100 dark:bg-emerald-950/50 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                                {imageSizeKb} KB (Base64)
+                              </span>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => applyImageMode('original')}
+                              disabled={isProcessingImg || !rawSource}
+                              className={`rounded-[7px] py-1.5 px-2 text-[10px] font-bold transition-all ${
+                                bgMode === 'original'
+                                  ? 'bg-blue-600 text-white shadow-sm'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                              }`}
+                            >
+                              Compressed
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => applyImageMode('remove-bg')}
+                              disabled={isProcessingImg || !rawSource}
+                              className={`rounded-[7px] py-1.5 px-2 text-[10px] font-bold transition-all flex items-center justify-center gap-1 ${
+                                bgMode === 'remove-bg'
+                                  ? 'bg-blue-600 text-white shadow-sm'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                              }`}
+                              title="Removes the background and generates transparent PNG"
+                            >
+                              <Wand2 size={11} /> Remove BG
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => applyImageMode('studio-white')}
+                              disabled={isProcessingImg || !rawSource}
+                              className={`rounded-[7px] py-1.5 px-2 text-[10px] font-bold transition-all flex items-center justify-center gap-1 ${
+                                bgMode === 'studio-white'
+                                  ? 'bg-blue-600 text-white shadow-sm'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                              }`}
+                              title="Clean studio white background"
+                            >
+                              <Sparkles size={11} /> Studio White
+                            </button>
+                          </div>
+                          {isProcessingImg && (
+                            <p className="text-[10px] font-medium text-blue-600 flex items-center gap-1">
+                              <Loader2 size={11} className="animate-spin" /> Processing image...
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="mt-6 grid grid-cols-1 gap-4 border-t border-slate-200 pt-5 sm:grid-cols-2 dark:border-slate-800">

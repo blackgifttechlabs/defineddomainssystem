@@ -39,7 +39,7 @@ export const TherapistDashboard: React.FC = () => {
         name: student.fullName,
         assignedClass: student.assignedClass || 'Early Years',
         growth: latestScore,
-        avatar: student.imageUrl || null,
+        avatar: student.imageUrl || student.idCardImageUrl || null,
         checksCount: studentMilestones.length || 1,
       };
     });
