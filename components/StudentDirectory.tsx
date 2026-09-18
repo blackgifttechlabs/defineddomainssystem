@@ -385,7 +385,7 @@ export const StudentDirectory: React.FC = () => {
                               className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 font-black flex items-center justify-center text-xs">
+                            <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-200 font-black flex items-center justify-center text-xs border border-slate-200 dark:border-slate-600">
                               {student.fullName[0]}
                             </div>
                           )}
@@ -455,7 +455,7 @@ export const StudentDirectory: React.FC = () => {
                       className="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-700"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 font-black flex items-center justify-center text-base">
+                    <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-200 font-black flex items-center justify-center text-base border border-slate-200 dark:border-slate-600">
                       {student.fullName[0]}
                     </div>
                   )}
@@ -556,7 +556,7 @@ export const StudentDirectory: React.FC = () => {
         <div className="flex flex-col justify-between gap-4 border-b border-slate-200 bg-white px-5 py-5 sm:px-6 md:flex-row md:items-center md:px-8 dark:border-slate-800 dark:bg-slate-950">
           <div className="flex items-center gap-4">
             <label
-              className={`relative group w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900/50 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex items-center justify-center font-bold text-lg text-blue-700 dark:text-blue-200 shrink-0 ${
+              className={`relative group w-14 h-14 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex items-center justify-center font-bold text-lg text-blue-700 dark:text-blue-200 shrink-0 ${
                 isAdmin ? 'cursor-pointer' : ''
               }`}
               title={isAdmin ? 'Click to change student photo' : undefined}

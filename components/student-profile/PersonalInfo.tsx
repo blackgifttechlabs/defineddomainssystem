@@ -138,7 +138,7 @@ export const PersonalInfo: React.FC<Props> = ({
     <div className="grid w-full grid-cols-1 items-start gap-5 animate-in fade-in duration-300 xl:grid-cols-2">
       <RecordSection eyebrow="Student record" title="Identity information">
         <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-4 bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800">
-          <div className="relative w-16 h-16 rounded-full border border-slate-200 dark:border-slate-700 bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200 overflow-hidden flex items-center justify-center font-bold text-lg shrink-0">
+          <div className="relative w-16 h-16 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-200 overflow-hidden flex items-center justify-center font-bold text-lg shrink-0">
             {(editForm.imageUrl || editForm.idCardImageUrl || student.imageUrl || student.idCardImageUrl) ? (
               <img
                 src={editForm.imageUrl || editForm.idCardImageUrl || student.imageUrl || student.idCardImageUrl}
