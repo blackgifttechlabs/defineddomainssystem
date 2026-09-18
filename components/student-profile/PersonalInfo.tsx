@@ -3,6 +3,8 @@ import { Student, Staff } from '../../types';
 import { Camera, ImagePlus, Loader2, Sparkles, Wand2 } from 'lucide-react';
 import { processStudentImage } from '../../utils/imageProcessor';
 
+const LogoImg = 'https://i.ibb.co/spSVqW8s/definedlogo.png';
+
 interface Props {
   student: Student;
   isEditing: boolean;
@@ -156,7 +158,9 @@ export const PersonalInfo: React.FC<Props> = ({
                 className="w-full h-full object-cover"
               />
             ) : (
-              (student.fullName || 'S')[0]
+              <div className="w-full h-full p-2.5 flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+                <img src={LogoImg} alt="" className="w-full h-full object-contain grayscale opacity-50" />
+              </div>
             )}
             {isEditing && isProcessing && (
               <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center text-white">

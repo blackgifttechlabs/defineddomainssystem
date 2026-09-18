@@ -23,8 +23,9 @@ import {
   Zap,
   Info,
   Users
-} from 'lucide-react';
 import { MilestoneRecord } from '../types';
+
+const LogoImg = 'https://i.ibb.co/spSVqW8s/definedlogo.png';
 
 const calculateAgeMonths = (dob: string) => {
   if (!dob) return 0;
@@ -291,12 +292,12 @@ export const ClinicalABA: React.FC = () => {
                                 className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700" 
                               />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 font-black flex items-center justify-center text-xs">
-                                {student.fullName[0]}
+                              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center p-1.5 overflow-hidden">
+                                <img src={LogoImg} alt="" className="w-full h-full object-contain grayscale opacity-50" />
                               </div>
                             )}
                             <span className="font-bold text-slate-900 dark:text-white">
-                              {student.fullName}
+                              {student.fullName || `${student.firstName || ''} ${student.lastName || ''}`.trim()}
                             </span>
                           </div>
                         </td>

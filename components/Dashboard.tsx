@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
+const LogoImg = 'https://i.ibb.co/spSVqW8s/definedlogo.png';
+
 const ActionCard = ({ label, icon: Icon, onClick, tone, iconTone }: any) => (
   <button 
     onClick={onClick}
@@ -265,7 +267,13 @@ export const Dashboard: React.FC = () => {
                          <td className="px-8 py-6">
                             <div className="flex items-center gap-4">
                                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center font-black text-xs uppercase text-blue-600">
-                                  {(student.imageUrl || student.idCardImageUrl) ? <img src={student.imageUrl || student.idCardImageUrl} className="w-full h-full object-cover" alt={student.fullName} /> : student.fullName[0]}
+                                  {(student.imageUrl || student.idCardImageUrl) ? (
+                                    <img src={student.imageUrl || student.idCardImageUrl} className="w-full h-full object-cover" alt={student.fullName} />
+                                  ) : (
+                                    <div className="w-full h-full p-2 flex items-center justify-center">
+                                      <img src={LogoImg} alt="" className="w-full h-full object-contain grayscale opacity-50" />
+                                    </div>
+                                  )}
                                </div>
                                <div>
                                   <p className="text-[11px] font-black uppercase tracking-tight text-slate-950 dark:text-white leading-none">{student.fullName}</p>

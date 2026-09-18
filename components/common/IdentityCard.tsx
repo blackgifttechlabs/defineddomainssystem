@@ -27,9 +27,9 @@ export const StudentPhoto: React.FC<{ student: Student }> = ({ student }) => (
       crossOrigin="anonymous"
     />
   ) : (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-white text-slate-300">
-      <User size={54} />
-      <span className="text-xs font-black uppercase tracking-widest">Student photo</span>
+    <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-white text-slate-400 p-4">
+      <img src={LogoImg} alt="" className="h-20 w-20 object-contain grayscale opacity-40" crossOrigin="anonymous" />
+      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">No Photo</span>
     </div>
   )
 );

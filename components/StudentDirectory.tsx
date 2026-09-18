@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { 
   Search, ChevronRight, X, LayoutGrid, List, 
@@ -12,6 +12,8 @@ import { HealthRecord } from './student-profile/HealthRecord';
 import { PerformanceMatrix } from './student-profile/PerformanceMatrix';
 import { PaymentLedger } from './student-profile/PaymentLedger';
 import { SecurityRecord } from './student-profile/SecurityRecord';
+
+const LogoImg = 'https://i.ibb.co/spSVqW8s/definedlogo.png';
 
 const STUDENT_COLORS = [
   { bg: 'bg-blue-600', row: 'bg-blue-50', text: 'text-white', border: 'border-blue-900', accent: 'border-blue-600', dark: 'dark:bg-blue-900/40' },
@@ -107,12 +109,66 @@ export const StudentDirectory: React.FC = () => {
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [payments, selectedStudent]);
 
+  const openStudent = (student: Student) => {
+    const fName = student.firstName || (student.fullName ? student.fullName.split(' ')[0] : '');
+    const lName = student.lastName || (student.fullName ? student.fullName.split(' ').slice(1).join(' ') : '');
+    const full = student.fullName || `${fName} ${lName}`.trim();
+    const normalized: Student = {
+      ...student,
+      firstName: fName,
+      lastName: lName,
+      fullName: full
+    };
+    setSelectedStudent(normalized);
+    setEditForm(normalized);
+    setIsEditing(false);
+  };
+
+  // Keep selectedStudent synced with latest updates from store when not actively editing
+  useEffect(() => {
+    if (selectedStudent && !isEditing) {
+      const fresh = students.find(s => 
+        (selectedStudent.firebaseUid && s.firebaseUid === selectedStudent.firebaseUid) || 
+        (selectedStudent.id && s.id === selectedStudent.id)
+      );
+      if (fresh) {
+        if (fresh.fullName !== selectedStudent.fullName || 
+            fresh.firstName !== selectedStudent.firstName || 
+            fresh.lastName !== selectedStudent.lastName ||
+            fresh.imageUrl !== selectedStudent.imageUrl ||
+            fresh.idCardImageUrl !== selectedStudent.idCardImageUrl ||
+            fresh.assignedClass !== selectedStudent.assignedClass ||
+            fresh.parentName !== selectedStudent.parentName ||
+            fresh.parentPhone !== selectedStudent.parentPhone ||
+            fresh.parentEmail !== selectedStudent.parentEmail ||
+            fresh.homeAddress !== selectedStudent.homeAddress ||
+            fresh.dob !== selectedStudent.dob) {
+          setSelectedStudent(fresh);
+          setEditForm(fresh);
+        }
+      }
+    }
+  }, [students, isEditing, selectedStudent]);
+
   const handleSaveEdit = async () => {
     if (!selectedStudent || !selectedStudent.firebaseUid || isSaving) return;
     setIsSaving(true);
     try {
-      await updateStudent(selectedStudent.firebaseUid, editForm);
-      setSelectedStudent({ ...selectedStudent, ...editForm } as Student);
+      const fName = (editForm.firstName !== undefined ? editForm.firstName : (selectedStudent.firstName || selectedStudent.fullName.split(' ')[0] || '')).trim();
+      const lName = (editForm.lastName !== undefined ? editForm.lastName : (selectedStudent.lastName || selectedStudent.fullName.split(' ').slice(1).join(' ') || '')).trim();
+      const computedFullName = `${fName} ${lName}`.trim();
+
+      const payload: Partial<Student> = {
+        ...editForm,
+        firstName: fName,
+        lastName: lName,
+        fullName: computedFullName
+      };
+
+      await updateStudent(selectedStudent.firebaseUid, payload);
+      const updatedStudent = { ...selectedStudent, ...payload } as Student;
+      setSelectedStudent(updatedStudent);
+      setEditForm(updatedStudent);
       setIsEditing(false);
     } catch(e) {
       // The store displays the update error to the user.
@@ -366,11 +422,7 @@ export const StudentDirectory: React.FC = () => {
                     <tr
                       key={student.id}
                       className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
-                      onClick={() => {
-                        setSelectedStudent(student);
-                        setEditForm(student);
-                        setIsEditing(false);
-                      }}
+                      onClick={() => openStudent(student)}
                     >
                       <td className="py-4 px-5 font-mono text-[11px] text-slate-500 font-bold">
                         #{student.id}
@@ -385,12 +437,12 @@ export const StudentDirectory: React.FC = () => {
                               className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-200 font-black flex items-center justify-center text-xs border border-slate-200 dark:border-slate-600">
-                              {student.fullName[0]}
+                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center p-1.5 overflow-hidden">
+                              <img src={LogoImg} alt="" className="w-full h-full object-contain grayscale opacity-50" />
                             </div>
                           )}
                           <span className="font-bold text-slate-900 dark:text-white">
-                            {student.fullName}
+                            {student.fullName || `${student.firstName || ''} ${student.lastName || ''}`.trim()}
                           </span>
                         </div>
                       </td>
@@ -420,9 +472,7 @@ export const StudentDirectory: React.FC = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedStudent(student);
-                            setEditForm(student);
-                            setIsEditing(false);
+                            openStudent(student);
                           }}
                           className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-[9px] transition-colors"
                         >
@@ -440,11 +490,7 @@ export const StudentDirectory: React.FC = () => {
             {paginatedStudents.map(student => (
               <div
                 key={student.id}
-                onClick={() => {
-                  setSelectedStudent(student);
-                  setEditForm(student);
-                  setIsEditing(false);
-                }}
+                onClick={() => openStudent(student)}
                 className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[9px] p-5 shadow-sm hover:shadow-md hover:border-blue-500 transition-all cursor-pointer flex flex-col justify-between"
               >
                 <div className="flex items-center gap-3 mb-4">
@@ -455,13 +501,13 @@ export const StudentDirectory: React.FC = () => {
                       className="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-700"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-200 font-black flex items-center justify-center text-base border border-slate-200 dark:border-slate-600">
-                      {student.fullName[0]}
+                    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center p-2.5 overflow-hidden">
+                      <img src={LogoImg} alt="" className="w-full h-full object-contain grayscale opacity-50" />
                     </div>
                   )}
                   <div className="min-w-0">
                     <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">
-                      {student.fullName}
+                      {student.fullName || `${student.firstName || ''} ${student.lastName || ''}`.trim()}
                     </h4>
                     <p className="text-[11px] font-mono text-slate-400">
                       #{student.id}
@@ -572,7 +618,9 @@ export const StudentDirectory: React.FC = () => {
               {(selectedStudent.imageUrl || selectedStudent.idCardImageUrl) ? (
                 <img src={selectedStudent.imageUrl || selectedStudent.idCardImageUrl} alt={selectedStudent.fullName} className="w-full h-full object-cover" />
               ) : (
-                selectedStudent.fullName[0]
+                <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center p-3.5">
+                  <img src={LogoImg} alt="" className="w-full h-full object-contain grayscale opacity-50" />
+                </div>
               )}
               {isAdmin && (
                 <div className="absolute inset-0 bg-slate-950/60 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -584,7 +632,7 @@ export const StudentDirectory: React.FC = () => {
             <div>
               <div className="flex items-center gap-2.5">
                 <h2 className="text-base md:text-lg font-bold text-slate-900 dark:text-white">
-                  {selectedStudent.fullName}
+                  {selectedStudent.fullName || `${selectedStudent.firstName || ''} ${selectedStudent.lastName || ''}`.trim()}
                 </h2>
                 <span className="px-2 py-0.5 rounded-[9px] text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900">
                   Active
