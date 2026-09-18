@@ -244,7 +244,9 @@ export const AdminClinicalLogs: React.FC = () => {
               {selectedStudent.imageUrl ? (
                 <img src={selectedStudent.imageUrl} alt={selectedStudent.fullName} className="h-full w-full rounded-full object-cover" />
               ) : (
-                <div className="h-full w-full rounded-full bg-[#f2e8ff] text-[#7c3aed] grid place-items-center text-xl font-black">{selectedStudent.fullName[0]}</div>
+                <div className="h-full w-full rounded-full bg-slate-100 flex items-center justify-center p-2 overflow-hidden">
+                  <img src={SCHOOL_LOGO_URL} alt="" className="h-full w-full object-contain grayscale opacity-40" />
+                </div>
               )}
             </div>
             <div className="min-w-0 flex-1">
@@ -357,7 +359,13 @@ export const AdminClinicalLogs: React.FC = () => {
           </div>
           <div className="flex items-center gap-4">
              <div className="w-10 h-10 rounded-none overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200">
-                {selectedStudent.imageUrl ? <img src={selectedStudent.imageUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-black text-blue-600">{selectedStudent.fullName[0]}</div>}
+                {selectedStudent.imageUrl ? (
+                  <img src={selectedStudent.imageUrl} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full p-1.5 flex items-center justify-center">
+                    <img src={SCHOOL_LOGO_URL} alt="" className="w-full h-full object-contain grayscale opacity-40" />
+                  </div>
+                )}
              </div>
              <div>
                <h1 className="text-lg font-black uppercase text-slate-900 dark:text-white leading-none tracking-tight">Report History</h1>

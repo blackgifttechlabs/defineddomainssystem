@@ -20,7 +20,7 @@ import {
   LogoImg
 } from '../common/IdentityCard';
 
-const VerificationBaseUrl = 'https://defined-domain.vercel.app/';
+const VerificationBaseUrl = 'https://defined-domains.netlify.app/';
 
 export const StudentIdVerification: React.FC = () => {
   const { students } = useStore();
