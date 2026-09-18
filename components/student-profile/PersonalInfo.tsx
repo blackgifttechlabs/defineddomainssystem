@@ -68,7 +68,17 @@ const InfoField = ({
             value={(editForm as any)[field] !== undefined ? (editForm as any)[field] : (value || '')}
             onChange={e => {
               const val = e.target.value;
-              setEditForm(prev => ({ ...prev, [field]: val }));
+              setEditForm(prev => {
+                const next = { ...prev, [field]: val };
+                if (field === 'firstName' || field === 'lastName') {
+                  const currentF = (field === 'firstName' ? val : (next.firstName !== undefined ? next.firstName : (value || ''))).toString().trim();
+                  const currentL = (field === 'lastName' ? val : (next.lastName !== undefined ? next.lastName : (value || ''))).toString().trim();
+                  next.firstName = currentF;
+                  next.lastName = currentL;
+                  next.fullName = `${currentF} ${currentL}`.trim();
+                }
+                return next;
+              });
             }}
             placeholder={`Enter ${label.toLowerCase()}...`}
             className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white"

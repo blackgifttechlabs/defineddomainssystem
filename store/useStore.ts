@@ -376,7 +376,18 @@ export const useStore = create<AppState>((set, get) => {
       import('../utils/seeder').then(m => m.autoSeed(secondaryAuth));
 
       onSnapshot(query(collection(db, 'students'), orderBy('fullName')), (snapshot) => {
-        set({ students: snapshot.docs.map(doc => ({ ...doc.data() } as Student)) });
+        set({ students: snapshot.docs.map(doc => {
+          const data = doc.data() as Student;
+          const fName = data.firstName || (data.fullName ? data.fullName.split(' ')[0] : '');
+          const lName = data.lastName || (data.fullName ? data.fullName.split(' ').slice(1).join(' ') : '');
+          const full = (data.firstName && data.lastName) ? `${data.firstName} ${data.lastName}`.trim() : (data.fullName || `${fName} ${lName}`.trim());
+          return {
+            ...data,
+            firstName: fName,
+            lastName: lName,
+            fullName: full,
+          } as Student;
+        }) });
       });
       onSnapshot(query(collection(db, 'staff'), orderBy('fullName')), (snapshot) => {
         set({ staff: snapshot.docs.map(doc => ({ ...doc.data() } as Staff)) });
@@ -557,36 +568,132 @@ export const useStore = create<AppState>((set, get) => {
         const studentSnap = await getDoc(studentRef);
         const existingStudent = studentSnap.exists() ? studentSnap.data() as Student : null;
 
+        // Resolve first, last, and full names reliably
+        const fallbackFirst = existingStudent?.firstName || (existingStudent?.fullName ? existingStudent.fullName.split(' ')[0] : '');
+        const fallbackLast = existingStudent?.lastName || (existingStudent?.fullName ? existingStudent.fullName.split(' ').slice(1).join(' ') : '');
+
+        let resolvedFirstName = processed.firstName !== undefined ? processed.firstName.trim() : fallbackFirst;
+        let resolvedLastName = processed.lastName !== undefined ? processed.lastName.trim() : fallbackLast;
+
+        // If payload provides fullName directly and neither firstName nor lastName was explicitly provided
+        if (processed.firstName === undefined && processed.lastName === undefined && processed.fullName) {
+          const parts = processed.fullName.trim().split(/\s+/);
+          resolvedFirstName = parts[0] || '';
+          resolvedLastName = parts.slice(1).join(' ') || '';
+        }
+
+        processed.firstName = resolvedFirstName;
+        processed.lastName = resolvedLastName;
+        processed.fullName = `${resolvedFirstName} ${resolvedLastName}`.trim();
+
         const studentEmail = (processed.email || existingStudent?.email || (existingStudent?.id ? `${existingStudent.id.toLowerCase()}@defineddomain.com` : '')).toLowerCase().trim();
         const studentPass = processed.password?.trim();
 
         if (studentPass && studentEmail) {
           await syncAuthPassword(studentEmail, studentPass, [existingStudent?.password || '', '000000']);
-          await setDoc(doc(db, 'users', uid), { password: studentPass }, { merge: true });
         }
 
-        // Sync avatar in users collection
+        // Sync user document in users collection
         const effectiveAvatar = processed.imageUrl || processed.idCardImageUrl;
-        if (effectiveAvatar) {
-          await setDoc(doc(db, 'users', uid), { avatar: effectiveAvatar }, { merge: true });
+        const studentUserUpdates: Record<string, any> = {
+          name: processed.fullName,
+        };
+        if (effectiveAvatar) studentUserUpdates.avatar = effectiveAvatar;
+        if (studentPass) studentUserUpdates.password = studentPass;
+        if (studentEmail) studentUserUpdates.email = studentEmail;
+        await setDoc(doc(db, 'users', uid), studentUserUpdates, { merge: true });
+
+        // If currently logged-in user is this student, sync session user
+        if (get().user && (get().user?.id === uid || get().user?.id === existingStudent?.id)) {
+          set(state => ({
+            user: state.user ? {
+              ...state.user,
+              name: processed.fullName,
+              ...(effectiveAvatar ? { avatar: effectiveAvatar } : {}),
+              ...(studentEmail ? { email: studentEmail } : {})
+            } : null
+          }));
         }
 
+        // Sync parent details and parent user
+        const studentId = existingStudent?.id || processed.id;
         const parentEmail = (processed.parentEmail || existingStudent?.parentEmail || '').toLowerCase().trim();
         const parentPass = processed.parentPassword?.trim();
-        if (parentPass && parentEmail) {
-          const parentQ = query(collection(db, 'parents'), where('studentId', '==', existingStudent?.id || ''), limit(1));
+
+        if (studentId) {
+          const parentQ = query(collection(db, 'parents'), where('studentId', '==', studentId));
           const parentSnap = await getDocs(parentQ);
-          if (!parentSnap.empty) {
-            const parentDoc = parentSnap.docs[0];
-            await updateDoc(doc(db, 'parents', parentDoc.id), { password: parentPass });
-            await setDoc(doc(db, 'users', parentDoc.id), { password: parentPass }, { merge: true });
-            await syncAuthPassword(parentEmail, parentPass, [parentDoc.data()?.password || '', '000000']);
+          for (const parentDoc of parentSnap.docs) {
+            const parentUpdates: Record<string, any> = {
+              studentFullName: processed.fullName,
+            };
+            if (processed.parentName) parentUpdates.name = processed.parentName;
+            if (processed.parentPhone) parentUpdates.phone = processed.parentPhone;
+            if (processed.parentEmail) parentUpdates.email = parentEmail;
+            if (processed.homeAddress) parentUpdates.address = processed.homeAddress;
+            if (parentPass) parentUpdates.password = parentPass;
+
+            await updateDoc(doc(db, 'parents', parentDoc.id), parentUpdates);
+
+            const parentUserUpdates: Record<string, any> = {};
+            if (processed.parentName) parentUserUpdates.name = processed.parentName;
+            if (processed.parentEmail) parentUserUpdates.email = parentEmail;
+            if (parentPass) parentUserUpdates.password = parentPass;
+            if (Object.keys(parentUserUpdates).length > 0) {
+              await setDoc(doc(db, 'users', parentDoc.id), parentUserUpdates, { merge: true });
+            }
+
+            if (parentPass && parentEmail) {
+              await syncAuthPassword(parentEmail, parentPass, [parentDoc.data()?.password || '', '000000']);
+            }
           }
+
+          // Update parent in Zustand store
+          set(state => ({
+            parents: state.parents.map(p => {
+              if (p.studentId === studentId) {
+                return {
+                  ...p,
+                  studentFullName: processed.fullName,
+                  ...(processed.parentName ? { name: processed.parentName } : {}),
+                  ...(processed.parentPhone ? { phone: processed.parentPhone } : {}),
+                  ...(processed.parentEmail ? { email: parentEmail } : {}),
+                  ...(processed.homeAddress ? { address: processed.homeAddress } : {}),
+                  ...(parentPass ? { password: parentPass } : {}),
+                };
+              }
+              return p;
+            })
+          }));
+        }
+
+        // Sync payments with new student name if name changed
+        if (studentId && existingStudent?.fullName !== processed.fullName) {
+          const payQ = query(collection(db, 'payments'), where('studentId', '==', studentId));
+          const paySnap = await getDocs(payQ);
+          for (const payDoc of paySnap.docs) {
+            await updateDoc(doc(db, 'payments', payDoc.id), { studentName: processed.fullName });
+          }
+          set(state => ({
+            payments: state.payments.map(p => p.studentId === studentId ? { ...p, studentName: processed.fullName } : p)
+          }));
+        }
+
+        // Sync orders with new student name if name changed
+        if (studentId && existingStudent?.fullName !== processed.fullName) {
+          const orderQ = query(collection(db, 'orders'), where('studentId', '==', studentId));
+          const orderSnap = await getDocs(orderQ);
+          for (const oDoc of orderSnap.docs) {
+            await updateDoc(doc(db, 'orders', oDoc.id), { studentName: processed.fullName });
+          }
+          set(state => ({
+            orders: state.orders.map(o => o.studentId === studentId ? { ...o, studentName: processed.fullName } : o)
+          }));
         }
 
         await updateDoc(studentRef, processed);
         set(state => ({
-          students: state.students.map(s => (s.firebaseUid === uid || s.id === uid) ? { ...s, ...processed } : s)
+          students: state.students.map(s => (s.firebaseUid === uid || s.id === uid || (existingStudent && s.id === existingStudent.id)) ? { ...s, ...processed } : s)
         }));
         get().notify('success', 'Student profile updated.');
       } catch (err: any) { get().notify('error', err.message); }
