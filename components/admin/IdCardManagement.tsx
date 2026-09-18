@@ -316,9 +316,9 @@ export const IdCardManagement: React.FC = () => {
                           className="hidden"
                           onChange={e => handleDirectStudentPhotoUpload(student, e.target.files?.[0])}
                         />
-                        <div className="h-9 w-9 overflow-hidden rounded-full bg-blue-50 text-blue-600 grid place-items-center font-bold border border-slate-200 dark:border-slate-700">
+                        <div className="h-9 w-9 overflow-hidden rounded-full bg-white text-blue-600 grid place-items-center font-bold border border-slate-200 dark:border-slate-700">
                           {(student.idCardImageUrl || student.imageUrl) ? (
-                            <img src={student.idCardImageUrl || student.imageUrl} alt="" className="h-full w-full object-cover" />
+                            <img src={student.idCardImageUrl || student.imageUrl} alt="" className="h-full w-full object-cover bg-white" />
                           ) : (
                             student.fullName[0]
                           )}
@@ -385,8 +385,8 @@ export const IdCardManagement: React.FC = () => {
                 </header>
                 <div className="p-5">
                   <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-                    <div className="h-48 w-36 shrink-0 overflow-hidden rounded-[12px] border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
-                      {editedIdImage ? <img src={editedIdImage} alt="ID preview" className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-slate-400"><User size={38} /></div>}
+                    <div className="h-48 w-36 shrink-0 overflow-hidden rounded-[12px] border border-slate-200 bg-white dark:border-slate-700">
+                      {editedIdImage ? <img src={editedIdImage} alt="ID preview" className="h-full w-full object-cover bg-white" /> : <div className="grid h-full place-items-center text-slate-400 bg-white"><User size={38} /></div>}
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-bold text-slate-900 dark:text-white">ID portrait</p>
@@ -482,7 +482,7 @@ export const IdCardManagement: React.FC = () => {
             <div className="border-y border-slate-200 py-16 text-center dark:border-slate-800"><QrCode size={38} className="mx-auto text-emerald-500" /><h2 className="mt-4 text-lg font-bold dark:text-white">Verify a student identity</h2><p className="mt-1 text-xs text-slate-500">Enter an exact student ID or full name in the search field.</p></div>
           ) : verifyMatch ? (
             <div className="grid border-y border-emerald-200 bg-emerald-50/40 md:grid-cols-[150px_1fr_auto] md:items-center dark:border-emerald-900 dark:bg-emerald-950/10">
-              <div className="h-44 bg-slate-100"> <StudentPhoto student={verifyMatch} /> </div>
+              <div className="h-44 bg-white"> <StudentPhoto student={verifyMatch} /> </div>
               <div className="p-6"><div className="mb-3 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-black uppercase text-emerald-700"><BadgeCheck size={14} />Authentic student identity</div><h2 className="text-xl font-black uppercase text-slate-900 dark:text-white">{verifyMatch.fullName}</h2><p className="mt-1 text-sm font-bold text-violet-600">{verifyMatch.assignedClass || 'General'}</p><p className="mt-2 font-mono text-xs text-slate-500">ID: {verifyMatch.id}</p></div>
               <button onClick={() => { setActiveView('cards'); openCard(verifyMatch); }} className="m-6 inline-flex items-center justify-center gap-2 rounded-[9px] bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white">View ID card <ChevronRight size={14} /></button>
             </div>

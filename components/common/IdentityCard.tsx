@@ -23,11 +23,11 @@ export const StudentPhoto: React.FC<{ student: Student }> = ({ student }) => (
     <img
       src={student.idCardImageUrl || student.imageUrl}
       alt={student.fullName}
-      className="h-full w-full object-cover"
+      className="h-full w-full object-cover bg-white"
       crossOrigin="anonymous"
     />
   ) : (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-slate-100 text-slate-300">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-white text-slate-300">
       <User size={54} />
       <span className="text-xs font-black uppercase tracking-widest">Student photo</span>
     </div>
@@ -68,8 +68,8 @@ const FrontFace: React.FC<{
 
     <div className="relative z-10 flex h-[398px] gap-6 px-8 py-5">
       <div className="flex w-[210px] shrink-0 flex-col items-center justify-start">
-        <div className="w-[205px] overflow-hidden rounded-[16px] border-2 border-[#0b1b36] bg-slate-100 shadow-md">
-          <div className="h-[210px] w-full"><StudentPhoto student={student} /></div>
+        <div className="w-[205px] overflow-hidden rounded-[16px] border-2 border-[#0b1b36] bg-white shadow-md">
+          <div className="h-[210px] w-full bg-white"><StudentPhoto student={student} /></div>
           <div className="border-t-2 border-emerald-500 bg-[#0b1b36] px-2 py-2.5 text-center">
             <p className="text-[9.5px] font-black uppercase tracking-widest text-[#4ade80]">Student ID</p>
             <p className="mt-0.5 font-mono text-[16px] font-black leading-tight tracking-wider text-white">{student.id.toUpperCase()}</p>
