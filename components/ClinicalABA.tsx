@@ -23,6 +23,7 @@ import {
   Zap,
   Info,
   Users
+}from 'lucide-react';
 import { MilestoneRecord } from '../types';
 
 const LogoImg = 'https://i.ibb.co/spSVqW8s/definedlogo.png';
