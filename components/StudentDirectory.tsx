@@ -330,31 +330,34 @@ export const StudentDirectory: React.FC = () => {
     <div className="w-full min-h-[calc(100vh-72px)] flex flex-col justify-between animate-in fade-in duration-500 font-sans">
       <div className={`${selectedStudent ? 'hidden' : 'flex'} flex-1 flex-col`}>
         {/* Table Toolbar Header directly on page */}
-        <div className="px-6 md:px-8 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white dark:bg-slate-950">
+        <div className="px-4 sm:px-6 md:px-8 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white dark:bg-slate-950">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm md:text-base font-bold text-slate-800 dark:text-white">
-            {filteredStudents.length} {searchTerm.trim() ? 'Matching' : 'All'} Students
+          <h2 className="text-base font-semibold tracking-tight text-slate-950 dark:text-white md:text-lg">
+            {isAdmin
+              ? `${filteredStudents.length} ${searchTerm.trim() ? 'Matching' : 'All'} Students`
+              : `${filteredStudents.length} ${searchTerm.trim() ? 'Matching' : 'My'} Students`}
           </h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex min-w-0 flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center">
           {/* Search Input */}
-          <div className="relative min-w-[260px]">
+          <div className="relative w-full min-w-0 sm:w-auto sm:min-w-[260px]">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search all students (name, ID, class, parent)..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[9px] text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600"
+              className="h-10 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs font-medium text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-950/5 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
             />
           </div>
 
+          <div className="flex min-w-0 items-center gap-2">
           {/* Class Filter Dropdown */}
           <select
             value={classFilter}
             onChange={e => setClassFilter(e.target.value)}
-            className="px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[9px] text-xs font-medium text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+            className="h-9 min-w-0 flex-1 rounded-md border border-slate-200 bg-slate-50 px-3 text-xs font-medium text-slate-700 outline-none cursor-pointer dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 sm:flex-none"
           >
             <option value="All">All Status</option>
             {settings.classes.map(c => (
@@ -363,11 +366,11 @@ export const StudentDirectory: React.FC = () => {
           </select>
 
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-900 p-0.5 rounded-[9px] border border-slate-200 dark:border-slate-800">
+          <div className="flex h-9 shrink-0 items-center rounded-md border border-slate-200 bg-slate-100 p-0.5 dark:border-slate-800 dark:bg-slate-900">
             <button
               onClick={() => setViewMode('table')}
               className={`p-1.5 rounded-[7px] transition-all ${
-                viewMode === 'table' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm' : 'text-slate-400'
+                viewMode === 'table' ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm' : 'text-slate-400'
               }`}
               title="Table View"
             >
@@ -376,7 +379,7 @@ export const StudentDirectory: React.FC = () => {
             <button
               onClick={() => setViewMode('cards')}
               className={`p-1.5 rounded-[7px] transition-all ${
-                viewMode === 'cards' ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm' : 'text-slate-400'
+                viewMode === 'cards' ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm' : 'text-slate-400'
               }`}
               title="Grid View"
             >
@@ -387,17 +390,51 @@ export const StudentDirectory: React.FC = () => {
           {isAdmin && (
             <button
               onClick={openAddStudentForm}
-              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-[9px] text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 shrink-0"
+              className="flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-slate-950 px-3 text-xs font-medium text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-950"
             >
-              + Add Student
+              <span className="text-base leading-none">+</span> <span className="hidden min-[360px]:inline">Add Student</span><span className="min-[360px]:hidden">Add</span>
             </button>
           )}
+          </div>
         </div>
       </div>
 
         {/* Table Content */}
         {viewMode === 'table' ? (
-          <div className="overflow-x-auto">
+          <>
+          <div className="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-950 md:hidden">
+            {paginatedStudents.length === 0 ? (
+              <div className="px-5 py-16 text-center">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">No students found</p>
+                <p className="mt-1 text-xs text-slate-400">Try changing your search or class filter.</p>
+              </div>
+            ) : paginatedStudents.map(student => (
+              <button
+                key={student.id}
+                type="button"
+                onClick={() => openStudent(student)}
+                className="flex w-full min-w-0 items-center gap-3 px-4 py-4 text-left transition hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-slate-900"
+              >
+                {(student.imageUrl || student.idCardImageUrl) ? (
+                  <img src={student.imageUrl || student.idCardImageUrl} alt="" className="h-11 w-11 shrink-0 rounded-full border border-slate-200 object-cover dark:border-slate-700" />
+                ) : (
+                  <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 p-2 dark:border-slate-700 dark:bg-slate-800">
+                    <img src={LogoImg} alt="" className="h-full w-full object-contain grayscale opacity-50" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{student.fullName || `${student.firstName || ''} ${student.lastName || ''}`.trim()}</p>
+                  <p className="mt-0.5 truncate font-mono text-[11px] text-slate-400">#{student.id}</p>
+                  <div className="mt-2 flex min-w-0 items-center gap-2 text-[11px] text-slate-500">
+                    <span className="truncate rounded-full bg-slate-100 px-2 py-0.5 dark:bg-slate-800">{student.assignedClass || 'General'}</span>
+                    <span className="shrink-0">{student.dob || 'DOB not set'}</span>
+                  </div>
+                </div>
+                <ChevronRight size={17} className="shrink-0 text-slate-400" />
+              </button>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/70 dark:bg-slate-800/40 text-[11px] font-semibold text-slate-400 border-b border-slate-100 dark:border-slate-800">
@@ -485,8 +522,9 @@ export const StudentDirectory: React.FC = () => {
               </tbody>
             </table>
           </div>
+          </>
         ) : (
-          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:gap-4 sm:p-6 lg:grid-cols-3 xl:grid-cols-4">
             {paginatedStudents.map(student => (
               <div
                 key={student.id}
@@ -541,7 +579,7 @@ export const StudentDirectory: React.FC = () => {
       </div>
 
       {/* Pagination Footer at very bottom */}
-      <div className={`${selectedStudent ? 'hidden' : 'flex'} mt-auto px-6 md:px-8 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500`}>
+      <div className={`${selectedStudent ? 'hidden' : 'flex'} mt-auto px-4 sm:px-6 md:px-8 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500`}>
         <div>
           Showing <span className="font-bold text-slate-900 dark:text-white">{filteredStudents.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}</span> to{' '}
           <span className="font-bold text-slate-900 dark:text-white">
@@ -562,7 +600,7 @@ export const StudentDirectory: React.FC = () => {
             <button
               key={num}
               onClick={() => setCurrentPage(num)}
-              className={`w-8 h-8 rounded-[9px] text-xs font-bold transition-all ${
+              className={`hidden h-8 w-8 rounded-md text-xs font-medium transition-all sm:block ${
                 currentPage === num
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -587,7 +625,7 @@ export const StudentDirectory: React.FC = () => {
         return (
       <div className="min-h-[calc(100vh-72px)] w-full bg-slate-50/40 font-sans animate-in fade-in duration-300 dark:bg-slate-950">
         {/* Breadcrumb Navigation on top */}
-        <div className="flex items-center gap-2 border-b border-slate-100 bg-white px-5 py-3 text-xs sm:px-6 md:px-8 dark:border-slate-900 dark:bg-slate-950">
+        <div className="hidden items-center gap-2 border-b border-slate-100 bg-white px-5 py-3 text-xs sm:flex sm:px-6 md:px-8 dark:border-slate-900 dark:bg-slate-950">
           <button
             onClick={() => setSelectedStudent(null)}
             className="text-slate-400 hover:text-blue-600 transition-colors font-medium"
@@ -599,8 +637,11 @@ export const StudentDirectory: React.FC = () => {
         </div>
 
         {/* Student Profile Hero Header Bar */}
-        <div className="flex flex-col justify-between gap-4 border-b border-slate-200 bg-white px-5 py-5 sm:px-6 md:flex-row md:items-center md:px-8 dark:border-slate-800 dark:bg-slate-950">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6 sm:py-5 md:flex-row md:items-center md:px-8 dark:border-slate-800 dark:bg-slate-950">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <button onClick={() => setSelectedStudent(null)} aria-label="Back to students" className="-ml-1 grid h-9 w-9 shrink-0 place-items-center text-slate-500 sm:hidden">
+              <ArrowLeft size={21} />
+            </button>
             <label
               className={`relative group w-14 h-14 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex items-center justify-center font-bold text-lg text-blue-700 dark:text-blue-200 shrink-0 ${
                 isAdmin ? 'cursor-pointer' : ''
@@ -629,16 +670,16 @@ export const StudentDirectory: React.FC = () => {
                 </div>
               )}
             </label>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h2 className="text-base md:text-lg font-bold text-slate-900 dark:text-white">
+            <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-2">
+                <h2 className="truncate text-sm font-semibold text-slate-900 dark:text-white sm:text-base md:text-lg">
                   {selectedStudent.fullName || `${selectedStudent.firstName || ''} ${selectedStudent.lastName || ''}`.trim()}
                 </h2>
                 <span className="px-2 py-0.5 rounded-[9px] text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900">
                   Active
                 </span>
               </div>
-              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-1 font-medium">
+              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400 sm:text-xs">
                 <span>ID: #{selectedStudent.id}</span>
                 <span>•</span>
                 <span>{selectedStudent.parentPhone || '+263 775 926 454'}</span>
@@ -648,10 +689,10 @@ export const StudentDirectory: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:justify-end">
             <button
               onClick={() => setSelectedStudent(null)}
-              className="px-3.5 py-1.5 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-[9px] text-xs font-semibold transition-all flex items-center gap-1.5"
+              className="hidden items-center gap-1.5 rounded-md border border-slate-200 px-3.5 py-1.5 text-xs font-medium text-slate-600 transition-all hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 sm:flex"
             >
               <ArrowLeft size={14} />
               <span>Back</span>
@@ -685,7 +726,7 @@ export const StudentDirectory: React.FC = () => {
         </div>
 
         {/* Underline Tabs matching reference screenshot */}
-        <div className="no-scrollbar flex gap-7 overflow-x-auto border-b border-slate-200 bg-white px-5 sm:px-6 md:px-8 dark:border-slate-800 dark:bg-slate-950">
+        <div className="no-scrollbar flex gap-5 overflow-x-auto border-b border-slate-200 bg-white px-4 sm:gap-7 sm:px-6 md:px-8 dark:border-slate-800 dark:bg-slate-950">
           {[
             { id: 'personal', label: 'Identity', count: '03' },
             { id: 'health', label: 'Health', count: '04' },
@@ -713,7 +754,7 @@ export const StudentDirectory: React.FC = () => {
         </div>
 
         {/* Tab Content Body - Starts near left edge */}
-        <div className="w-full px-5 py-6 sm:px-6 md:px-8 md:py-7">
+        <div className="w-full px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-7">
           {activeProfileTab === 'personal' && (
             <PersonalInfo
               student={selectedStudent}

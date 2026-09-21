@@ -16,12 +16,12 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   }, [activeTab]);
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-slate-950 font-sans">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 font-sans">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Header />
-        <main ref={mainRef} className="flex-1 overflow-y-auto bg-white dark:bg-slate-950">
-          <div className="w-full pb-16">
+        <main ref={mainRef} className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 dark:bg-slate-950">
+          <div className="mx-auto w-full max-w-[1600px] pb-16">
             {children}
           </div>
         </main>

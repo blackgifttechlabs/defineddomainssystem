@@ -225,30 +225,52 @@ export const ClinicalABA: React.FC = () => {
       <div className="w-full min-h-[calc(100vh-72px)] flex flex-col justify-between animate-in fade-in duration-500 font-sans">
         <div className="flex-1 flex flex-col">
           {/* Table Toolbar Header directly on page */}
-          <div className="px-6 md:px-8 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white dark:bg-slate-950">
+          <div className="flex flex-col justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-950 sm:px-6 lg:flex-row lg:items-center lg:px-8">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm md:text-base font-bold text-slate-800 dark:text-white">
+              <h2 className="text-base font-semibold text-slate-950 dark:text-white md:text-lg">
                 Select Student to Assess
               </h2>
             </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex items-center gap-2.5">
             {/* Search Input */}
-            <div className="relative min-w-[240px]">
+            <div className="relative w-full min-w-0 sm:min-w-[240px]">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                   type="text" 
                   placeholder="Search student or ID..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[9px] text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600" 
+                  className="h-10 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs font-medium text-slate-900 outline-none transition focus:border-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
             </div>
           </div>
 
           {/* Table Content */}
-          <div className="overflow-x-auto">
+          <div className="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-950 md:hidden">
+            {paginatedStudents.length === 0 ? (
+              <div className="px-5 py-16 text-center text-sm text-slate-400">No learners found.</div>
+            ) : paginatedStudents.map(student => {
+              const studentChecks = (milestoneRecords || []).filter(r => r.studentId === student.id);
+              const ageMos = calculateAgeMonths(student.dob);
+              return (
+                <button key={student.id} type="button" onClick={() => setSelectedStudentIdForLog(student.id)} className="flex w-full min-w-0 items-center gap-3 px-4 py-4 text-left transition hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-slate-900">
+                  {(student.imageUrl || student.idCardImageUrl) ? <img src={student.imageUrl || student.idCardImageUrl} alt="" className="h-11 w-11 shrink-0 rounded-full border border-slate-200 object-cover dark:border-slate-700" /> : <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-slate-200 bg-slate-100 p-2 dark:border-slate-700 dark:bg-slate-800"><img src={LogoImg} alt="" className="h-full w-full object-contain grayscale opacity-50" /></div>}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 items-start justify-between gap-2">
+                      <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{student.fullName}</p>
+                      <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${studentChecks.length > 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-600' : 'border-amber-200 bg-amber-50 text-amber-600'}`}>{studentChecks.length > 0 ? 'Evaluated' : 'Pending'}</span>
+                    </div>
+                    <p className="mt-0.5 truncate font-mono text-[11px] text-slate-400">#{student.id} · {student.assignedClass || 'General'}</p>
+                    <p className="mt-1 text-[11px] text-slate-500">{formatStudentAge(ageMos)} · {studentChecks.length} checks</p>
+                  </div>
+                  <ChevronRight size={17} className="shrink-0 text-slate-400" />
+                </button>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/70 dark:bg-slate-800/40 text-[11px] font-semibold text-slate-400 border-b border-slate-100 dark:border-slate-800">
@@ -352,7 +374,7 @@ export const ClinicalABA: React.FC = () => {
         </div>
 
         {/* Pagination Footer at very bottom */}
-        <div className="mt-auto px-6 md:px-8 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+        <div className="mt-auto flex flex-col items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-4 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-950 sm:flex-row sm:px-6 md:px-8">
           <div>
             Showing <span className="font-bold text-slate-900 dark:text-white">{filteredStudents.length > 0 ? (studentListPage - 1) * studentPageSize + 1 : 0}</span> to{' '}
             <span className="font-bold text-slate-900 dark:text-white">
@@ -373,7 +395,7 @@ export const ClinicalABA: React.FC = () => {
               <button
                 key={num}
                 onClick={() => setStudentListPage(num)}
-                className={`w-8 h-8 rounded-[9px] text-xs font-bold transition-all ${
+                className={`hidden h-8 w-8 rounded-md text-xs font-medium transition-all sm:block ${
                   studentListPage === num
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -398,20 +420,20 @@ export const ClinicalABA: React.FC = () => {
   return (
     <div className="min-h-[calc(100vh-72px)] w-full bg-slate-50/40 pb-16 font-sans animate-in fade-in duration-500 dark:bg-slate-950">
       {/* Flat student header, matching the student details page. */}
-      <header className="flex flex-col justify-between gap-5 border-b border-slate-200 bg-white px-5 py-5 sm:px-6 md:flex-row md:items-center md:px-8 dark:border-slate-800 dark:bg-slate-950">
-        <div className="flex flex-col items-start gap-2">
+      <header className="flex flex-col justify-between gap-4 border-b border-slate-200 bg-white px-4 py-4 sm:px-6 sm:py-5 md:flex-row md:items-center md:px-8 dark:border-slate-800 dark:bg-slate-950">
+        <div className="flex min-w-0 items-center gap-3">
           <button 
             onClick={() => { setSelectedStudentIdForLog(null); setActiveTemplateId(null); setActiveTab('history'); }}
-            className="p-1 text-slate-400 transition-colors hover:text-blue-600 dark:hover:text-blue-400"
+            className="grid h-9 w-9 shrink-0 place-items-center text-slate-500 transition-colors hover:text-slate-950 dark:hover:text-white"
             title="Back to student list"
           >
             <ArrowLeft size={19} />
           </button>
-          <div>
-            <h1 className="text-xl font-bold leading-none tracking-tight text-slate-900 dark:text-white md:text-2xl">
+          <div className="min-w-0">
+            <h1 className="truncate text-base font-semibold leading-none tracking-tight text-slate-900 dark:text-white sm:text-xl md:text-2xl">
               {selectedStudent.fullName}
             </h1>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-2 flex items-center gap-2">
+            <p className="mt-1.5 flex items-center gap-1.5 truncate text-[11px] text-slate-500 dark:text-slate-400">
               <Clock size={12} className="text-blue-500" />
               {formatStudentAge(calculateAgeMonths(selectedStudent.dob))} • {selectedStudent.assignedClass}
             </p>
@@ -419,18 +441,18 @@ export const ClinicalABA: React.FC = () => {
         </div>
 
         <div className="flex flex-col items-stretch gap-2">
-          <div className="flex rounded-[9px] border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex rounded-md border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900">
             {!isRestrictedRole && (
               <button
                 onClick={() => { setActiveTab('new'); setActiveTemplateId(null); setViewingRecord(null); }}
-                className={`flex items-center gap-2 px-5 py-2 rounded-[9px] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'new' ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+                className={`flex flex-1 items-center justify-center gap-2 rounded px-3 py-2 text-[10px] font-medium transition-all ${activeTab === 'new' ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
               >
                 <Plus size={14} /> New Check
               </button>
             )}
             <button
               onClick={() => { setActiveTab('history'); setActiveTemplateId(null); setViewingRecord(null); }}
-              className={`flex items-center gap-2 px-5 py-2 rounded-[9px] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+              className={`flex flex-1 items-center justify-center gap-2 rounded px-3 py-2 text-[10px] font-medium transition-all ${activeTab === 'history' ? 'bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
             >
               <HistoryIcon size={14} /> Past Checks
             </button>
@@ -487,10 +509,10 @@ export const ClinicalABA: React.FC = () => {
                   <span className="text-[10px] font-medium text-slate-400">{section.items.filter(item => item.checked).length} of {section.items.length} achieved</span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[620px] text-left">
+                  <table className="w-full text-left">
                     <thead>
                       <tr className="border-y border-slate-100 bg-white text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:border-slate-800 dark:bg-slate-900">
-                        <th className="w-20 px-8 py-3">No.</th>
+                        <th className="hidden w-20 px-8 py-3 sm:table-cell">No.</th>
                         <th className="px-4 py-3">Checklist item</th>
                         <th className="px-8 py-3 text-right">Result</th>
                       </tr>
@@ -498,9 +520,9 @@ export const ClinicalABA: React.FC = () => {
                     <tbody className="divide-y divide-slate-100 text-xs dark:divide-slate-800">
                       {section.items.map((item, itemIndex) => (
                         <tr key={item.id || `${sectionIndex}-${itemIndex}`}>
-                          <td className="px-8 py-4 font-mono text-[10px] font-bold text-slate-400">{(itemIndex + 1).toString().padStart(2, '0')}</td>
+                          <td className="hidden px-8 py-4 font-mono text-[10px] font-bold text-slate-400 sm:table-cell">{(itemIndex + 1).toString().padStart(2, '0')}</td>
                           <td className="px-4 py-4 font-medium text-slate-800 dark:text-slate-200">{item.text}</td>
-                          <td className="px-8 py-4 text-right">
+                          <td className="px-3 py-4 text-right sm:px-8">
                             <span className={`inline-flex items-center gap-1.5 rounded-[9px] border px-3 py-1 text-[9px] font-bold ${item.checked ? 'border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-400' : 'border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800'}`}>
                               {item.checked ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
                               {item.checked ? 'Achieved' : 'Not achieved'}
@@ -520,15 +542,15 @@ export const ClinicalABA: React.FC = () => {
                 <span className="text-[10px] font-medium text-rose-400">{viewingRecord.redFlags.filter(flag => flag.checked).length} observed</span>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[620px] text-left">
+                <table className="w-full text-left">
                   <tbody className="divide-y divide-slate-100 text-xs dark:divide-slate-800">
                     {viewingRecord.redFlags.length === 0 ? (
                       <tr><td className="px-8 py-8 text-center text-slate-400">No warning signs were included in this assessment.</td></tr>
                     ) : viewingRecord.redFlags.map((flag, flagIndex) => (
                       <tr key={flag.id || `flag-${flagIndex}`}>
-                        <td className="w-20 px-8 py-4 font-mono text-[10px] font-bold text-slate-400">{(flagIndex + 1).toString().padStart(2, '0')}</td>
+                        <td className="hidden w-20 px-8 py-4 font-mono text-[10px] font-bold text-slate-400 sm:table-cell">{(flagIndex + 1).toString().padStart(2, '0')}</td>
                         <td className="px-4 py-4 font-medium text-slate-800 dark:text-slate-200">{flag.text}</td>
-                        <td className="px-8 py-4 text-right">
+                        <td className="px-3 py-4 text-right sm:px-8">
                           <span className={`inline-flex rounded-[9px] border px-3 py-1 text-[9px] font-bold ${flag.checked ? 'border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900 dark:bg-rose-950/30' : 'border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800'}`}>
                             {flag.checked ? 'Observed' : 'Not observed'}
                           </span>
@@ -542,7 +564,22 @@ export const ClinicalABA: React.FC = () => {
           </div>
         ) : (
         <div className="w-full overflow-hidden bg-white dark:bg-slate-950">
-           <div className="overflow-x-auto">
+           <div className="divide-y divide-slate-200 dark:divide-slate-800 md:hidden">
+             {history.length === 0 ? (
+               <div className="px-5 py-16 text-center text-sm text-slate-400">No past checklist evaluations yet.</div>
+             ) : history.map(record => (
+               <button key={record.id} type="button" onClick={() => setViewingRecord(record)} className="flex w-full min-w-0 items-center gap-3 px-4 py-4 text-left transition hover:bg-slate-50 dark:hover:bg-slate-900">
+                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-blue-50 text-xs font-semibold text-blue-600 dark:bg-blue-950/30">{record.overallPercentage}%</div>
+                 <div className="min-w-0 flex-1">
+                   <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{record.ageCategory}</p>
+                   <p className="mt-0.5 truncate text-[11px] text-slate-500">{staff.find(s => s.id === record.staffId)?.fullName || teacherName}</p>
+                   <p className="mt-1 text-[10px] text-slate-400">{new Date(record.timestamp).toLocaleString()}</p>
+                 </div>
+                 <ChevronRight size={17} className="shrink-0 text-slate-400" />
+               </button>
+             ))}
+           </div>
+           <div className="hidden overflow-x-auto md:block">
              <table className="w-full text-left">
                 <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-black uppercase text-[10px] tracking-widest">
                    <tr>
@@ -580,17 +617,17 @@ export const ClinicalABA: React.FC = () => {
         </div>
         )
       ) : activeTemplateId ? (
-        <div className="mt-6 grid min-h-[calc(100vh-190px)] grid-cols-1 border-y border-slate-200 bg-white animate-in fade-in duration-300 lg:grid-cols-12 dark:border-slate-800 dark:bg-slate-900">
-           <main className="space-y-6 p-5 sm:p-6 lg:col-span-9 lg:p-8">
-              <div className="relative overflow-hidden border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-                 <div className="p-7 md:p-8 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6 bg-slate-50/50 dark:bg-slate-950/20">
+        <div className="mt-4 grid min-h-[calc(100vh-190px)] grid-cols-1 border-y border-slate-200 bg-white animate-in fade-in duration-300 lg:mt-6 lg:grid-cols-12 dark:border-slate-800 dark:bg-slate-900">
+           <main className="space-y-4 p-3 sm:p-6 lg:col-span-9 lg:p-8">
+              <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+                 <div className="flex flex-col items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950/20 sm:p-6 md:flex-row md:items-center md:p-8">
                     <div className="flex items-center gap-5">
-                       <div className="w-14 h-14 bg-blue-600 text-white rounded-[9px] flex items-center justify-center shadow-sm">
+                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white sm:h-14 sm:w-14">
                           <ClipboardList size={26} />
                        </div>
                        <div>
                           <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 mb-1.5 block">Active Evaluation</h3>
-                          <h4 className="text-2xl font-black uppercase tracking-tight dark:text-white leading-none">
+                          <h4 className="text-lg font-semibold tracking-tight dark:text-white sm:text-2xl">
                             {formatStageLabel(activeTemplate!)}
                           </h4>
                        </div>
@@ -607,7 +644,7 @@ export const ClinicalABA: React.FC = () => {
                  <div className="p-0 space-y-0">
                     {activeTemplate?.sections.map((section, sIdx) => (
                       <div key={section.title} className="group">
-                         <div className="bg-slate-100/70 dark:bg-slate-800/80 px-8 py-3.5 flex items-center justify-between border-b border-slate-200 dark:border-slate-700">
+                         <div className="flex items-center justify-between border-b border-slate-200 bg-slate-100/70 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/80 sm:px-8 sm:py-3.5">
                             <h5 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-700 dark:text-slate-300">{section.title}</h5>
                             <span className="text-[10px] font-bold text-slate-400 uppercase">{section.items.length} Goals</span>
                          </div>
@@ -615,7 +652,7 @@ export const ClinicalABA: React.FC = () => {
                             <table className="w-full text-left border-collapse">
                                <thead>
                                   <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                     <th className="px-8 py-3 w-16">No.</th>
+                                     <th className="hidden w-16 px-8 py-3 sm:table-cell">No.</th>
                                      <th className="px-4 py-3">Description</th>
                                      <th className="px-8 py-3 text-right">Status</th>
                                   </tr>
@@ -630,11 +667,11 @@ export const ClinicalABA: React.FC = () => {
                                         onClick={() => toggleItem(id)}
                                         className={`group/row cursor-pointer transition-colors ${isChecked ? 'bg-emerald-50/40 dark:bg-emerald-950/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'}`}
                                        >
-                                          <td className="px-8 py-4 font-mono text-[10px] font-bold text-slate-400">{(iIdx + 1).toString().padStart(2, '0')}</td>
+                                          <td className="hidden px-8 py-4 font-mono text-[10px] font-bold text-slate-400 sm:table-cell">{(iIdx + 1).toString().padStart(2, '0')}</td>
                                           <td className={`px-4 py-4 text-xs font-bold leading-relaxed ${isChecked ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-200'}`}>
                                              {item}
                                           </td>
-                                          <td className="px-8 py-4 text-right">
+                                          <td className="px-3 py-4 text-right sm:px-8">
                                              <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-[9px] text-[9px] font-black uppercase border transition-all ${isChecked ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}>
                                                 {isChecked ? <CheckCircle2 size={12} /> : <div className="w-3 h-3 rounded-[3px] border border-slate-300 dark:border-slate-600" />}
                                                 {isChecked ? 'Passed' : 'Pending'}
@@ -650,9 +687,9 @@ export const ClinicalABA: React.FC = () => {
                     ))}
 
                     {activeTemplate?.redFlags && activeTemplate.redFlags.length > 0 && (
-                      <div className="bg-rose-50/50 dark:bg-rose-950/20 p-8 space-y-6 border-t border-rose-100 dark:border-rose-900/30">
+                      <div className="space-y-4 border-t border-rose-100 bg-rose-50/50 p-4 dark:border-rose-900/30 dark:bg-rose-950/20 sm:p-6 md:p-8">
                          <div className="flex items-center justify-between border-b border-rose-200/60 dark:border-rose-800 pb-4">
-                            <h5 className="text-lg font-black uppercase tracking-tight text-rose-600 flex items-center gap-2.5">
+                            <h5 className="flex items-center gap-2 text-sm font-semibold text-rose-600 sm:text-lg">
                                <AlertTriangle size={20} /> Developmental Warning Signs
                             </h5>
                             <span className="text-[9px] font-black uppercase bg-rose-600 text-white px-3 py-1 rounded-[9px] shadow-sm">Observation</span>
@@ -684,7 +721,7 @@ export const ClinicalABA: React.FC = () => {
            </main>
 
            <aside className="border-t border-slate-200 bg-slate-50/80 lg:col-span-3 lg:border-l lg:border-t-0 dark:border-slate-800 dark:bg-slate-950/70">
-              <div className="sticky top-0 space-y-6 p-6 lg:p-7">
+              <div className="sticky top-0 space-y-5 p-4 sm:p-6 lg:p-7">
                  <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
                     <div className="w-10 h-10 rounded-[9px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center">
                        <Brain size={20} />
@@ -732,7 +769,27 @@ export const ClinicalABA: React.FC = () => {
         </div>
       ) : (
         <div className="w-full bg-white animate-in fade-in duration-500 dark:bg-slate-950">
-          <div className="overflow-x-auto">
+          <div className="divide-y divide-slate-200 dark:divide-slate-800 md:hidden">
+            {sortedTemplates.map((template, tIdx) => {
+              const stageTheme = STAGE_THEMES[tIdx % STAGE_THEMES.length];
+              const isRecommended = studentAgeMonths >= template.minAge && studentAgeMonths <= template.maxAge;
+              const itemCount = template.sections.reduce((total, section) => total + section.items.length, 0);
+              return (
+                <button key={template.id} type="button" onClick={() => { setActiveTemplateId(template.id); setCheckedItems(new Set()); setCheckedFlags(new Set()); }} className="flex w-full min-w-0 items-center gap-3 px-4 py-4 text-left transition hover:bg-slate-50 dark:hover:bg-slate-900">
+                  <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full font-mono text-sm font-semibold ${stageTheme.iconBg}`}>{(tIdx + 1).toString().padStart(2, '0')}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 items-start justify-between gap-2">
+                      <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{formatStageLabel(template)}</p>
+                      {isRecommended && <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-medium text-emerald-600">Recommended</span>}
+                    </div>
+                    <p className="mt-1 text-[11px] text-slate-500">{template.sections.length} categories · {itemCount} items</p>
+                  </div>
+                  <ChevronRight size={17} className="shrink-0 text-slate-400" />
+                </button>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[760px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80 text-[10px] font-semibold text-slate-400 dark:border-slate-800 dark:bg-slate-800/50">

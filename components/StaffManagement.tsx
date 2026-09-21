@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from '../store/useStore';
 import { 
   ChevronRight, 
@@ -52,12 +53,75 @@ const ProfileRow = ({
     return value;
   }, [value, multiple, availableClasses]);
 
+  const displayValue = Array.isArray(filteredValue)
+    ? filteredValue.join(', ')
+    : (field === 'imageUrl' && typeof filteredValue === 'string' && filteredValue.startsWith('data:'))
+      ? 'Uploaded profile image'
+      : (filteredValue || 'None');
+  const profileImage = field === 'imageUrl' ? String(editForm.imageUrl || value || '') : '';
+
+  const viewProfileImage = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (profileImage && !profileImage.includes('No image')) {
+      window.open(profileImage, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const setImageFile = (file?: File) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => setEditForm({ ...editForm, imageUrl: String(reader.result || '') });
+    reader.readAsDataURL(file);
+  };
+
   return (
-    <tr className="border-b border-slate-100 dark:border-slate-800/50 group/row">
-      <td className="py-4 px-2 w-1/3 text-[10px] font-black uppercase tracking-widest text-slate-950 dark:text-slate-400 group-hover/row:text-blue-600 transition-colors">{label}</td>
-      <td className="py-4 px-2">
+    <div className="grid min-w-0 gap-1.5 border-b border-slate-200/70 py-4 last:border-b-0 dark:border-slate-800 sm:grid-cols-[minmax(120px,0.42fr)_minmax(0,1fr)] sm:gap-6 sm:py-5">
+      <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{label}</div>
+      <div className="min-w-0">
         {isEditing && field ? (
-          multiple && availableClasses ? (
+          field === 'imageUrl' ? (
+            <label
+              className="group flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center transition hover:border-blue-500 hover:bg-blue-50/50 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-blue-500 dark:hover:bg-blue-950/20"
+              onDragOver={e => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+              }}
+              onDrop={e => {
+                e.preventDefault();
+                setImageFile(e.dataTransfer.files?.[0]);
+              }}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={e => setImageFile(e.target.files?.[0])}
+              />
+              {(editForm.imageUrl || value) && !String(editForm.imageUrl || value).includes('No image') ? (
+                <img
+                  src={String(editForm.imageUrl || value)}
+                  alt="Profile preview"
+                  className="mb-3 h-16 w-16 rounded-full border border-slate-200 object-cover shadow-sm dark:border-slate-700"
+                />
+              ) : (
+                <span className="mb-3 grid h-10 w-10 place-items-center rounded-full bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
+                  <ImageIcon size={18} />
+                </span>
+              )}
+              <span className="rounded-md bg-slate-950 px-3 py-1.5 text-xs font-medium text-white dark:bg-white dark:text-slate-950">Choose image</span>
+              <span className="mt-2 text-xs text-slate-500">or drag and drop an image here</span>
+              {profileImage && !profileImage.includes('No image') && (
+                <button
+                  type="button"
+                  onClick={viewProfileImage}
+                  className="mt-3 text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+                >
+                  View full image
+                </button>
+              )}
+            </label>
+          ) : multiple && availableClasses ? (
             <div className="flex flex-wrap gap-2 py-2">
               {availableClasses.map(cls => (
                 <label key={cls} className="flex items-center gap-2 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 px-4 py-1.5 rounded-none cursor-pointer hover:border-blue-500 transition-all select-none">
@@ -79,7 +143,7 @@ const ProfileRow = ({
             </div>
           ) : options ? (
             <select 
-              className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-none text-sm font-bold outline-none focus:border-blue-600"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950"
               value={(editForm as any)[field] || ''}
               onChange={e => setEditForm({...editForm, [field]: e.target.value})}
             >
@@ -92,7 +156,7 @@ const ProfileRow = ({
           ) : (
             <input 
               type={field === 'password' ? 'text' : 'text'}
-              className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-none text-sm font-bold outline-none focus:border-blue-600 font-mono"
+              className="w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950"
               value={(editForm as any)[field] !== undefined ? (editForm as any)[field] : (field === 'password' ? value : '')}
               onChange={e => setEditForm({...editForm, [field]: e.target.value})}
               placeholder={field === 'password' ? 'Enter new password (min 6 characters)...' : `Enter ${label.toLowerCase()}...`}
@@ -100,17 +164,25 @@ const ProfileRow = ({
           )
         ) : (
           field === 'password' ? (
-            <span className="font-mono bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-3 py-1 border border-amber-200 dark:border-amber-800 text-xs font-black uppercase tracking-wider">
+            <span className="inline-flex rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 font-mono text-xs font-semibold text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
               {filteredValue || 'Not Set'}
             </span>
+          ) : field === 'imageUrl' && profileImage && !profileImage.includes('No image') ? (
+            <button
+              type="button"
+              onClick={viewProfileImage}
+              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              View image
+            </button>
           ) : (
-            <span className={`text-sm font-bold text-slate-700 dark:text-slate-200`}>
-              {Array.isArray(filteredValue) ? filteredValue.join(', ') : (filteredValue || 'None')}
+            <span className="block min-w-0 break-words text-sm font-medium leading-6 text-slate-900 dark:text-slate-100">
+              {displayValue}
             </span>
           )
         )}
-      </td>
-    </tr>
+      </div>
+    </div>
   );
 };
 
@@ -195,40 +267,65 @@ export const StaffManagement: React.FC = () => {
   };
 
   return (
-    <div className="w-full space-y-7 px-5 py-6 animate-in fade-in duration-500 sm:px-6 md:px-8">
+    <div className="w-full space-y-5 px-4 py-4 animate-in fade-in duration-500 sm:px-6 sm:py-6 md:space-y-7 md:px-8">
       {isAdmin && (
         <div className="flex justify-end">
-          <button onClick={openAddStaffForm} className="flex items-center gap-2 rounded-[9px] bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700">
-            <Plus size={18} /> Add New Staff
+          <button onClick={openAddStaffForm} className="flex h-9 items-center gap-2 rounded-md bg-slate-950 px-3.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 sm:h-10 sm:px-4 sm:text-sm">
+            <Plus size={16} /> Add staff
           </button>
         </div>
       )}
 
-      <div className="mb-2 flex items-center gap-1.5 border-b border-slate-200 dark:border-slate-800">
-        <button onClick={() => setActiveSubTab('administration')} className={`border-b-2 px-5 py-3 text-xs font-bold transition-all ${activeSubTab === 'administration' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Office & Support</button>
-        <button onClick={() => setActiveSubTab('general')} className={`border-b-2 px-5 py-3 text-xs font-bold transition-all ${activeSubTab === 'general' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Teachers</button>
+      <div className="grid grid-cols-2 border-b border-slate-200 dark:border-slate-800 sm:flex sm:items-center">
+        <button onClick={() => setActiveSubTab('administration')} className={`border-b-2 px-3 py-3 text-xs font-medium transition-all sm:px-5 ${activeSubTab === 'administration' ? 'border-slate-950 text-slate-950 dark:border-white dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}>Office &amp; Support</button>
+        <button onClick={() => setActiveSubTab('general')} className={`border-b-2 px-3 py-3 text-xs font-medium transition-all sm:px-5 ${activeSubTab === 'general' ? 'border-slate-950 text-slate-950 dark:border-white dark:text-white' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}>Teachers</button>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex items-center gap-2 sm:gap-3">
         <div className="relative flex-1 group">
-          <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 
             type="text" 
             placeholder="Search by name..." 
             value={searchTerm} 
             onChange={(e) => setSearchTerm(e.target.value)} 
-            className="w-full rounded-[9px] border border-slate-200 bg-white py-3 pl-14 pr-6 text-sm font-medium outline-none transition-all focus:border-blue-500 dark:border-slate-800 dark:bg-slate-900" 
+            className="h-10 w-full rounded-md border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-950/5 dark:border-slate-800 dark:bg-slate-900 dark:focus:border-slate-600"
           />
         </div>
-        <div className="bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-none flex gap-1 border border-slate-200 dark:border-slate-700 h-fit">
-          <button onClick={() => setViewMode('table')} className={`p-2.5 rounded-none transition-all ${viewMode === 'table' ? 'bg-white dark:bg-slate-700 shadow-md text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}><List size={22} /></button>
-          <button onClick={() => setViewMode('cards')} className={`p-2.5 rounded-none transition-all ${viewMode === 'cards' ? 'bg-white dark:bg-slate-700 shadow-md text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}><LayoutGrid size={22} /></button>
+        <div className="flex h-10 shrink-0 gap-0.5 rounded-md border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800/60">
+          <button aria-label="List view" onClick={() => setViewMode('table')} className={`grid w-8 place-items-center rounded transition-all ${viewMode === 'table' ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}><List size={17} /></button>
+          <button aria-label="Card view" onClick={() => setViewMode('cards')} className={`grid w-8 place-items-center rounded transition-all ${viewMode === 'cards' ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}><LayoutGrid size={17} /></button>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[9px] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:rounded-xl">
         {viewMode === 'table' ? (
-          <div className="overflow-x-auto">
+          <>
+          <div className="divide-y divide-slate-200 dark:divide-slate-800 md:hidden">
+            {filteredStaff.length === 0 ? (
+              <div className="px-5 py-16 text-center text-sm text-slate-500">No matching staff found.</div>
+            ) : filteredStaff.map(s => {
+              const sClasses = (s.assignedClasses || []).filter(c => availableClasses.includes(c));
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => { setSelectedStaff(s); setIsEditing(false); setEditForm(s); }}
+                  className="flex w-full min-w-0 items-center gap-3 px-4 py-4 text-left transition hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-slate-800/60"
+                >
+                  <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
+                    {s.imageUrl ? <img src={s.imageUrl} className="h-full w-full object-cover" alt="" /> : <div className="grid h-full w-full place-items-center text-sm font-semibold text-slate-400">{s.fullName[0]}</div>}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{s.fullName}</p>
+                    <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">{s.position || 'Staff member'}</p>
+                    {sClasses.length > 0 && <p className="mt-1 truncate text-[11px] text-slate-400">{sClasses.join(' · ')}</p>}
+                  </div>
+                  <ChevronRight size={17} className="shrink-0 text-slate-400" />
+                </button>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left">
               <thead className="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-black uppercase text-slate-950 dark:text-slate-400 border-b-2 border-slate-100 dark:border-slate-800">
                 <tr>
@@ -268,17 +365,18 @@ export const StaffManagement: React.FC = () => {
               </tbody>
             </table>
           </div>
+          </>
         ) : (
-          <div className="p-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:gap-4 sm:p-5 lg:grid-cols-3 xl:grid-cols-4">
             {filteredStaff.map(s => (
-              <div key={s.id} className="bg-white dark:bg-slate-950 border-2 border-slate-100 hover:border-blue-500 dark:border-slate-800 rounded-none p-8 hover:shadow-2xl transition-all cursor-pointer group relative overflow-hidden" onClick={() => { setSelectedStaff(s); setIsEditing(false); setEditForm(s); }}>
-                <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 mb-6 overflow-hidden border-2 border-white dark:border-slate-700 shadow-lg group-hover:scale-110 transition-transform">
+              <div key={s.id} className="group relative cursor-pointer overflow-hidden rounded-lg border border-slate-200 bg-white p-5 transition hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-950" onClick={() => { setSelectedStaff(s); setIsEditing(false); setEditForm(s); }}>
+                <div className="mb-4 h-14 w-14 overflow-hidden rounded-full border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
                   {s.imageUrl ? <img src={s.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center font-black text-3xl text-slate-400 uppercase">{s.fullName[0]}</div>}
                 </div>
-                <h3 className="font-black text-lg uppercase group-hover:text-blue-600 transition-colors leading-tight mb-2 text-slate-900 dark:text-white">{s.fullName}</h3>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{s.position}</p>
-                <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                   <span className="text-[9px] font-mono font-bold text-slate-400">ID: {s.id.substring(0,8).toUpperCase()}</span>
+                <h3 className="mb-1 text-sm font-semibold text-slate-950 transition-colors dark:text-white">{s.fullName}</h3>
+                <p className="truncate text-xs text-slate-500 dark:text-slate-400">{s.position}</p>
+                <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4 dark:border-slate-800">
+                   <span className="text-[10px] font-mono text-slate-400">{s.id.substring(0,8).toUpperCase()}</span>
                    <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-600 transition-all" />
                 </div>
               </div>
@@ -287,47 +385,54 @@ export const StaffManagement: React.FC = () => {
         )}
       </div>
 
-      {selectedStaff && (
-        <div className="fixed inset-0 z-[500] bg-white dark:bg-slate-950 flex flex-col animate-in slide-in-from-bottom duration-500 overflow-hidden">
-          <header className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white/90 dark:bg-slate-950/90 backdrop-blur-md z-20 shadow-sm">
-            <div className="flex items-center gap-6">
+      {selectedStaff && createPortal((
+        <div className="fixed inset-y-0 left-0 right-0 z-[800] flex min-h-0 flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 md:left-64">
+          <header className="z-20 shrink-0 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95 sm:px-6 sm:py-4 lg:px-8">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
               <button 
                 onClick={() => setSelectedStaff(null)} 
-                className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none text-slate-400 hover:text-black transition-all active:scale-90"
+                className="-ml-1 grid h-9 w-9 shrink-0 place-items-center text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+                aria-label="Back to staff list"
               >
-                <ArrowLeft size={28} />
+                <ArrowLeft size={22} />
               </button>
-              <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-none overflow-hidden border-2 border-slate-200 shadow-xl">
+              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 sm:h-11 sm:w-11">
                 {selectedStaff.imageUrl ? <img src={selectedStaff.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center font-black text-2xl text-slate-400 uppercase">{selectedStaff.fullName[0]}</div>}
               </div>
-              <div>
-                 <h2 className="text-xl font-black uppercase dark:text-white leading-none tracking-tight">Staff Profile</h2>
-                 <p className="text-[10px] font-mono font-bold text-blue-600 mt-2 uppercase tracking-[0.2em]">{selectedStaff.position}</p>
+              <div className="min-w-0">
+                 <h2 className="truncate text-base font-semibold text-slate-950 dark:text-white">{selectedStaff.fullName}</h2>
+                 <p className="mt-0.5 truncate text-sm text-slate-500 dark:text-slate-400">{selectedStaff.position || 'Staff profile'}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex w-full items-center gap-2 sm:w-auto">
               {isAdmin && (
                 <>
-                  <button onClick={() => setShowDeleteConfirm(true)} className="px-6 py-4 bg-rose-50 text-rose-500 rounded-none hover:bg-rose-500 hover:text-white transition-all shadow-sm border border-rose-100 dark:border-rose-900/30 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                    <Trash2 size={18}/> Remove
+                  <button onClick={() => setShowDeleteConfirm(true)} className="inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-rose-600 transition hover:border-rose-200 hover:bg-rose-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-rose-950/30 sm:flex-none sm:text-sm">
+                    <Trash2 size={15}/> Remove
                   </button>
-                  <button onClick={() => isEditing ? handleSaveEdit() : setIsEditing(true)} className={`px-8 py-4 rounded-none transition-all shadow-md text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${isEditing ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-blue-600 text-white hover:bg-black'}`}>
-                    {isEditing ? <><Save size={18}/> Save Profile</> : <><Edit2 size={18}/> Edit Profile</>}
+                  <button onClick={() => isEditing ? handleSaveEdit() : setIsEditing(true)} className={`inline-flex h-9 flex-1 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium text-white transition sm:flex-none sm:text-sm ${isEditing ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-950 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200'}`}>
+                    {isEditing ? <><Save size={15}/> Save changes</> : <><Edit2 size={15}/> Edit profile</>}
                   </button>
                 </>
               )}
             </div>
+            </div>
           </header>
 
-          <div className="flex-1 overflow-y-auto p-10 space-y-12 max-w-6xl mx-auto w-full sidebar-scrollbar">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                <div className="space-y-8">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-blue-600">General Information</h3>
-                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800"></div>
+          <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden sidebar-scrollbar">
+            <div className="w-full px-3 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+              <div className="mb-4 px-1 sm:mb-6 sm:px-0">
+                <h1 className="text-lg font-semibold tracking-tight text-slate-950 dark:text-white sm:text-2xl">Profile details</h1>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">Personal, work, and account information.</p>
+              </div>
+             <div className="grid min-w-0 grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-2">
+                <section className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:rounded-xl">
+                  <div className="border-b border-slate-200 px-4 py-3.5 dark:border-slate-800 sm:px-6 sm:py-4">
+                    <h3 className="text-sm font-semibold text-slate-950 dark:text-white">General information</h3>
+                    <p className="mt-1 text-xs text-slate-500">Personal and identity details.</p>
                   </div>
-                  <table className="w-full">
-                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                  <div className="min-w-0 px-4 sm:px-6">
                         <ProfileRow label="First Name" value={selectedStaff.firstName} field="firstName" isEditing={isEditing} editForm={editForm} setEditForm={setEditForm} />
                         <ProfileRow label="Surname" value={selectedStaff.lastName} field="lastName" isEditing={isEditing} editForm={editForm} setEditForm={setEditForm} />
                         <ProfileRow label="Profile Image Link" value={selectedStaff.imageUrl || 'No image link'} field="imageUrl" isEditing={isEditing} editForm={editForm} setEditForm={setEditForm} />
@@ -338,28 +443,26 @@ export const StaffManagement: React.FC = () => {
                         <ProfileRow label="ID Number" value={selectedStaff.nationalId || 'None'} field="nationalId" isEditing={isEditing} editForm={editForm} setEditForm={setEditForm} />
                         <ProfileRow label="Birth Date" value={selectedStaff.dob} field="dob" isEditing={isEditing} editForm={editForm} setEditForm={setEditForm} />
                         <ProfileRow label="Home Address" value={selectedStaff.address} field="address" isEditing={isEditing} editForm={editForm} setEditForm={setEditForm} />
-                     </tbody>
-                  </table>
-                </div>
-
-                <div className="space-y-8">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-blue-600">Work & Contact</h3>
-                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800"></div>
                   </div>
-                  <table className="w-full">
-                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                </section>
+
+                <section className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:rounded-xl">
+                  <div className="border-b border-slate-200 px-4 py-3.5 dark:border-slate-800 sm:px-6 sm:py-4">
+                    <h3 className="text-sm font-semibold text-slate-950 dark:text-white">Work &amp; contact</h3>
+                    <p className="mt-1 text-xs text-slate-500">Role, assignments, and account access.</p>
+                  </div>
+                  <div className="min-w-0 px-4 sm:px-6">
                         <ProfileRow label="Job Title" value={selectedStaff.position} field="position" isEditing={isEditing} editForm={editForm} setEditForm={setEditForm} options={settings?.positions || []} />
                         <ProfileRow label="Assigned Classes" value={selectedStaff.assignedClasses} field="assignedClasses" isEditing={isEditing} editForm={editForm} setEditForm={setEditForm} multiple availableClasses={availableClasses} />
                         <ProfileRow label="Email Address" value={selectedStaff.email} field="email" isEditing={isEditing} editForm={editForm} setEditForm={setEditForm} />
                         <ProfileRow label="Phone Number" value={selectedStaff.phone} field="phone" isEditing={isEditing} editForm={editForm} setEditForm={setEditForm} />
                         <ProfileRow label="Password" value={selectedStaff.password || 'Not Set'} field="password" isEditing={isEditing} editForm={editForm} setEditForm={setEditForm} />
                         <ProfileRow label="System ID" value={selectedStaff.id} field="id" isEditing={false} editForm={editForm} setEditForm={setEditForm} />
-                     </tbody>
-                  </table>
-               </div>
+                  </div>
+                </section>
              </div>
-          </div>
+            </div>
+          </main>
 
           {showDeleteConfirm && (
             <div className="fixed inset-0 z-[600] bg-white/98 dark:bg-slate-950/98 flex flex-col items-center justify-center p-12 text-center animate-in zoom-in-95 backdrop-blur-md">
@@ -373,7 +476,7 @@ export const StaffManagement: React.FC = () => {
             </div>
           )}
         </div>
-      )}
+      ), document.body)}
 
       {isAdding && (
         <div className="fixed inset-0 z-[300] overflow-hidden">

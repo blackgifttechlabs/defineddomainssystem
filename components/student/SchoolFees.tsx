@@ -8,7 +8,6 @@ import {
   Download,
   Loader2,
   Receipt,
-  ShieldCheck,
   Wallet,
   X,
 } from 'lucide-react';
@@ -25,7 +24,7 @@ const PAYMENT_API_BASE_URL = ((import.meta as any).env?.VITE_PAYMENT_API_BASE_UR
 const currency = (amount: number) => `$${amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 export const SchoolFees: React.FC = () => {
-  const { user, students, parents, settings, updateStudent, payments, addPayment } = useStore();
+  const { user, students, parents, settings, payments } = useStore();
   const [paymentAmount, setPaymentAmount] = useState('');
   const [selectedTerm, setSelectedTerm] = useState(settings.currentTerm || 'Term 1');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -152,29 +151,6 @@ export const SchoolFees: React.FC = () => {
     }
   };
 
-  const handleAutoSystemPayment = async () => {
-    if (!validateAmount() || !studentProfile?.firebaseUid) return;
-    setIsProcessing(true);
-    const reference = `DDS-${Date.now().toString().slice(-7)}`;
-    const timestamp = new Date().toISOString();
-    try {
-      await addPayment({
-        studentId: studentProfile.id,
-        studentName: studentProfile.fullName,
-        amount,
-        method: `Auto System - ${selectedTerm}`,
-        isMock: true,
-        reference,
-        timestamp,
-      });
-      await updateStudent(studentProfile.firebaseUid, { totalPaid: paidFees + amount });
-      setReceipt({ amount, reference, timestamp, term: selectedTerm });
-      setPaymentAmount('');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   if (!studentProfile) {
     return <div className="h-[70svh] grid place-items-center text-xs font-black uppercase tracking-widest text-[#7c3aed]">Syncing fees</div>;
   }
@@ -252,14 +228,6 @@ export const SchoolFees: React.FC = () => {
           >
             {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={15} />}
             Pay with ZB
-          </button>
-          <button
-            onClick={handleAutoSystemPayment}
-            disabled={isProcessing || !validateAmount()}
-            className="h-12 rounded-[24px] bg-[#ecfdf5] text-[#16a34a] text-[11px] font-black flex items-center justify-center gap-2 disabled:opacity-45 transition-all active:scale-[0.98]"
-          >
-            <ShieldCheck size={15} />
-            Auto system receipt
           </button>
         </div>
       </section>

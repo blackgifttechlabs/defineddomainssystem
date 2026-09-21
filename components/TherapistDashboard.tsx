@@ -15,8 +15,7 @@ export const TherapistDashboard: React.FC = () => {
   const { theme, students, staff, user, setActiveTab, milestoneRecords, milestoneTemplates, notify, toggleNotices, setSelectedStudentIdForLog } = useStore();
   const [selectedPeriod, setSelectedPeriod] = useState<'Term 1' | 'Term 2' | 'Term 3' | 'Annual'>('Term 1');
 
-  // Authorized teacher name: user name or fallback to "Prominance Magara"
-  const teacherName = user?.name || 'Prominance Magara';
+  const teacherName = user?.name || 'Unknown staff member';
 
   const myStudents = useMemo(() => {
     const currentStaff = staff.find(st => st.id === user?.id);
@@ -33,46 +32,63 @@ export const TherapistDashboard: React.FC = () => {
         .filter(r => r.studentId === student.id)
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       
-      const latestScore = studentMilestones[0]?.overallPercentage || Math.floor(65 + (student.id.charCodeAt(student.id.length - 1) % 30));
+      const latestScore = studentMilestones[0]?.overallPercentage ?? 0;
+      const goalsMet = studentMilestones[0]?.sections.reduce(
+        (total, section) => total + section.items.filter(item => item.checked).length,
+        0
+      ) ?? 0;
       return {
         id: student.id,
         name: student.fullName,
-        assignedClass: student.assignedClass || 'Early Years',
+        assignedClass: student.assignedClass || 'Unassigned',
         growth: latestScore,
         avatar: student.imageUrl || student.idCardImageUrl || null,
-        checksCount: studentMilestones.length || 1,
+        checksCount: studentMilestones.length,
+        goalsMet,
       };
     });
   }, [myStudents, milestoneRecords]);
 
   const averageMastery = useMemo(() => {
-    if (performanceData.length === 0) return 84;
+    if (performanceData.length === 0) return 0;
     return Math.round(performanceData.reduce((acc, curr) => acc + curr.growth, 0) / performanceData.length);
   }, [performanceData]);
+  const needsSupport = Math.max(0, 100 - averageMastery);
 
   // Monthly progression curve data for the AreaChart (matching screenshot Left Chart)
-  const monthlyProgressionData = [
-    { month: 'Jan', mastery: 62, target: 60 },
-    { month: 'Feb', mastery: 58, target: 65 },
-    { month: 'Mar', mastery: 74, target: 70 },
-    { month: 'Apr', mastery: 68, target: 72 },
-    { month: 'May', mastery: 70, target: 75 },
-    { month: 'Jun', mastery: 71, target: 78 },
-    { month: 'Jul', mastery: 72, target: 80 },
-    { month: 'Aug', mastery: 73, target: 82 },
-    { month: 'Sep', mastery: 85, target: 85 },
-    { month: 'Oct', mastery: 78, target: 88 },
-    { month: 'Nov', mastery: 92, target: 90 },
-    { month: 'Dec', mastery: 89, target: 92 },
-  ];
+  const relevantRecords = useMemo(() => {
+    const studentIds = new Set(myStudents.map(student => student.id));
+    return milestoneRecords.filter(record => studentIds.has(record.studentId));
+  }, [milestoneRecords, myStudents]);
+
+  const monthlyProgressionData = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 12 }, (_, index) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - 11 + index, 1);
+      const records = relevantRecords.filter(record => {
+        const recorded = new Date(record.timestamp);
+        return recorded.getFullYear() === date.getFullYear() && recorded.getMonth() === date.getMonth();
+      });
+      return {
+        month: date.toLocaleDateString(undefined, { month: 'short' }),
+        mastery: records.length ? Math.round(records.reduce((sum, record) => sum + record.overallPercentage, 0) / records.length) : 0,
+      };
+    });
+  }, [relevantRecords]);
 
   // Domain Performance category breakdown (matching screenshot Right Chart)
-  const domainBreakdownData = [
-    { stage: 'West (Toddlers)', motor: 32, language: 45, social: 23, cognitive: 38 },
-    { stage: 'East (Preschool)', motor: 28, language: 52, social: 35, cognitive: 42 },
-    { stage: 'Central (Pre-K)', motor: 24, language: 40, social: 28, cognitive: 34 },
-    { stage: 'South (Kinder)', motor: 18, language: 30, social: 22, cognitive: 25 },
-  ];
+  const domainBreakdownData = useMemo(() => relevantRecords.slice(0, 4).map(record => {
+    const result = { stage: record.ageCategory, motor: 0, language: 0, social: 0, cognitive: 0 };
+    record.sections.forEach(section => {
+      const percentage = section.items.length ? Math.round(section.items.filter(item => item.checked).length / section.items.length * 100) : 0;
+      const title = section.title.toLowerCase();
+      if (title.includes('language') || title.includes('speech')) result.language = percentage;
+      else if (title.includes('social') || title.includes('emotion')) result.social = percentage;
+      else if (title.includes('cognit') || title.includes('concept')) result.cognitive = percentage;
+      else result.motor = percentage;
+    });
+    return result;
+  }), [relevantRecords]);
 
   // Age group stage card color configurations (Months for <=11, Years for >11)
   const STAGE_CARDS = [
@@ -152,22 +168,21 @@ export const TherapistDashboard: React.FC = () => {
   const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-[1500px] mx-auto pb-16 font-sans">
+    <div className="mx-auto max-w-[1500px] space-y-5 px-4 py-4 pb-16 font-sans animate-in fade-in duration-500 sm:px-6 sm:py-6 lg:px-8">
       {/* Row 1: TOP 5 STAT CARDS */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
         {[
-          { icon: Users, label: 'Learners', value: myStudents.length || 18, change: '^ 12%' },
-          { icon: Target, label: 'Mastery', value: `${averageMastery}%`, change: '^ 4.3%' },
-          { icon: CheckCircle2, label: 'Assessments', value: milestoneRecords.length || 48, change: '^ 8%' },
-          { icon: Brain, label: 'Goals Met', value: performanceData.reduce((acc, c) => acc + Math.round(c.growth * 1.5), 0) || 142, change: '^ 2.5%' },
-          { icon: AlertTriangle, label: 'Observations', value: 3, change: '^ 1' },
+          { icon: Users, label: 'Learners', value: myStudents.length },
+          { icon: Target, label: 'Mastery', value: `${averageMastery}%` },
+          { icon: CheckCircle2, label: 'Assessments', value: relevantRecords.length },
+          { icon: Brain, label: 'Goals Met', value: relevantRecords.reduce((sum, record) => sum + record.sections.reduce((sectionSum, section) => sectionSum + section.items.filter(item => item.checked).length, 0), 0) },
+          { icon: AlertTriangle, label: 'Observations', value: relevantRecords.reduce((sum, record) => sum + record.redFlags.filter(flag => flag.checked).length, 0) },
         ].map((card, i) => (
-          <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[9px] p-5 shadow-sm">
-            <card.icon size={20} className="text-slate-400 dark:text-slate-500 mb-3" />
-            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mb-1">{card.label}</p>
+          <div key={i} className={`rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 ${i === 4 ? 'col-span-2 md:col-span-1' : ''}`}>
+            <card.icon size={18} className="mb-3 text-slate-400 dark:text-slate-500" />
+            <p className="mb-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">{card.label}</p>
             <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">{card.value}</h3>
-              <span className="text-[11px] font-bold text-emerald-500">{card.change}</span>
+              <h3 className="text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">{card.value}</h3>
             </div>
           </div>
         ))}
@@ -175,25 +190,25 @@ export const TherapistDashboard: React.FC = () => {
 
 
       {/* Row 3: MIDDLE SECTION - CHARTS (matching screenshot's Left & Right Chart views) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-6">
         {/* Left Card: GROWTH PERFORMANCE (Area Chart matching screenshot) */}
-        <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[9px] p-6 lg:p-7 shadow-sm space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6 lg:col-span-7 lg:p-7">
+          <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-900 dark:text-white">
-                Sales / Growth Performance
+              <h3 className="text-sm font-semibold text-slate-950 dark:text-white">
+                Growth performance
               </h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                Progression by Month
+              <p className="mt-1 text-xs text-slate-500">
+                Monthly class mastery progression
               </p>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#6366f1]"></span>
-              <span className="text-[10px] font-bold text-slate-500 uppercase">Class Mastery (%)</span>
+              <span className="text-[10px] font-medium text-slate-500">Class mastery (%)</span>
             </div>
           </div>
 
-          <div className="h-[280px] w-full">
+          <div className="h-[220px] w-full sm:h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={monthlyProgressionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
@@ -246,14 +261,14 @@ export const TherapistDashboard: React.FC = () => {
         </div>
 
         {/* Right Card: REGION / DOMAIN PERFORMANCE (Horizontal Stacked Bar Chart matching screenshot) */}
-        <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[9px] p-6 lg:p-7 shadow-sm space-y-6">
+        <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6 lg:col-span-5 lg:p-7">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
             <div>
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-900 dark:text-white">
-                Region / Domain Performance
+              <h3 className="text-sm font-semibold text-slate-950 dark:text-white">
+                Domain performance
               </h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                Category Split
+              <p className="mt-1 text-xs text-slate-500">
+                Development category split
               </p>
             </div>
           </div>
@@ -346,7 +361,7 @@ export const TherapistDashboard: React.FC = () => {
                       {student.assignedClass}
                     </td>
                     <td className="py-3.5 text-center font-mono font-bold text-slate-600 dark:text-slate-300">
-                      {Math.round(student.growth * 0.35)} Goals
+                      {student.goalsMet} Goals
                     </td>
                     <td className="py-3.5 text-right font-mono font-black text-slate-900 dark:text-white">
                       <span className="px-2.5 py-1 rounded-[9px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 text-[11px]">
@@ -374,10 +389,10 @@ export const TherapistDashboard: React.FC = () => {
           <div className="space-y-4 my-auto py-2">
             <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider">
               <span className="text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span> On-Track (88.91%)
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span> On-Track ({averageMastery}%)
               </span>
               <span className="text-rose-500 flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Needs Support (11.09%)
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Needs Support ({needsSupport}%)
               </span>
             </div>
 
@@ -385,15 +400,15 @@ export const TherapistDashboard: React.FC = () => {
             <div className="h-7 w-full bg-slate-100 dark:bg-slate-800 rounded-[9px] overflow-hidden flex shadow-inner">
               <div 
                 className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-white text-[10px] font-black tracking-wider shadow-sm transition-all"
-                style={{ width: '88.91%' }}
+                style={{ width: `${averageMastery}%` }}
               >
-                88.91%
+                {averageMastery > 12 ? `${averageMastery}%` : ''}
               </div>
               <div 
                 className="h-full bg-gradient-to-r from-rose-500 to-pink-600 flex items-center justify-center text-white text-[10px] font-black tracking-wider transition-all"
-                style={{ width: '11.09%' }}
+                style={{ width: `${needsSupport}%` }}
               >
-                11.09%
+                {needsSupport > 12 ? `${needsSupport}%` : ''}
               </div>
             </div>
 
@@ -421,4 +436,3 @@ export const TherapistDashboard: React.FC = () => {
     </div>
   );
 };
-

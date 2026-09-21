@@ -1,4 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { addDoc, collection, getFirestore, onSnapshot } from 'firebase/firestore';
 import { useStore } from '../store/useStore';
 import { 
   Search, MessageSquare, Plus, Bell, BookOpen, Coffee, 
@@ -21,82 +23,10 @@ interface LoungePost {
   preview: string;
 }
 
-const INITIAL_POSTS: LoungePost[] = [
-  {
-    id: 'post-1',
-    refId: '#LN-101',
-    title: 'Term 1 Milestone Assessment Schedule Update',
-    author: 'Prominance Magara',
-    authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-    category: 'Schedule',
-    date: '2026-09-01',
-    time: '08:30 AM',
-    status: 'Important',
-    repliesCount: 6,
-    likesCount: 14,
-    preview: 'All specialists please note that 1–3 Months and 4–7 Months evaluations should be submitted before the Friday staff briefing.'
-  },
-  {
-    id: 'post-2',
-    refId: '#LN-102',
-    title: 'Discrete Trial Training (DTT) Flashcard Sets Uploaded',
-    author: 'Sarah Jenkins',
-    authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
-    category: 'ABA Resource',
-    date: '2026-08-30',
-    time: '11:15 AM',
-    status: 'Published',
-    repliesCount: 4,
-    likesCount: 22,
-    preview: 'New visual prompt cards for motor and verbal imitation protocols are now in the staff shared resource locker.'
-  },
-  {
-    id: 'post-3',
-    refId: '#LN-103',
-    title: 'Staff Wellness & Coffee Catch-up (Friday 3:30 PM)',
-    author: 'Tinashe Admin',
-    authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-    category: 'Announcement',
-    date: '2026-08-29',
-    time: '02:00 PM',
-    status: 'Published',
-    repliesCount: 11,
-    likesCount: 19,
-    preview: 'Join us in the lounge room for weekly reflections, wins of the week, and coffee.'
-  },
-  {
-    id: 'post-4',
-    refId: '#LN-104',
-    title: 'Behavior Support Plan Adjustments for Non-Verbal Learners',
-    author: 'David Moyo',
-    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-    category: 'Lesson Plan',
-    date: '2026-08-28',
-    time: '09:45 AM',
-    status: 'Discussion',
-    repliesCount: 8,
-    likesCount: 9,
-    preview: 'Looking for peer input on token reinforcement schedules when transitioning between tabletop and free play domains.'
-  },
-  {
-    id: 'post-5',
-    refId: '#LN-105',
-    title: 'Adaptive Seating Request Protocol',
-    author: 'Emily Watson',
-    authorAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=80',
-    category: 'ABA Resource',
-    date: '2026-08-25',
-    time: '01:20 PM',
-    status: 'Published',
-    repliesCount: 2,
-    likesCount: 7,
-    preview: 'Occupational therapy requisitions are open for early intervention sensory cushions and weighted vests.'
-  }
-];
-
 export const TeachLounge: React.FC = () => {
   const { user, notify } = useStore();
-  const [posts, setPosts] = useState<LoungePost[]>(INITIAL_POSTS);
+  const [posts, setPosts] = useState<LoungePost[]>([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
@@ -107,6 +37,19 @@ export const TeachLounge: React.FC = () => {
   const [newCategory, setNewCategory] = useState<LoungePost['category']>('Discussion');
   const [newContent, setNewContent] = useState('');
   const pageSize = 5;
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(getFirestore(), 'lounge_posts'), snapshot => {
+      const next = snapshot.docs.map(item => ({ ...item.data(), id: item.id } as LoungePost));
+      next.sort((a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`));
+      setPosts(next);
+      setIsLoadingPosts(false);
+    }, () => {
+      setIsLoadingPosts(false);
+      notify('error', 'Failed to load Teacher Lounge posts.');
+    });
+    return unsubscribe;
+  }, [notify]);
 
   const filteredPosts = useMemo(() => {
     return posts.filter(p => {
@@ -136,26 +79,26 @@ export const TeachLounge: React.FC = () => {
     }
   };
 
-  const handleCreatePost = (e: React.FormEvent) => {
+  const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
     const newEntry: LoungePost = {
       id: `post-${Date.now()}`,
-      refId: `#LN-${Math.floor(100 + Math.random() * 900)}`,
+      refId: `#LN-${Date.now().toString().slice(-6)}`,
       title: newTitle,
-      author: user?.name || 'Prominance Magara',
+      author: user?.name || 'Unknown staff member',
       authorAvatar: user?.avatar,
       category: newCategory,
       date: new Date().toISOString().split('T')[0],
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: 'Published',
       repliesCount: 0,
-      likesCount: 1,
+      likesCount: 0,
       preview: newContent
     };
 
-    setPosts([newEntry, ...posts]);
+    await addDoc(collection(getFirestore(), 'lounge_posts'), newEntry);
     setNewTitle('');
     setNewContent('');
     setShowNewPostModal(false);
@@ -166,23 +109,23 @@ export const TeachLounge: React.FC = () => {
     <div className="w-full min-h-[calc(100vh-72px)] flex flex-col justify-between animate-in fade-in duration-500 font-sans">
       <div className="flex-1 flex flex-col">
         {/* Table Toolbar Header directly on page */}
-        <div className="px-6 md:px-8 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white dark:bg-slate-950">
+        <div className="flex flex-col justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-950 sm:px-6 lg:flex-row lg:items-center lg:px-8">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm md:text-base font-bold text-slate-800 dark:text-white">
+            <h2 className="text-base font-semibold text-slate-950 dark:text-white md:text-lg">
               {filteredPosts.length} Lounge Posts & Bulletins
             </h2>
           </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
           {/* Search Input */}
-          <div className="relative min-w-[220px]">
+          <div className="relative col-span-2 w-full min-w-0 sm:col-span-1 sm:min-w-[220px]">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search posts or author..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[9px] text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600"
+              className="h-10 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs font-medium text-slate-900 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
             />
           </div>
 
@@ -190,7 +133,7 @@ export const TeachLounge: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[9px] text-xs font-medium text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+            className="h-9 min-w-0 rounded-md border border-slate-200 bg-slate-50 px-2 text-xs font-medium text-slate-700 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
           >
             <option value="All">All Status</option>
             <option value="Published">Published</option>
@@ -202,7 +145,7 @@ export const TeachLounge: React.FC = () => {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[9px] text-xs font-medium text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+            className="h-9 min-w-0 rounded-md border border-slate-200 bg-slate-50 px-2 text-xs font-medium text-slate-700 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
           >
             <option value="All">All Categories</option>
             <option value="Schedule">Schedule</option>
@@ -213,7 +156,7 @@ export const TeachLounge: React.FC = () => {
 
           <button 
             onClick={() => setShowNewPostModal(true)}
-            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-[9px] flex items-center gap-1.5 shadow-sm transition-all active:scale-98 shrink-0"
+            className="col-span-2 flex h-9 items-center justify-center gap-1.5 rounded-md bg-slate-950 px-3 text-xs font-medium text-white transition hover:bg-slate-800 sm:col-span-1 dark:bg-white dark:text-slate-950"
           >
             <Plus size={14} />
             <span>New Post</span>
@@ -222,7 +165,24 @@ export const TeachLounge: React.FC = () => {
       </div>
 
       {/* Data Table */}
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-slate-200 dark:divide-slate-800 md:hidden">
+          {isLoadingPosts ? (
+            <div className="px-5 py-16 text-center text-sm text-slate-400">Loading lounge posts…</div>
+          ) : paginatedPosts.length === 0 ? (
+            <div className="px-5 py-16 text-center text-sm text-slate-400">No lounge posts yet.</div>
+          ) : paginatedPosts.map(post => (
+            <button key={post.id} type="button" onClick={() => setSelectedPost(post)} className="flex w-full min-w-0 items-start gap-3 px-4 py-4 text-left transition hover:bg-slate-50 dark:hover:bg-slate-900">
+              <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-slate-100 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{post.authorAvatar ? <img src={post.authorAvatar} alt="" className="h-full w-full object-cover" /> : post.author[0]}</div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2"><p className="line-clamp-1 text-sm font-semibold text-slate-950 dark:text-white">{post.title}</p><span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-medium ${getStatusBadge(post.status)}`}>{post.status}</span></div>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{post.preview}</p>
+                <p className="mt-2 text-[10px] text-slate-400">{post.author} · {post.date} · {post.category}</p>
+              </div>
+              <ChevronRight size={16} className="mt-3 shrink-0 text-slate-400" />
+            </button>
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/70 dark:bg-slate-800/40 text-[11px] font-semibold text-slate-400 border-b border-slate-100 dark:border-slate-800">
@@ -237,7 +197,9 @@ export const TeachLounge: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-              {paginatedPosts.length === 0 ? (
+              {isLoadingPosts ? (
+                <tr><td colSpan={8} className="py-12 text-center text-slate-400">Loading lounge posts…</td></tr>
+              ) : paginatedPosts.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center text-slate-400 font-medium">
                     No lounge entries matching the selected criteria.
@@ -326,7 +288,7 @@ export const TeachLounge: React.FC = () => {
       </div>
 
       {/* Pagination Footer at very bottom */}
-      <div className="mt-auto px-6 md:px-8 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+      <div className="mt-auto flex flex-col items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-4 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-950 sm:flex-row sm:px-6 md:px-8">
         <div>
           Showing <span className="font-bold text-slate-900 dark:text-white">{filteredPosts.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}</span> to{' '}
           <span className="font-bold text-slate-900 dark:text-white">
@@ -347,7 +309,7 @@ export const TeachLounge: React.FC = () => {
             <button
               key={num}
               onClick={() => setCurrentPage(num)}
-              className={`w-8 h-8 rounded-[9px] text-xs font-bold transition-all ${
+              className={`hidden h-8 w-8 rounded-md text-xs font-medium transition-all sm:block ${
                 currentPage === num
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -367,9 +329,9 @@ export const TeachLounge: React.FC = () => {
       </div>
 
       {/* Post Detail Drawer / Modal */}
-      {selectedPost && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[9px] max-w-2xl w-full p-6 space-y-5 shadow-xl">
+      {selectedPost && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-stretch justify-center bg-slate-950/50 backdrop-blur-sm animate-in fade-in duration-200 sm:items-center sm:p-4">
+          <div className="flex min-h-0 w-full flex-col space-y-5 overflow-y-auto bg-white p-4 shadow-xl dark:bg-slate-900 sm:max-h-[90vh] sm:max-w-2xl sm:rounded-xl sm:border sm:border-slate-200 sm:p-6 dark:sm:border-slate-800">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-3">
                 <span className={`px-2.5 py-1 rounded-[9px] text-[10px] font-bold border ${getStatusBadge(selectedPost.status)}`}>
@@ -420,12 +382,12 @@ export const TeachLounge: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* New Post Modal */}
-      {showNewPostModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <form onSubmit={handleCreatePost} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[9px] max-w-xl w-full p-6 space-y-4 shadow-xl">
+      {showNewPostModal && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-stretch justify-center bg-slate-950/50 backdrop-blur-sm animate-in fade-in duration-200 sm:items-center sm:p-4">
+          <form onSubmit={handleCreatePost} className="flex min-h-0 w-full flex-col space-y-4 overflow-y-auto bg-white p-4 shadow-xl dark:bg-slate-900 sm:max-h-[90vh] sm:max-w-xl sm:rounded-xl sm:border sm:border-slate-200 sm:p-6 dark:sm:border-slate-800">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h3 className="text-lg font-black uppercase text-slate-900 dark:text-white">
                 Create Lounge Post
@@ -497,7 +459,7 @@ export const TeachLounge: React.FC = () => {
             </div>
           </form>
         </div>
-      )}
+      , document.body)}
     </div>
   );
 };

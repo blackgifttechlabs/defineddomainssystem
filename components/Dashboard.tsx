@@ -3,14 +3,12 @@ import React, { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { 
   Users, Activity, HeartPulse, ShoppingCart, 
-  ChevronRight, ArrowUpRight, TrendingUp,
-  FileText, ShieldAlert, Package, Search, Plus,
-  UserPlus, BellRing, Settings, Send, Receipt, History,
-  Filter, DollarSign, Target, Database, ShieldCheck, CalendarDays
+  ChevronRight, TrendingUp,
+  ShieldAlert, Package,
+  UserPlus, BellRing, Settings, Send, Receipt,
+  CalendarDays
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-const LogoImg = 'https://i.ibb.co/spSVqW8s/definedlogo.png';
 
 const ActionCard = ({ label, icon: Icon, onClick, tone, iconTone }: any) => (
   <button 
@@ -24,7 +22,7 @@ const ActionCard = ({ label, icon: Icon, onClick, tone, iconTone }: any) => (
   </button>
 );
 
-const StatBox = ({ title, value, change, icon: Icon, color }: any) => (
+const StatBox = ({ title, value, icon: Icon, color }: any) => (
   <div className="bg-white dark:bg-slate-900 gh-box p-5 flex flex-col justify-between hover:shadow-md transition-all group relative overflow-hidden">
     <div className="flex items-start justify-between relative z-10">
       <div>
@@ -35,12 +33,7 @@ const StatBox = ({ title, value, change, icon: Icon, color }: any) => (
         <Icon size={22} />
       </div>
     </div>
-    <div className="mt-4 flex items-center gap-2 relative z-10">
-      <span className="flex items-center text-[10px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-900/50">
-        <ArrowUpRight size={12} className="mr-0.5" /> {change}
-      </span>
-      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">v last month</span>
-    </div>
+    <p className="relative z-10 mt-4 text-[9px] font-bold uppercase tracking-widest text-slate-400">Live database total</p>
     <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
       <Icon size={120} />
     </div>
@@ -48,9 +41,7 @@ const StatBox = ({ title, value, change, icon: Icon, color }: any) => (
 );
 
 export const Dashboard: React.FC = () => {
-  const { students, staff, clinicalLogs, user, setActiveTab, orders, applications, notices, settings, milestoneRecords } = useStore();
-  const [tableSearch, setTableSearch] = useState('');
-  const [classFilter, setClassFilter] = useState('All');
+  const { students, staff, clinicalLogs, setActiveTab, orders, applications, notices, systemLogs } = useStore();
   const [chartRange, setChartRange] = useState<'7d' | '30d'>('7d');
 
   const processedGraphData = useMemo(() => {
@@ -78,30 +69,17 @@ export const Dashboard: React.FC = () => {
     return data;
   }, [clinicalLogs, chartRange]);
 
-  const studentPerformanceList = useMemo(() => {
-    return students.map(student => {
-      const latestMilestone = milestoneRecords
-        .filter(r => r.studentId === student.id)
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-      
-      const balance = Math.max(0, settings.feesAmount - (student.totalPaid || 0));
-      
-      return {
-        ...student,
-        mastery: latestMilestone?.overallPercentage || 0,
-        balance
-      };
-    });
-  }, [students, milestoneRecords, settings.feesAmount]);
-
-  const filteredStudents = studentPerformanceList.filter(s => {
-    const matchesSearch = s.fullName.toLowerCase().includes(tableSearch.toLowerCase()) || s.id.toLowerCase().includes(tableSearch.toLowerCase());
-    const matchesClass = classFilter === 'All' || s.assignedClass === classFilter;
-    return matchesSearch && matchesClass;
-  });
+  const procurementTotal = useMemo(
+    () => orders.reduce((sum, order) => sum + (Number(order.total) || 0), 0),
+    [orders]
+  );
+  const systemErrorCount = useMemo(
+    () => systemLogs.filter(log => /error|fail/i.test(`${log.action} ${log.details}`)).length,
+    [systemLogs]
+  );
 
   return (
-    <div className="w-full space-y-7 px-5 py-6 pb-20 animate-fade-up sm:px-6 md:px-8">
+    <div className="w-full space-y-5 px-4 py-4 pb-20 animate-fade-up sm:px-6 sm:py-6 md:space-y-7 lg:px-8">
       <section className="space-y-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
           <ActionCard label="Add Student" icon={UserPlus} tone="border-blue-200 bg-blue-50/80 dark:border-blue-900 dark:bg-blue-950/25" iconTone="bg-blue-100 text-blue-600 dark:bg-blue-900/60 dark:text-blue-300" onClick={() => setActiveTab('students')} />
@@ -116,10 +94,10 @@ export const Dashboard: React.FC = () => {
       </section>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatBox title="Enrolled Students" value={students.length} change="12%" icon={Users} color="text-googleBlue" />
-        <StatBox title="Session Notes" value={clinicalLogs.length} change="8%" icon={Activity} color="text-indigo-600" />
-        <StatBox title="Active Staff" value={staff.length} change="2%" icon={ShieldAlert} color="text-emerald-600" />
-        <StatBox title="Procurement" value={`$${(orders.length * 125).toLocaleString()}`} change="5%" icon={Package} color="text-orange-600" />
+        <StatBox title="Enrolled Students" value={students.length} icon={Users} color="text-googleBlue" />
+        <StatBox title="Session Notes" value={clinicalLogs.length} icon={Activity} color="text-indigo-600" />
+        <StatBox title="Active Staff" value={staff.length} icon={ShieldAlert} color="text-emerald-600" />
+        <StatBox title="Procurement" value={`$${procurementTotal.toLocaleString()}`} icon={Package} color="text-orange-600" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -186,7 +164,7 @@ export const Dashboard: React.FC = () => {
                 { label: 'Careers', value: applications.filter(a => a.status === 'Pending').length, icon: Send, color: 'text-amber-500', tab: 'applications' },
                 { label: 'Unpaid Orders', value: orders.filter(o => o.status === 'Uncollected').length, icon: Receipt, color: 'text-blue-500', tab: 'orders' },
                 { label: 'Notices', value: notices.length, icon: BellRing, color: 'text-emerald-500', tab: 'notices' },
-                { label: 'System Errors', value: 0, icon: ShieldAlert, color: 'text-rose-500', tab: 'system-logs' },
+                { label: 'System Errors', value: systemErrorCount, icon: ShieldAlert, color: 'text-rose-500', tab: 'system-logs' },
               ].map((log, i) => (
                 <button 
                   key={i}
@@ -210,120 +188,6 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <section className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1">
-          <div className="flex items-center gap-3">
-             <Target size={18} className="text-googleBlue" />
-             <h2 className="text-sm font-black uppercase tracking-[0.3em] text-slate-400">Student List</h2>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="relative group">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-googleBlue" />
-              <input 
-                type="text" 
-                placeholder="Filter names..." 
-                value={tableSearch}
-                onChange={e => setTableSearch(e.target.value)}
-                className="pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-ghBorder dark:border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:border-googleBlue transition-all w-full sm:w-64"
-              />
-            </div>
-            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-ghBorder dark:border-slate-800 px-3 py-2 rounded-xl">
-               <Filter size={14} className="text-slate-400" />
-               <select 
-                 value={classFilter}
-                 onChange={e => setClassFilter(e.target.value)}
-                 className="bg-transparent text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer text-slate-700 dark:text-slate-400"
-               >
-                 <option value="All">All Classes</option>
-                 {(settings?.classes || []).map(c => <option key={c} value={c}>{c}</option>)}
-               </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-ghBorder dark:border-slate-800 rounded-[2.5rem] overflow-hidden shadow-sm">
-           <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                 <thead className="bg-ghBg/50 dark:bg-slate-950/50 border-b border-ghBorder dark:border-slate-800 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
-                    <tr>
-                       <th className="px-8 py-5">Student Photo & Name</th>
-                       <th className="px-8 py-5">Class</th>
-                       <th className="px-8 py-5 text-center">Progress</th>
-                       <th className="px-8 py-5">Paid</th>
-                       <th className="px-8 py-5">Balance</th>
-                       <th className="px-8 py-5 text-right">View</th>
-                    </tr>
-                 </thead>
-                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                    {filteredStudents.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="py-20 text-center">
-                           <Database size={48} className="mx-auto text-slate-100 mb-4" />
-                           <p className="text-[10px] font-black uppercase text-slate-300 italic tracking-widest">No matching entry found</p>
-                        </td>
-                      </tr>
-                    ) : filteredStudents.map(student => (
-                      <tr key={student.id} className="hover:bg-slate-50/50 dark:hover:bg-blue-900/5 group transition-colors cursor-pointer" onClick={() => setActiveTab('students')}>
-                         <td className="px-8 py-6">
-                            <div className="flex items-center gap-4">
-                               <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center font-black text-xs uppercase text-blue-600">
-                                  {(student.imageUrl || student.idCardImageUrl) ? (
-                                    <img src={student.imageUrl || student.idCardImageUrl} className="w-full h-full object-cover" alt={student.fullName} />
-                                  ) : (
-                                    <div className="w-full h-full p-2 flex items-center justify-center">
-                                      <img src={LogoImg} alt="" className="w-full h-full object-contain grayscale opacity-50" />
-                                    </div>
-                                  )}
-                               </div>
-                               <div>
-                                  <p className="text-[11px] font-black uppercase tracking-tight text-slate-950 dark:text-white leading-none">{student.fullName}</p>
-                                  <p className="text-[9px] font-mono text-slate-400 mt-1 uppercase tracking-widest">{student.id}</p>
-                               </div>
-                            </div>
-                         </td>
-                         <td className="px-8 py-6">
-                            <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-[9px] font-black uppercase border border-slate-200 dark:border-slate-700 text-slate-500">
-                               {student.assignedClass}
-                            </span>
-                         </td>
-                         <td className="px-8 py-6">
-                            <div className="flex items-center justify-center gap-3">
-                               <div className="w-24 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full transition-all duration-1000 ${student.mastery > 75 ? 'bg-emerald-500' : student.mastery > 40 ? 'bg-googleBlue' : 'bg-amber-500'}`} 
-                                    style={{ width: `${student.mastery}%` }}
-                                  />
-                               </div>
-                               <span className="text-[10px] font-black font-mono text-slate-700 dark:text-slate-400">{student.mastery}%</span>
-                            </div>
-                         </td>
-                         <td className="px-8 py-6 font-black font-mono text-[13px] text-emerald-600">
-                            ${(student.totalPaid || 0).toLocaleString()}
-                         </td>
-                         <td className="px-8 py-6">
-                            <span className={`text-[13px] font-black font-mono ${student.balance > 0 ? 'text-rose-600' : 'text-slate-300'}`}>
-                               ${student.balance.toLocaleString()}
-                            </span>
-                         </td>
-                         <td className="px-8 py-6 text-right">
-                            <button className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:bg-googleBlue group-hover:text-white transition-all shadow-sm">
-                               <ChevronRight size={18} />
-                            </button>
-                         </td>
-                      </tr>
-                    ))}
-                 </tbody>
-              </table>
-           </div>
-           <div className="p-8 bg-ghBg/30 dark:bg-slate-950/30 border-t border-ghBorder dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-3 text-slate-400">
-                 <ShieldCheck size={16} className="text-emerald-500" />
-                 <span className="text-[9px] font-black uppercase tracking-widest">Secure Records Sync</span>
-              </div>
-              <p className="text-[9px] font-mono text-slate-400 uppercase">{filteredStudents.length} Active Student Profiles</p>
-           </div>
-        </div>
-      </section>
     </div>
   );
 };

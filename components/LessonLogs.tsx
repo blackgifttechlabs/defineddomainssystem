@@ -64,8 +64,7 @@ export const LessonLogs: React.FC = () => {
       setSteps(initialSteps);
     } else {
       setSteps([
-        { id: '1', description: 'Step 1', trials: Array(10).fill('-') },
-        { id: '2', description: 'Step 2', trials: Array(10).fill('-') }
+        { id: `step-${Date.now()}`, description: '', trials: Array(10).fill('-') }
       ]);
     }
   }, [settings?.defaultTaskSteps]);
@@ -177,30 +176,49 @@ export const LessonLogs: React.FC = () => {
       <div className="w-full min-h-[calc(100vh-72px)] flex flex-col justify-between animate-in fade-in duration-500 font-sans">
         <div className="flex-1 flex flex-col">
           {/* Table Toolbar Header directly on page */}
-          <div className="px-6 md:px-8 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white dark:bg-slate-950">
+          <div className="flex flex-col justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-950 sm:px-6 lg:flex-row lg:items-center lg:px-8">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm md:text-base font-bold text-slate-800 dark:text-white">
+              <h2 className="text-base font-semibold text-slate-950 dark:text-white md:text-lg">
                 Select Student for Task Analysis
               </h2>
             </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Search Input */}
-            <div className="relative min-w-[240px]">
+            <div className="relative w-full min-w-0 sm:min-w-[240px]">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                   type="text" 
                   placeholder="Search student or ID..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[9px] text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-blue-600" 
+                  className="h-10 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs font-medium text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
             </div>
           </div>
 
           {/* Table Content */}
-          <div className="overflow-x-auto">
+          <div className="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-950 md:hidden">
+            {paginatedStudents.length === 0 ? (
+              <div className="px-5 py-16 text-center text-sm text-slate-400">No assigned students found.</div>
+            ) : paginatedStudents.map(student => {
+              const studentLogs = (clinicalLogs || []).filter(l => l.studentId === student.id);
+              const lastLog = studentLogs[studentLogs.length - 1];
+              return (
+                <button key={student.id} type="button" onClick={() => { setSelectedStudentIdForLog(student.id); setActiveView('workspace'); }} className="flex w-full min-w-0 items-center gap-3 px-4 py-4 text-left transition hover:bg-slate-50 dark:hover:bg-slate-900">
+                  {(student.imageUrl || student.idCardImageUrl) ? <img src={student.imageUrl || student.idCardImageUrl} alt="" className="h-11 w-11 shrink-0 rounded-full border border-slate-200 object-cover dark:border-slate-700" /> : <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-slate-200 bg-slate-100 p-2 dark:border-slate-700 dark:bg-slate-800"><img src={LogoImg} alt="" className="h-full w-full object-contain grayscale opacity-50" /></div>}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2"><p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{student.fullName}</p><span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-medium ${studentLogs.length ? 'border-emerald-200 bg-emerald-50 text-emerald-600' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>{studentLogs.length ? 'Active' : 'New'}</span></div>
+                    <p className="mt-0.5 truncate font-mono text-[11px] text-slate-400">#{student.id} · {student.assignedClass || 'General'}</p>
+                    <p className="mt-1 truncate text-[11px] text-slate-500">{studentLogs.length} notes{lastLog ? ` · ${lastLog.targetBehavior}` : ''}</p>
+                  </div>
+                  <ChevronRight size={17} className="shrink-0 text-slate-400" />
+                </button>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/70 dark:bg-slate-800/40 text-[11px] font-semibold text-slate-400 border-b border-slate-100 dark:border-slate-800">
@@ -308,7 +326,7 @@ export const LessonLogs: React.FC = () => {
         </div>
 
       {/* Pagination Footer at very bottom */}
-      <div className="mt-auto px-6 md:px-8 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+      <div className="mt-auto flex flex-col items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-4 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-950 sm:flex-row sm:px-6 md:px-8">
         <div>
           Showing <span className="font-bold text-slate-900 dark:text-white">{filteredStudents.length > 0 ? (studentListPage - 1) * studentPageSize + 1 : 0}</span> to{' '}
           <span className="font-bold text-slate-900 dark:text-white">
@@ -329,7 +347,7 @@ export const LessonLogs: React.FC = () => {
             <button
               key={num}
               onClick={() => setStudentListPage(num)}
-              className={`w-8 h-8 rounded-[9px] text-xs font-bold transition-all ${
+              className={`hidden h-8 w-8 rounded-md text-xs font-medium transition-all sm:block ${
                 studentListPage === num
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -353,17 +371,17 @@ export const LessonLogs: React.FC = () => {
 
   return (
     <div className="min-h-[calc(100vh-72px)] w-full bg-slate-50/40 pb-16 font-sans animate-in fade-in duration-500 dark:bg-slate-950">
-      <header className="flex flex-col justify-between gap-5 border-b border-slate-200 bg-white px-5 py-5 sm:px-6 md:flex-row md:items-center md:px-8 dark:border-slate-800 dark:bg-slate-950">
-        <div className="flex flex-col items-start gap-2">
+      <header className="flex flex-col justify-between gap-4 border-b border-slate-200 bg-white px-4 py-4 sm:px-6 md:flex-row md:items-center md:px-8 dark:border-slate-800 dark:bg-slate-950">
+        <div className="flex min-w-0 items-center gap-3">
           <button 
             onClick={() => { setActiveView('selection'); setSelectedStudentIdForLog(null); }}
-            className="p-1 text-slate-400 transition-colors hover:text-blue-600 dark:hover:text-blue-400"
+            className="shrink-0 p-1 text-slate-400 transition-colors hover:text-blue-600 dark:hover:text-blue-400"
             title="Back to students"
           >
             <ArrowLeft size={19} />
           </button>
-          <div>
-                <h1 className="text-xl font-bold leading-none tracking-tight text-slate-900 dark:text-white md:text-2xl">{selectedStudent?.fullName}</h1>
+          <div className="min-w-0">
+                <h1 className="truncate text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white md:text-2xl">{selectedStudent?.fullName}</h1>
                 <div className="flex items-center gap-2 mt-1.5">
                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Active Worksheet</p>
                    <span className="text-slate-300 dark:text-slate-700">•</span>
@@ -372,17 +390,17 @@ export const LessonLogs: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-col items-stretch gap-2">
-        <div className="flex rounded-[9px] border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800">
+        <div className="flex w-full flex-col items-stretch gap-2 md:w-auto">
+        <div className="grid grid-cols-2 rounded-[9px] border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800">
            <button 
             onClick={() => setActiveView('workspace')}
-            className={`flex items-center gap-2 px-5 py-2 rounded-[9px] text-xs font-bold transition-all ${activeView === 'workspace' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+            className={`flex items-center justify-center gap-2 px-3 py-2 rounded-[9px] text-xs font-bold transition-all ${activeView === 'workspace' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
            >
              <Plus size={14} /> New Lesson
            </button>
            <button 
             onClick={() => setActiveView('history')}
-            className={`flex items-center gap-2 px-5 py-2 rounded-[9px] text-xs font-bold transition-all ${activeView === 'history' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+            className={`flex items-center justify-center gap-2 px-3 py-2 rounded-[9px] text-xs font-bold transition-all ${activeView === 'history' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
            >
              <History size={14} /> Past Notes
            </button>
@@ -396,17 +414,17 @@ export const LessonLogs: React.FC = () => {
 
       {activeView === 'workspace' && (
         <div>
-           <div className="flex border-b border-slate-200 bg-white px-6 md:px-8 dark:border-slate-800 dark:bg-slate-950">
+           <div className="grid grid-cols-2 border-b border-slate-200 bg-white px-4 sm:flex sm:px-6 md:px-8 dark:border-slate-800 dark:bg-slate-950">
               <button 
                 onClick={() => setWorkspaceMode('datasheet')}
-                className={`flex items-center gap-2 border-b-2 px-5 py-3.5 text-xs font-bold transition-colors ${workspaceMode === 'datasheet' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+                className={`flex items-center justify-center gap-2 border-b-2 px-2 py-3.5 text-xs font-bold transition-colors sm:px-5 ${workspaceMode === 'datasheet' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
               >
                  <FileSpreadsheet size={15} /> Activity Record
               </button>
 
               <button 
                 onClick={() => setWorkspaceMode('program')}
-                className={`flex items-center gap-2 border-b-2 px-5 py-3.5 text-xs font-bold transition-colors ${workspaceMode === 'program' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+                className={`flex items-center justify-center gap-2 border-b-2 px-2 py-3.5 text-xs font-bold transition-colors sm:px-5 ${workspaceMode === 'program' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
               >
                  <MessageSquarePlus size={15} /> Speech Goals
               </button>

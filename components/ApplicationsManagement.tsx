@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from '../store/useStore';
 import { Application } from '../types';
-import { Mail, Phone, Clock, FileText, CheckCircle2, XCircle, ChevronRight, Eye, User, Briefcase, Trash2, Search, Filter, Calendar } from 'lucide-react';
+import { Mail, FileText, CheckCircle2, XCircle, ChevronRight, Briefcase, Search, Calendar, X } from 'lucide-react';
 
 export const ApplicationsManagement: React.FC = () => {
   const { applications, updateApplicationStatus } = useStore();
@@ -36,23 +37,27 @@ export const ApplicationsManagement: React.FC = () => {
   };
 
   return (
-    <div className="w-full space-y-7 px-5 py-6 animate-in fade-in duration-700 sm:px-6 md:px-8">
-      <header className="flex flex-col gap-6 md:flex-row md:items-end md:justify-end">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative group min-w-[300px]">
+    <div className="w-full space-y-5 px-4 py-4 animate-in fade-in duration-700 sm:px-6 sm:py-6 md:space-y-7 lg:px-8">
+      <header className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight text-slate-950 dark:text-white sm:text-xl">Job applications</h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">{filteredApps.length} {filteredApps.length === 1 ? 'candidate' : 'candidates'}</p>
+        </div>
+        <div className="flex gap-2 sm:justify-end">
+          <div className="relative group w-full min-w-0 sm:min-w-[300px]">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500" />
             <input 
               type="text" 
               placeholder="Search applicants..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold outline-none" 
+              className="h-10 w-full rounded-md border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-950/5 dark:border-slate-800 dark:bg-slate-900"
             />
           </div>
           <select 
             value={filter} 
             onChange={(e) => setFilter(e.target.value as any)}
-            className="px-5 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none"
+            className="h-10 min-w-0 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium outline-none dark:border-slate-800 dark:bg-slate-900 sm:px-4"
           >
             <option value="All">All Status</option>
             <option value="Pending">Pending</option>
@@ -62,8 +67,34 @@ export const ApplicationsManagement: React.FC = () => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-12 grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 md:hidden">
+        <div className="divide-y divide-slate-200 dark:divide-slate-800">
+          {filteredApps.length === 0 ? (
+            <div className="px-5 py-16 text-center">
+              <Briefcase size={28} className="mx-auto mb-3 text-slate-300" />
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">No applications found</p>
+              <p className="mt-1 text-xs text-slate-400">Try another name or status.</p>
+            </div>
+          ) : filteredApps.map(app => (
+            <button key={app.id} type="button" onClick={() => setSelectedApp(app)} className="flex w-full min-w-0 items-center gap-3 px-4 py-4 text-left transition hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-slate-800/60">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{app.fullName[0]}</div>
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 items-start justify-between gap-2">
+                  <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{app.fullName}</p>
+                  <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${getStatusColor(app.status)}`}>{app.status}</span>
+                </div>
+                <p className="mt-0.5 truncate text-xs text-slate-500">{app.position}</p>
+                <div className="mt-2 flex min-w-0 items-center gap-2 text-[11px] text-slate-400">
+                  <span className="truncate">{app.email}</span><span>·</span><span className="shrink-0">{new Date(app.timestamp).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <ChevronRight size={17} className="shrink-0 text-slate-400" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredApps.length === 0 ? (
             <div className="col-span-full rounded-[9px] border border-dashed border-slate-200 bg-slate-50 py-20 text-center dark:border-slate-800 dark:bg-slate-900/50">
               <Briefcase size={48} className="mx-auto text-slate-300 mb-4" />
@@ -108,38 +139,37 @@ export const ApplicationsManagement: React.FC = () => {
               </div>
             </div>
           ))}
-        </div>
       </div>
 
-      {selectedApp && (
-        <div className="fixed inset-0 z-[200] flex justify-end">
-           <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setSelectedApp(null)} />
-           <aside className="relative w-full md:w-[60%] lg:w-[45%] bg-white dark:bg-slate-950 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-500">
-              <header className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white dark:bg-slate-950 z-10">
-                 <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 rounded-3xl bg-[#002D50] text-white flex items-center justify-center text-3xl font-black uppercase">
+      {selectedApp && createPortal((
+        <div className="fixed inset-0 z-[800] flex justify-end bg-white dark:bg-slate-950 md:bg-slate-950/60 md:backdrop-blur-sm">
+           <div className="absolute inset-0 hidden md:block" onClick={() => setSelectedApp(null)} />
+           <aside className="relative flex h-full w-full flex-col overflow-hidden bg-white dark:bg-slate-950 md:w-[60%] md:border-l md:border-slate-200 md:shadow-2xl lg:w-[45%] dark:md:border-slate-800">
+              <header className="z-10 flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950 sm:px-6 sm:py-4">
+                 <div className="flex min-w-0 items-center gap-3">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-950 text-sm font-semibold uppercase text-white dark:bg-white dark:text-slate-950 sm:h-12 sm:w-12">
                        {selectedApp.fullName[0]}
                     </div>
-                    <div>
-                       <h2 className="text-xl font-black uppercase tracking-tight dark:text-white leading-none">{selectedApp.fullName}</h2>
-                       <div className="flex items-center gap-3 mt-2">
-                          <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${getStatusColor(selectedApp.status)}`}>{selectedApp.status}</span>
-                          <span className="text-[10px] font-mono text-slate-400">{new Date(selectedApp.timestamp).toLocaleString()}</span>
+                    <div className="min-w-0">
+                       <h2 className="truncate text-sm font-semibold text-slate-950 dark:text-white sm:text-base">{selectedApp.fullName}</h2>
+                       <div className="mt-1 flex items-center gap-2">
+                          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-medium ${getStatusColor(selectedApp.status)}`}>{selectedApp.status}</span>
+                          <span className="truncate text-[10px] text-slate-400">{new Date(selectedApp.timestamp).toLocaleDateString()}</span>
                        </div>
                     </div>
                  </div>
-                 <button onClick={() => setSelectedApp(null)} className="p-4 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl"><XCircle size={32} /></button>
+                 <button aria-label="Close applicant details" onClick={() => setSelectedApp(null)} className="grid h-9 w-9 shrink-0 place-items-center text-slate-500 transition hover:text-slate-950 dark:hover:text-white"><X size={21} /></button>
               </header>
 
-              <div className="flex-1 overflow-y-auto p-10 space-y-12">
+              <div className="flex-1 overflow-y-auto p-4 space-y-6 sm:p-6 md:p-10 md:space-y-12">
                  <section className="space-y-6">
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-600">Candidate Information</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                       <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
                           <p className="text-[9px] font-black uppercase tracking-widest text-slate-900 dark:text-slate-400 mb-1">Applied Position</p>
                           <p className="text-sm font-black uppercase tracking-tight">{selectedApp.position}</p>
                        </div>
-                       <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
+                       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
                           <p className="text-[9px] font-black uppercase tracking-widest text-slate-900 dark:text-slate-400 mb-1">Phone Contact</p>
                           <p className="text-sm font-black uppercase tracking-tight">{selectedApp.phone}</p>
                        </div>
@@ -148,14 +178,14 @@ export const ApplicationsManagement: React.FC = () => {
 
                  <section className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-600">Cover Letter</h3>
-                    <div className="p-8 bg-slate-50 dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 font-medium italic text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 sm:p-6">
                        "{selectedApp.coverLetter}"
                     </div>
                  </section>
 
                  <section className="space-y-4">
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-600">Attachments</h3>
-                    <div className="flex items-center justify-between p-6 bg-[#002D50] rounded-3xl text-white shadow-xl">
+                    <div className="flex flex-col gap-4 rounded-xl bg-slate-950 p-4 text-white sm:flex-row sm:items-center sm:justify-between sm:p-5">
                        <div className="flex items-center gap-4">
                           <FileText size={28} />
                           <div>
@@ -173,23 +203,23 @@ export const ApplicationsManagement: React.FC = () => {
                  </section>
               </div>
 
-              <footer className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex gap-4">
+              <footer className="flex shrink-0 gap-2 border-t border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950 sm:p-4">
                  <button 
                   onClick={() => updateApplicationStatus(selectedApp.id, 'Shortlisted')}
-                  className="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2"
+                  className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 text-xs font-medium text-white transition hover:bg-emerald-700"
                  >
                     <CheckCircle2 size={16} /> Shortlist Candidate
                  </button>
                  <button 
                   onClick={() => updateApplicationStatus(selectedApp.id, 'Rejected')}
-                  className="flex-1 py-4 bg-rose-500 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all flex items-center justify-center gap-2"
+                  className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-rose-600 px-3 text-xs font-medium text-white transition hover:bg-rose-700"
                  >
                     <XCircle size={16} /> Reject Application
                  </button>
               </footer>
            </aside>
         </div>
-      )}
+      ), document.body)}
     </div>
   );
 };

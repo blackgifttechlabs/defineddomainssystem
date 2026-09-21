@@ -54,7 +54,7 @@ export const StudentApplications: React.FC = () => {
       'Approved': 'bg-emerald-100 text-emerald-700 border-emerald-200',
       'Rejected': 'bg-rose-100 text-rose-700 border-rose-200'
     }[status] || 'bg-slate-100 text-slate-700 border-slate-200';
-    return <span className={`px-3 py-1 rounded-none text-[8px] font-black uppercase border ${colors}`}>{status}</span>;
+    return <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-medium ${colors}`}>{status}</span>;
   };
 
   if (selectedApp) {
@@ -75,7 +75,7 @@ export const StudentApplications: React.FC = () => {
            </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-10 max-w-6xl mx-auto w-full space-y-12">
+        <div className="flex-1 overflow-y-auto p-4 max-w-6xl mx-auto w-full space-y-6 sm:p-6 md:p-10 md:space-y-12">
            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               {/* Student Side */}
               <div className="space-y-8">
@@ -140,7 +140,7 @@ export const StudentApplications: React.FC = () => {
            </div>
         </div>
 
-        <footer className="p-10 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex justify-center gap-6">
+        <footer className="p-4 sm:p-6 md:p-10 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex flex-col sm:flex-row justify-center gap-3 sm:gap-6">
            <button 
             onClick={() => setShowChannelModal(true)}
             className="px-16 py-6 bg-emerald-600 text-white rounded-none font-black uppercase tracking-[0.3em] text-xs shadow-xl hover:bg-emerald-700 transition-all flex items-center gap-3 active:scale-95"
@@ -158,7 +158,7 @@ export const StudentApplications: React.FC = () => {
         {/* Channel Selection Modal */}
         {showChannelModal && (
           <div className="fixed inset-0 z-[600] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md">
-            <div className="bg-white dark:bg-slate-900 max-w-lg w-full p-10 border-2 border-slate-100 dark:border-slate-800 rounded-none shadow-2xl animate-in zoom-in duration-300">
+            <div className="bg-white dark:bg-slate-900 max-w-lg w-full p-5 sm:p-8 md:p-10 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl animate-in zoom-in duration-300">
               <h3 className="text-xl font-black uppercase text-center mb-8 dark:text-white">Notify Guardian</h3>
               <p className="text-sm text-slate-500 text-center mb-10 italic">How would you like to contact the guardian?</p>
               
@@ -200,9 +200,49 @@ export const StudentApplications: React.FC = () => {
   }
 
   return (
-    <div className="w-full px-5 py-6 animate-in fade-in duration-700 sm:px-6 md:px-8">
-      <div className="overflow-hidden rounded-[9px] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="overflow-x-auto">
+    <div className="w-full px-4 py-4 animate-in fade-in duration-700 sm:px-6 sm:py-6 lg:px-8">
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-lg font-semibold tracking-tight text-slate-950 dark:text-white sm:text-xl">Applications</h2>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
+          {studentApplications.length} {studentApplications.length === 1 ? 'application' : 'applications'} received
+        </p>
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="divide-y divide-slate-200 dark:divide-slate-800 md:hidden">
+          {studentApplications.length === 0 ? (
+            <div className="px-5 py-16 text-center">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">No applications yet</p>
+              <p className="mt-1 text-xs text-slate-400">New student applications will appear here.</p>
+            </div>
+          ) : studentApplications.map(app => (
+            <button
+              key={app.id}
+              type="button"
+              onClick={() => setSelectedApp(app)}
+              className="flex w-full min-w-0 items-start gap-3 px-4 py-4 text-left transition hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-slate-800/60"
+            >
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {app.firstName?.[0]}{app.lastName?.[0]}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 items-start justify-between gap-2">
+                  <p className="min-w-0 truncate text-sm font-semibold text-slate-950 dark:text-white">{app.firstName} {app.lastName}</p>
+                  <StatusPill status={app.status} />
+                </div>
+                <p className="mt-1 truncate text-xs text-slate-600 dark:text-slate-400">{app.guardianEmail}</p>
+                <div className="mt-2 flex min-w-0 items-center gap-2 text-[11px] text-slate-400">
+                  <span className="truncate">{app.guardianPhone}</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="shrink-0">{new Date(app.timestamp).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <ChevronRight size={17} className="mt-3 shrink-0 text-slate-400" />
+            </button>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-left">
             <thead className="bg-slate-50 dark:bg-slate-950/50 text-[10px] font-black uppercase tracking-widest text-black dark:text-white border-b border-slate-100 dark:border-slate-800">
               <tr>

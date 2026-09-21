@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from '../store/useStore';
 import { Receipt, Search, Filter, CheckCircle2, Clock, User, Package, ChevronRight, X, Calendar, DollarSign } from 'lucide-react';
 import { Order } from '../types';
@@ -18,23 +19,27 @@ export const TransactionsManagement: React.FC = () => {
   });
 
   return (
-    <div className="w-full space-y-7 px-5 py-6 animate-in fade-in duration-700 sm:px-6 md:px-8">
-      <header className="flex flex-col gap-6 md:flex-row md:items-end md:justify-end">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative group min-w-[300px]">
+    <div className="w-full space-y-5 px-4 py-4 animate-in fade-in duration-700 sm:px-6 sm:py-6 md:space-y-7 lg:px-8">
+      <header className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight text-slate-950 dark:text-white sm:text-xl">Orders</h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">{filteredOrders.length} {filteredOrders.length === 1 ? 'transaction' : 'transactions'}</p>
+        </div>
+        <div className="flex gap-2 sm:justify-end">
+          <div className="relative group w-full min-w-0 sm:min-w-[300px]">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500" />
             <input 
               type="text" 
               placeholder="Search by student or ID..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold outline-none" 
+              className="h-10 w-full rounded-md border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-950/5 dark:border-slate-800 dark:bg-slate-900"
             />
           </div>
           <select 
             value={filter} 
             onChange={(e) => setFilter(e.target.value as any)}
-            className="px-5 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none"
+            className="h-10 min-w-0 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium outline-none dark:border-slate-800 dark:bg-slate-900 sm:px-4"
           >
             <option value="All">All Status</option>
             <option value="Uncollected">Uncollected</option>
@@ -43,8 +48,33 @@ export const TransactionsManagement: React.FC = () => {
         </div>
       </header>
 
-      <div className="overflow-hidden rounded-[9px] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="overflow-x-auto">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="divide-y divide-slate-200 dark:divide-slate-800 md:hidden">
+          {filteredOrders.length === 0 ? (
+            <div className="px-5 py-16 text-center">
+              <Receipt size={28} className="mx-auto mb-3 text-slate-300" />
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">No orders found</p>
+              <p className="mt-1 text-xs text-slate-400">Try another student, ID, or status.</p>
+            </div>
+          ) : filteredOrders.map(order => (
+            <button key={order.id} type="button" onClick={() => setSelectedOrder(order)} className="flex w-full min-w-0 items-center gap-3 px-4 py-4 text-left transition hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-slate-800/60">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{order.studentName[0]}</div>
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 items-start justify-between gap-2">
+                  <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{order.studentName}</p>
+                  <span className="shrink-0 font-mono text-sm font-semibold text-slate-950 dark:text-white">${order.total}</span>
+                </div>
+                <p className="mt-0.5 truncate font-mono text-[11px] text-slate-400">#{order.id.substring(0, 8).toUpperCase()} · {order.studentId}</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${order.status === 'Collected' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>{order.status}</span>
+                  <span className="text-[10px] text-slate-400">{new Date(order.timestamp).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <ChevronRight size={17} className="shrink-0 text-slate-400" />
+            </button>
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-left">
             <thead className="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
               <tr>
@@ -88,30 +118,30 @@ export const TransactionsManagement: React.FC = () => {
         </div>
       </div>
 
-      {selectedOrder && (
-        <div className="fixed inset-0 z-[400] flex justify-end">
-           <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" onClick={() => setSelectedOrder(null)} />
-           <aside className="relative w-full md:w-[60%] lg:w-[45%] bg-white dark:bg-slate-950 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-500">
-              <header className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white dark:bg-slate-950 z-10">
-                 <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 rounded-[2rem] bg-[#002D50] text-white flex items-center justify-center text-2xl font-black">{selectedOrder.studentName[0]}</div>
-                    <div>
-                       <h2 className="text-xl font-black uppercase tracking-tight dark:text-white leading-none">Order Summary</h2>
-                       <p className="text-[10px] font-mono text-slate-400 mt-2 uppercase">TX_ID: {selectedOrder.id}</p>
+      {selectedOrder && createPortal((
+        <div className="fixed inset-0 z-[800] flex justify-end bg-white dark:bg-slate-950 md:bg-slate-950/60 md:backdrop-blur-sm">
+           <div className="absolute inset-0 hidden md:block" onClick={() => setSelectedOrder(null)} />
+           <aside className="relative flex h-full w-full flex-col overflow-hidden bg-white dark:bg-slate-950 md:w-[60%] md:border-l md:border-slate-200 md:shadow-2xl lg:w-[45%] dark:md:border-slate-800">
+              <header className="z-10 flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950 sm:px-6 sm:py-4">
+                 <div className="flex min-w-0 items-center gap-3">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-950 text-sm font-semibold text-white dark:bg-white dark:text-slate-950 sm:h-12 sm:w-12">{selectedOrder.studentName[0]}</div>
+                    <div className="min-w-0">
+                       <h2 className="text-sm font-semibold text-slate-950 dark:text-white sm:text-base">Order summary</h2>
+                       <p className="mt-0.5 truncate font-mono text-[10px] text-slate-400">#{selectedOrder.id}</p>
                     </div>
                  </div>
-                 <button onClick={() => setSelectedOrder(null)} className="p-4 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl"><X size={24} /></button>
+                 <button aria-label="Close order summary" onClick={() => setSelectedOrder(null)} className="grid h-9 w-9 shrink-0 place-items-center text-slate-500 transition hover:text-slate-950 dark:hover:text-white"><X size={21} /></button>
               </header>
 
-              <div className="flex-1 overflow-y-auto p-10 space-y-12">
+              <div className="flex-1 overflow-y-auto p-4 space-y-6 sm:p-6 md:p-10 md:space-y-12">
                  <section className="space-y-6">
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-600">Technical Assets Purchased</h3>
                     <div className="space-y-4">
                        {selectedOrder.items.map((item, idx) => (
-                         <div key={idx} className="flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 group">
-                            <div className="flex items-center gap-4">
-                               <img src={item.imageUrl} className="w-14 h-14 rounded-xl object-cover shadow-md" />
-                               <div>
+                         <div key={idx} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                            <div className="flex min-w-0 items-center gap-3">
+                               <img src={item.imageUrl} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+                               <div className="min-w-0">
                                   <p className="text-xs font-black uppercase tracking-tight">{item.name}</p>
                                   <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase">QTY: {item.quantity}</p>
                                </div>
@@ -122,15 +152,15 @@ export const TransactionsManagement: React.FC = () => {
                     </div>
                  </section>
 
-                 <section className="grid grid-cols-2 gap-4">
-                    <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
+                 <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-900 dark:text-slate-400 mb-2">Payment Method</p>
                        <div className="flex items-center gap-2">
                           <DollarSign size={14} className="text-emerald-500" />
                           <span className="text-xs font-black uppercase">{selectedOrder.paymentMethod}</span>
                        </div>
                     </div>
-                    <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-900 dark:text-slate-400 mb-2">Collection Node</p>
                        <div className="flex items-center gap-2">
                           <Package size={14} className="text-blue-500" />
@@ -140,22 +170,22 @@ export const TransactionsManagement: React.FC = () => {
                  </section>
               </div>
 
-              <footer className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col gap-4">
-                 <div className="flex items-center justify-between px-2 mb-2">
-                    <span className="text-xs font-black uppercase text-slate-500">Transaction Total</span>
-                    <span className="text-2xl font-black font-mono text-blue-600">${selectedOrder.total}</span>
+              <footer className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950 sm:p-4">
+                 <div className="flex items-center justify-between px-1">
+                    <span className="text-xs font-medium text-slate-500">Transaction total</span>
+                    <span className="font-mono text-xl font-semibold text-slate-950 dark:text-white">${selectedOrder.total}</span>
                  </div>
                  {selectedOrder.status === 'Uncollected' ? (
                    <button 
                     onClick={() => { updateOrderStatus(selectedOrder.id, 'Collected'); setSelectedOrder(null); }}
-                    className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-600/20 hover:bg-emerald-700 transition-all flex items-center justify-center gap-3"
+                    className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-4 text-xs font-medium text-white transition hover:bg-emerald-700"
                    >
                       <CheckCircle2 size={20} /> Mark as Collected
                    </button>
                  ) : (
                    <button 
                     onClick={() => { updateOrderStatus(selectedOrder.id, 'Uncollected'); setSelectedOrder(null); }}
-                    className="w-full py-5 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-amber-500/20 hover:bg-amber-600 transition-all flex items-center justify-center gap-3"
+                    className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-amber-500 px-4 text-xs font-medium text-white transition hover:bg-amber-600"
                    >
                       <Clock size={20} /> Mark as Uncollected
                    </button>
@@ -163,7 +193,7 @@ export const TransactionsManagement: React.FC = () => {
               </footer>
            </aside>
         </div>
-      )}
+      ), document.body)}
     </div>
   );
 };

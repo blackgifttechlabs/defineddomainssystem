@@ -59,27 +59,27 @@ export const SystemSettings: React.FC = () => {
   const visibleTabs = allTabs.filter(t => !t.adminOnly || isAdmin);
 
   return (
-    <div className="w-full space-y-7 px-5 py-6 font-sans animate-in fade-in duration-500 selection:bg-blue-100 sm:px-6 md:px-8">
+    <div className="w-full space-y-5 px-4 py-4 font-sans animate-in fade-in duration-500 selection:bg-blue-100 sm:px-6 sm:py-6 md:space-y-7 lg:px-8">
       <header>
-        <h1 className="text-2xl font-bold leading-none tracking-tight text-slate-900 dark:text-white">Settings</h1>
-        <p className="mt-2 text-xs font-medium text-slate-400">
+        <h1 className="text-xl font-semibold leading-none tracking-tight text-slate-900 dark:text-white sm:text-2xl">Settings</h1>
+        <p className="mt-1.5 text-xs text-slate-500">
           {isAdmin ? 'System Registry Management' : 'Manage your professional node'}
         </p>
       </header>
 
-      <div className={`no-scrollbar flex max-w-full w-fit overflow-x-auto rounded-[9px] border ${inputBorderStyle} bg-slate-100 p-1 dark:bg-slate-900`}>
+      <div className="grid grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900 sm:flex sm:w-fit sm:max-w-full sm:overflow-x-auto">
          {visibleTabs.map(tab => (
            <button 
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 rounded-[7px] px-4 py-2.5 text-[10px] font-bold transition-all ${activeTab === tab.id ? 'bg-[#154A70] text-white shadow-sm' : 'text-slate-400 hover:text-slate-700'}`}
+            className={`flex min-w-0 items-center justify-center gap-2 rounded-md px-3 py-2.5 text-[10px] font-medium transition-all sm:justify-start sm:px-4 ${activeTab === tab.id ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
            >
              {tab.icon} {tab.label}
            </button>
          ))}
       </div>
 
-      <div className={`min-h-[600px] overflow-hidden rounded-[9px] border ${inputBorderStyle} bg-white shadow-sm dark:bg-slate-900`}>
+      <div className="min-h-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 md:min-h-[600px]">
         {activeTab === 'checklists' && isAdmin && <ChecklistTemplates onEdit={setEditingTemplate} onAdd={handleAddTemplate} />}
         {activeTab === 'tasks' && isAdmin && <DefaultTasks />}
         {activeTab === 'fees' && isAdmin && <FeesAndTerm />}
@@ -96,7 +96,7 @@ export const SystemSettings: React.FC = () => {
                  <button onClick={() => setEditingTemplate(null)} className="p-3 text-slate-400 hover:text-rose-600 transition-colors"><X size={28}/></button>
               </header>
 
-              <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar sm:p-6 md:p-10 md:space-y-10">
                  <div className="space-y-6">
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Template Label</label>
                     <input value={editingTemplate.label} onChange={e => setEditingTemplate({...editingTemplate, label: e.target.value})} className={`w-full p-5 border-2 ${inputBorderStyle} rounded-none font-black text-lg dark:text-white bg-slate-50 dark:bg-slate-950 outline-none`} />

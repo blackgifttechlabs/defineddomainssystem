@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from '../store/useStore';
 import { 
   ShoppingBag, ShoppingCart, Trash2, Loader2, Package, 
@@ -117,39 +118,39 @@ export const UniformShop: React.FC = () => {
   const filteredItems = (shopItems || []).filter(item => filter === 'All' ? true : item.category === filter);
 
   return (
-    <div className="relative w-full space-y-5 px-5 py-6 pb-24 font-sans animate-in fade-in duration-500 selection:bg-blue-100 sm:px-6 md:px-8">
+    <div className="relative w-full space-y-5 px-4 py-4 pb-24 font-sans animate-in fade-in duration-500 selection:bg-blue-100 sm:px-6 sm:py-6 lg:px-8">
       
       {/* Page Header */}
-      <header className="flex flex-col items-center justify-between gap-4 rounded-[9px] border border-slate-200 bg-white p-5 shadow-sm sm:flex-row dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center gap-4">
-          <div className="rounded-[9px] bg-blue-600 p-3 text-white">
-            <ShoppingBag size={24} />
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-slate-950 text-white dark:bg-white dark:text-slate-950">
+            <ShoppingBag size={19} />
           </div>
-          <div>
-            <h1 className="text-xl font-bold leading-none tracking-tight text-slate-900 dark:text-white">
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-semibold leading-none tracking-tight text-slate-900 dark:text-white sm:text-xl">
               {showCartView ? 'Your Shopping Cart' : 'School Uniform Shop'}
             </h1>
-            <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-[0.3em] italic">Official Defined Domain uniforms and gear</p>
+            <p className="mt-1 truncate text-xs text-slate-500">Official uniforms and school gear</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           {isAdmin && !showCartView && (
             <button 
               onClick={openAddUniformForm}
-              className="flex items-center gap-2 rounded-[9px] bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
+              className="flex h-9 items-center gap-2 rounded-md bg-slate-950 px-3 text-xs font-medium text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950"
             >
-              <PlusCircle size={14} /> Add New Uniform
+              <PlusCircle size={14} /> Add uniform
             </button>
           )}
 
           {!showCartView && (
-            <div className="flex gap-1 rounded-[9px] border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800">
+            <div className="flex min-w-0 flex-1 gap-0.5 rounded-md border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800 sm:flex-none">
               {['All', 'Required', 'Optional'].map(f => (
                 <button 
                   key={f} 
                   onClick={() => setFilter(f as any)} 
-                  className={`rounded-[7px] px-4 py-2 text-[10px] font-bold transition-all ${filter === f ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-700' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`min-w-0 flex-1 rounded px-2.5 py-1.5 text-[10px] font-medium transition-all sm:flex-none sm:px-3 ${filter === f ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                   {f}
                 </button>
@@ -160,7 +161,7 @@ export const UniformShop: React.FC = () => {
           {showCartView && (
             <button 
               onClick={() => setShowCartView(false)}
-              className="px-6 py-3 bg-slate-100 text-slate-600 rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all border border-slate-200"
+              className="h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Back to Shop
             </button>
@@ -170,13 +171,13 @@ export const UniformShop: React.FC = () => {
 
       {/* Product Grid */}
       {!showCartView ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {filteredItems.map((item) => (
-            <div key={item.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none overflow-hidden group hover:border-blue-600 transition-all flex flex-col shadow-sm">
+            <div key={item.id} className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
               <div className="aspect-[4/3] bg-slate-50 dark:bg-slate-950 overflow-hidden relative border-b border-slate-100 dark:border-slate-800">
                 <img src={item.imageUrl} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105" alt={item.name} />
                 <div className="absolute top-3 left-3">
-                   <span className="px-3 py-1 bg-slate-900 text-white text-[8px] font-black uppercase tracking-[0.2em]">{item.category}</span>
+                   <span className="rounded-full bg-slate-950 px-2 py-1 text-[8px] font-medium text-white">{item.category}</span>
                 </div>
                 {isAdmin && (
                   <button 
@@ -187,17 +188,17 @@ export const UniformShop: React.FC = () => {
                   </button>
                 )}
               </div>
-              <div className="p-6 flex-1 flex flex-col">
-                <div className="flex items-start justify-between gap-3 mb-6">
-                  <h3 className="font-black text-sm uppercase text-slate-900 dark:text-white tracking-tight leading-tight">{item.name}</h3>
-                  <span className="text-base font-black font-mono text-blue-600">${item.price}</span>
+              <div className="flex flex-1 flex-col p-3 sm:p-5">
+                <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                  <h3 className="line-clamp-2 text-xs font-semibold leading-tight text-slate-900 dark:text-white sm:text-sm">{item.name}</h3>
+                  <span className="shrink-0 font-mono text-sm font-semibold text-slate-950 dark:text-white sm:text-base">${item.price}</span>
                 </div>
                 {canShop && (
                   <button 
                     onClick={() => addToCart(item)}
-                    className="w-full mt-auto py-4 bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.3em] hover:bg-slate-900 transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2"
+                    className="mt-auto flex h-9 w-full items-center justify-center gap-1.5 rounded-md bg-slate-950 px-2 text-[10px] font-medium text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950"
                   >
-                    <ShoppingCart size={14} /> Buy Online
+                    <ShoppingCart size={13} /> Add to cart
                   </button>
                 )}
               </div>
@@ -212,8 +213,30 @@ export const UniformShop: React.FC = () => {
         </div>
       ) : (
         /* Cart List Table */
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-none overflow-hidden animate-in slide-in-from-bottom-4 duration-500 shadow-2xl">
-           <table className="w-full text-left border-collapse">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm animate-in slide-in-from-bottom-4 duration-500 dark:border-slate-800 dark:bg-slate-900">
+           <div className="divide-y divide-slate-200 dark:divide-slate-800 md:hidden">
+             {cart.length === 0 ? (
+               <div className="px-5 py-16 text-center text-sm text-slate-400">Your cart is empty.</div>
+             ) : cart.map(item => (
+               <div key={item.cartId} className="flex min-w-0 items-center gap-3 p-4">
+                 <img src={item.imageUrl} className="h-12 w-12 shrink-0 rounded-lg object-cover" alt={item.name} />
+                 <div className="min-w-0 flex-1">
+                   <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{item.name}</p>
+                   <p className="mt-0.5 font-mono text-xs text-slate-500">${item.price} each</p>
+                   <div className="mt-2 flex w-fit items-center rounded-md border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+                     <button onClick={() => updateCartQuantity(item.cartId, -1)} className="grid h-7 w-8 place-items-center"><Minus size={12} /></button>
+                     <span className="min-w-7 text-center font-mono text-xs font-medium">{item.quantity}</span>
+                     <button onClick={() => updateCartQuantity(item.cartId, 1)} className="grid h-7 w-8 place-items-center"><Plus size={12} /></button>
+                   </div>
+                 </div>
+                 <div className="text-right">
+                   <p className="font-mono text-sm font-semibold text-slate-950 dark:text-white">${(item.price * item.quantity).toFixed(2)}</p>
+                   <button onClick={() => removeFromCart(item.cartId)} className="mt-2 text-rose-500"><Trash2 size={16} /></button>
+                 </div>
+               </div>
+             ))}
+           </div>
+           <table className="hidden w-full border-collapse text-left md:table">
               <thead className="bg-slate-50 dark:bg-slate-950/50 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800">
                  <tr>
                     <th className="px-8 py-6">Item</th>
@@ -259,14 +282,14 @@ export const UniformShop: React.FC = () => {
            </table>
            
            {cart.length > 0 && (
-             <div className="p-10 bg-slate-50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-8">
+             <div className="flex flex-col gap-4 border-t border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/50 sm:p-6 md:flex-row md:items-center md:justify-between md:gap-8 md:p-10">
                 <div>
                    <p className="text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Order Total</p>
-                   <p className="text-5xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">${subtotal.toFixed(2)}</p>
+                   <p className="font-mono text-3xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl md:text-5xl">${subtotal.toFixed(2)}</p>
                 </div>
                 <button 
                   onClick={() => setShowCheckout(true)}
-                  className="px-16 py-6 bg-slate-950 dark:bg-blue-600 text-white font-black uppercase tracking-[0.4em] text-xs shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:bg-blue-600 transition-all flex items-center gap-4 active:scale-95"
+                  className="flex h-11 items-center justify-center gap-2 rounded-md bg-slate-950 px-5 text-sm font-medium text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950"
                 >
                    Proceed to Payment <ArrowRight size={22} />
                 </button>
@@ -279,14 +302,14 @@ export const UniformShop: React.FC = () => {
       {canShop && cart.length > 0 && !showCartView && (
         <button 
           onClick={() => setShowCartView(true)}
-          className="fixed bottom-10 right-10 z-[100] group flex items-center gap-6 bg-slate-950 dark:bg-blue-600 text-white pl-8 pr-6 py-6 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] border border-white/10 hover:scale-105 transition-all animate-in slide-in-from-right-10 duration-500"
+          className="fixed bottom-4 right-4 z-[100] flex items-center gap-3 rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-white shadow-xl transition hover:bg-slate-800 sm:bottom-8 sm:right-8 dark:bg-blue-600"
         >
            <div className="text-left">
               <p className="text-[9px] font-black uppercase text-white/40 tracking-[0.3em] mb-1">Items Total</p>
-              <p className="text-2xl font-black font-mono leading-none">${subtotal.toFixed(2)}</p>
+              <p className="font-mono text-lg font-semibold leading-none">${subtotal.toFixed(2)}</p>
            </div>
-           <div className="relative p-4 bg-white/10 border border-white/20 rounded-none">
-              <ShoppingCart size={24} />
+           <div className="relative grid h-9 w-9 place-items-center rounded-lg bg-white/10">
+              <ShoppingCart size={18} />
               <span className="absolute -top-2 -right-2 bg-rose-600 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-slate-950 shadow-lg">
                 {cart.reduce((a, b) => a + b.quantity, 0)}
               </span>
@@ -295,18 +318,17 @@ export const UniformShop: React.FC = () => {
       )}
 
       {/* Admin: Add Item Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-6">
-           <div className={`absolute inset-0 bg-slate-100/95 dark:bg-slate-950/90 backdrop-blur-md ${isAddModalClosing ? 'form-backdrop-out' : 'form-backdrop-in'}`} onClick={() => closeAddUniformForm()} />
-           <div className={`relative bg-white dark:bg-slate-900 max-w-xl w-full border border-slate-200 dark:border-slate-800 rounded-[15px] overflow-hidden shadow-2xl max-h-[92vh] overflow-y-auto sidebar-scrollbar ${isAddModalClosing ? 'form-screen-out' : 'form-screen-in'}`}>
-              <header className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-10">
+      {showAddModal && createPortal((
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-white dark:bg-slate-950 sm:bg-slate-100/95 sm:p-6 sm:backdrop-blur-md dark:sm:bg-slate-950/90">
+           <div className={`relative flex h-full w-full flex-col overflow-hidden bg-white dark:bg-slate-900 sm:h-auto sm:max-h-[92vh] sm:max-w-xl sm:rounded-xl sm:border sm:border-slate-200 sm:shadow-2xl dark:sm:border-slate-800 ${isAddModalClosing ? 'form-screen-out' : 'form-screen-in'}`}>
+              <header className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95 sm:px-6 sm:py-4">
                  <div>
-                   <h3 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Add New Uniform</h3>
-                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Save a real product photo into the shop.</p>
+                   <h3 className="text-base font-semibold tracking-tight text-slate-900 dark:text-white sm:text-xl">Add new uniform</h3>
+                   <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">Add a product to the school shop.</p>
                  </div>
-                 <button onClick={() => closeAddUniformForm()} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-[15px] text-slate-400 hover:text-rose-500 transition-colors"><X size={22}/></button>
+                 <button aria-label="Close add uniform" onClick={() => closeAddUniformForm()} className="grid h-9 w-9 place-items-center text-slate-400 transition hover:text-slate-950 dark:hover:text-white"><X size={20}/></button>
               </header>
-              <div className="p-6 space-y-6 bg-slate-50/50 dark:bg-slate-950/20">
+              <div className="flex-1 space-y-5 overflow-y-auto bg-slate-50/50 p-4 dark:bg-slate-950/20 sm:p-6">
                  <div className="space-y-3">
                     <label className={googleLabel}>Item Name</label>
                     <input 
@@ -348,9 +370,9 @@ export const UniformShop: React.FC = () => {
                         className="sr-only"
                         onChange={e => handleUniformImageSelect(e.target.files?.[0])}
                       />
-                      <div className="min-h-64 border border-dashed border-slate-300 dark:border-slate-700 rounded-[15px] bg-white dark:bg-slate-950 flex items-center justify-center overflow-hidden hover:border-blue-600 hover:ring-4 hover:ring-blue-500/10 transition-all shadow-sm">
+                      <div className="flex min-h-48 items-center justify-center overflow-hidden rounded-xl border border-dashed border-slate-300 bg-white shadow-sm transition hover:border-blue-600 hover:ring-4 hover:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950 sm:min-h-56">
                         {newItem.imageUrl ? (
-                          <img src={newItem.imageUrl} className="w-full h-64 object-cover" alt="Uniform preview" />
+                          <img src={newItem.imageUrl} className="h-48 w-full object-cover sm:h-56" alt="Uniform preview" />
                         ) : (
                           <div className="text-center px-8">
                             <ImageIcon size={34} className="mx-auto text-slate-300 mb-4" />
@@ -374,14 +396,14 @@ export const UniformShop: React.FC = () => {
                  </div>
                  <button 
                   onClick={handleAddItem}
-                  className="w-full py-5 bg-blue-600 text-white font-bold tracking-wide text-sm rounded-[15px] shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-[0.99]"
+                  className="h-11 w-full rounded-md bg-slate-950 px-4 text-sm font-medium text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950"
                  >
                     Save to Shop
                  </button>
               </div>
            </div>
         </div>
-      )}
+      ), document.body)}
 
       {/* Admin: Delete Confirmation Modal */}
       {itemToDelete && (
