@@ -559,6 +559,10 @@ export const StaffManagement: React.FC = () => {
              
              <form onSubmit={async (e) => {
                e.preventDefault();
+               if (!staffImageData) {
+                 notify('error', 'Add a profile image for this staff member.');
+                 return;
+               }
                if (selectedClassesForAdd.length === 0) {
                  notify('error', 'Select at least one class for this staff member.');
                  return;
@@ -638,9 +642,19 @@ export const StaffManagement: React.FC = () => {
                     ) : (
                       <div className="space-y-2">
                         <label className={googleLabel}>National ID</label>
-                        <input name="nationalId" placeholder="63-XXXXXX-X-XX" className={googleInput} />
+                        <input required name="nationalId" placeholder="63-XXXXXX-X-XX" className={googleInput} />
                       </div>
                     )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                      <label className={googleLabel}>Birth Date</label>
+                      <input required type="date" name="dob" className={googleInput} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className={googleLabel}>Home Address</label>
+                      <input required name="address" placeholder="Enter home address" className={googleInput} />
+                    </div>
                   </div>
                 </section>
 

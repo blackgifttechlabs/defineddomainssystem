@@ -710,12 +710,42 @@ export const useStore = create<AppState>((set, get) => {
         const fullName = `${staffData.firstName} ${staffData.lastName}`.trim();
         const email = staffData.email.toLowerCase().trim();
         const staffPassword = staffData.password?.trim() || '';
-        if (!fullName || !email || staffPassword.length < 6 || !staffData.position) {
+        const nationality = staffData.nationality?.trim();
+        const identityNumber = nationality === 'Zimbabwean'
+          ? staffData.nationalId?.trim()
+          : staffData.passportNumber?.trim();
+        if (
+          !fullName ||
+          !email ||
+          staffPassword.length < 6 ||
+          !staffData.position ||
+          !staffData.imageUrl ||
+          !nationality ||
+          !identityNumber ||
+          !staffData.dob ||
+          !staffData.address?.trim() ||
+          !staffData.phone?.trim() ||
+          !staffData.assignedClasses?.length
+        ) {
           throw new Error('Complete all required staff details. Passwords must contain at least 6 characters.');
         }
         const finalImageUrl = extractSrcFromHtml(staffData.imageUrl || '');
-        const staffCredential = await createUserWithEmailAndPassword(secondaryAuth, email, staffPassword);
-        const staffUid = staffCredential.user.uid;
+        let staffUid = '';
+        try {
+          const staffCredential = await createUserWithEmailAndPassword(secondaryAuth, email, staffPassword);
+          staffUid = staffCredential.user.uid;
+        } catch (authError: any) {
+          if (authError.code !== 'auth/email-already-in-use') throw authError;
+
+          // The Auth account may remain after its Firestore profile was removed.
+          // Reattach it when the supplied credentials prove ownership.
+          try {
+            const existingCredential = await signInWithEmailAndPassword(secondaryAuth, email, staffPassword);
+            staffUid = existingCredential.user.uid;
+          } catch {
+            throw new Error('This email already has a Firebase login with a different password. Reset or delete the existing Authentication account, then try again.');
+          }
+        }
 
         if (staffUid) {
           await setDoc(doc(db, 'staff', staffUid), { 
@@ -739,9 +769,7 @@ export const useStore = create<AppState>((set, get) => {
         }
       } catch (err: any) {
         await signOut(secondaryAuth).catch(() => undefined);
-        const message = err.code === 'auth/email-already-in-use'
-          ? 'A staff login already exists for this email address.'
-          : err.message || 'Staff registration failed.';
+        const message = err.message || 'Staff registration failed.';
         get().notify('error', message);
         throw err;
       }
