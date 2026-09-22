@@ -35,25 +35,20 @@ const NotificationHost = () => {
   const { notifications, removeNotification } = useStore();
 
   return (
-    <div className="fixed top-6 right-6 z-[700] flex flex-col gap-3 pointer-events-none">
-      {(notifications || []).map((n) => (
+    <div className="pointer-events-none fixed left-1/2 top-3 z-[700] flex w-[calc(100%-24px)] max-w-sm -translate-x-1/2 flex-col gap-2 sm:top-5">
+      {[...(notifications || [])].reverse().map((n) => (
         <div 
           key={n.id} 
-          className={`
-            pointer-events-auto min-w-[320px] max-w-md p-5 rounded-none shadow-2xl flex items-center justify-between gap-4 border-l-4 animate-notification-in
-            ${n.type === 'success' ? 'bg-emerald-50 border-emerald-500 text-emerald-800' : ''}
-            ${n.type === 'error' ? 'bg-rose-50 border-rose-500 text-rose-800' : ''}
-            ${n.type === 'info' ? 'bg-blue-50 border-blue-500 text-blue-800' : ''}
-          `}
+          className="pointer-events-auto flex w-full items-center gap-3 rounded-2xl border border-white/60 bg-white/90 px-3.5 py-3 text-slate-900 shadow-[0_12px_40px_rgba(15,23,42,0.18)] backdrop-blur-2xl animate-notification-in dark:border-white/10 dark:bg-slate-900/90 dark:text-white"
         >
-          <div className="flex items-center gap-3">
-            {n.type === 'success' && <CheckCircle2 size={24} />}
-            {n.type === 'error' && <AlertCircle size={24} />}
-            {n.type === 'info' && <Info size={24} />}
-            <p className="text-sm font-black uppercase tracking-tight">{n.message}</p>
+          <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-white ${n.type === 'success' ? 'bg-emerald-500' : n.type === 'error' ? 'bg-rose-500' : 'bg-blue-500'}`}>
+            {n.type === 'success' && <CheckCircle2 size={17} />}
+            {n.type === 'error' && <AlertCircle size={17} />}
+            {n.type === 'info' && <Info size={17} />}
           </div>
-          <button onClick={() => removeNotification(n.id)} className="opacity-40 hover:opacity-100 transition-opacity">
-            <X size={18} />
+          <p className="min-w-0 flex-1 text-[13px] font-medium leading-5">{n.message}</p>
+          <button aria-label="Dismiss notification" onClick={() => removeNotification(n.id)} className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white">
+            <X size={14} />
           </button>
         </div>
       ))}

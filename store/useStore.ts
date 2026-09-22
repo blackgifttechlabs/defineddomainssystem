@@ -218,7 +218,7 @@ export const useStore = create<AppState>((set, get) => {
     notifications: [],
     notify: (type, message, duration = 5000) => {
       const id = Math.random().toString(36).substring(7);
-      set(state => ({ notifications: [...state.notifications, { id, type, message }] }));
+      set(state => ({ notifications: [...state.notifications.filter(item => item.message !== message), { id, type, message }].slice(-4) }));
       setTimeout(() => get().removeNotification(id), duration);
     },
     removeNotification: (id) => set(state => ({ notifications: state.notifications.filter(n => n.id !== id) })),
@@ -707,27 +707,15 @@ export const useStore = create<AppState>((set, get) => {
     },
     addStaff: async (staffData) => {
       try {
-        const fullName = `${staffData.firstName} ${staffData.lastName}`;
+        const fullName = `${staffData.firstName} ${staffData.lastName}`.trim();
         const email = staffData.email.toLowerCase().trim();
-        const staffPassword = staffData.password && staffData.password.trim().length >= 6 ? staffData.password.trim() : "000000";
-        const finalImageUrl = extractSrcFromHtml(staffData.imageUrl || '');
-        let staffUid = '';
-
-        try {
-          const staffCredential = await createUserWithEmailAndPassword(secondaryAuth, email, staffPassword);
-          staffUid = staffCredential.user.uid;
-        } catch (err: any) {
-          if (err.code === 'auth/email-already-in-use') {
-            try {
-              const cred = await signInWithEmailAndPassword(secondaryAuth, email, staffPassword);
-              staffUid = cred.user.uid;
-            } catch (sErr) {
-              const cred = await signInWithEmailAndPassword(secondaryAuth, email, "000000");
-              staffUid = cred.user.uid;
-              await updatePassword(secondaryAuth.currentUser!, staffPassword);
-            }
-          } else { throw err; }
+        const staffPassword = staffData.password?.trim() || '';
+        if (!fullName || !email || staffPassword.length < 6 || !staffData.position) {
+          throw new Error('Complete all required staff details. Passwords must contain at least 6 characters.');
         }
+        const finalImageUrl = extractSrcFromHtml(staffData.imageUrl || '');
+        const staffCredential = await createUserWithEmailAndPassword(secondaryAuth, email, staffPassword);
+        const staffUid = staffCredential.user.uid;
 
         if (staffUid) {
           await setDoc(doc(db, 'staff', staffUid), { 
@@ -749,9 +737,13 @@ export const useStore = create<AppState>((set, get) => {
           await signOut(secondaryAuth);
           get().notify('success', `Staff member registered successfully.`);
         }
-      } catch (err: any) { 
-        await signOut(secondaryAuth);
-        get().notify('error', err.message); 
+      } catch (err: any) {
+        await signOut(secondaryAuth).catch(() => undefined);
+        const message = err.code === 'auth/email-already-in-use'
+          ? 'A staff login already exists for this email address.'
+          : err.message || 'Staff registration failed.';
+        get().notify('error', message);
+        throw err;
       }
     },
     updateStaff: async (id, data) => {
@@ -918,13 +910,13 @@ export const useStore = create<AppState>((set, get) => {
       try {
         await addDoc(collection(db, 'orders'), { ...orderData, status: 'Uncollected', timestamp: new Date().toISOString() });
         get().clearCart();
-        get().notify('success', 'Order placed.');
+        get().notify('success', 'Your order was placed successfully.');
       } catch (err: any) { get().notify('error', err.message); }
     },
     updateOrderStatus: async (orderId, status) => {
       try {
         await updateDoc(doc(db, 'orders', orderId), { status });
-        get().notify('success', 'Status updated.');
+        get().notify('success', `Order marked as ${status.toLowerCase()}.`);
       } catch (err: any) { get().notify('error', err.message); }
     },
     saveMilestoneRecord: async (record) => {
