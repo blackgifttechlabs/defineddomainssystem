@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { Role, Student, Parent, Staff } from '../types';
-import { Mail, Lock, ShieldCheck, Activity, Users, Loader2, ArrowLeft, GraduationCap, ChevronRight, Search, Zap } from 'lucide-react';
+import { Mail, Lock, ShieldCheck, Activity, Users, Loader2, ArrowLeft, GraduationCap, ChevronRight, Search, Zap, Eye, EyeOff } from 'lucide-react';
 import * as THREE from 'three';
 
 const LogoImg = "https://i.ibb.co/spSVqW8s/definedlogo.png";
@@ -14,6 +14,7 @@ export const LoginPage: React.FC = () => {
   const [step, setStep] = useState<'role' | 'credentials'>('role');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
   // Suggestion specific states
@@ -452,13 +453,23 @@ export const LoginPage: React.FC = () => {
                       <div className="relative">
                         <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <input 
-                          type="password" 
+                          type={showPassword ? 'text' : 'password'}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder="••••••••" 
                           required
-                          className="w-full pl-12 pr-6 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold dark:text-white text-sm"
+                          autoComplete="current-password"
+                          className="w-full rounded-xl border border-slate-200 bg-white py-4 pl-12 pr-14 text-sm font-bold outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(visible => !visible)}
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                          aria-pressed={showPassword}
+                          className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:hover:bg-slate-800 dark:hover:text-white"
+                        >
+                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
                       </div>
                     </div>
                   </div>
