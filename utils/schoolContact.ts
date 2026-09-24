@@ -11,7 +11,10 @@ export const schoolContact = {
   address: '24 Eliot Street, Rhodene, Masvingo, Zimbabwe',
   phone: env.VITE_SCHOOL_PHONE || '+263 775 926 454',
   email: env.VITE_SCHOOL_EMAIL || 'admin@defineddomain.org',
-  coordinates: parseCoordinates(env.VITE_SCHOOL_LATITUDE, env.VITE_SCHOOL_LONGITUDE),
+  coordinates: parseCoordinates(env.VITE_SCHOOL_LATITUDE, env.VITE_SCHOOL_LONGITUDE) || {
+    latitude: -20.055226,
+    longitude: 30.831660,
+  },
 };
 export function directionsUrl(destination: Coordinates | string): string {
   const params = new URLSearchParams({ api: '1', travelmode: 'driving', destination: typeof destination === 'string'
