@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'qrcode';
+import { collection, doc, getDoc, getDocs, getFirestore, limit, query, where } from 'firebase/firestore';
+import type { Student } from '../../types';
+import { findVerificationStudent, parseStudentLookup } from '../../utils/studentVerification';
 import {
   CheckCircle2,
   ChevronRight,
@@ -24,8 +27,9 @@ const VerificationBaseUrl = 'https://defineddomains.org/';
 
 export const StudentIdVerification: React.FC = () => {
   const { students } = useStore();
-  const [hasWaited, setHasWaited] = useState(false);
-  const [searchInput, setSearchInput] = useState('');
+  const [searchInput, setSearchInput] = useState(() => new URLSearchParams(window.location.search).get('id-card') || '');
+  const [lookupResult, setLookupResult] = useState<{ lookup: string; student: Student | null; error: string }>({ lookup: '', student: null, error: '' });
+  const [retryCount, setRetryCount] = useState(0);
   const [showingBack, setShowingBack] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [scale, setScale] = useState(1);
@@ -35,26 +39,46 @@ export const StudentIdVerification: React.FC = () => {
   const previewRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const urlCardId = new URLSearchParams(window.location.search).get('id-card') || '';
-  const activeLookupId = urlCardId || searchInput.trim();
-
-  const student = useMemo(() => {
-    if (!activeLookupId) return null;
-    const query = activeLookupId.toLowerCase();
-    return (
-      students.find(
-        (item) =>
-          item.firebaseUid?.toLowerCase() === query ||
-          item.id.toLowerCase() === query ||
-          item.fullName.toLowerCase() === query
-      ) || null
-    );
-  }, [activeLookupId, students]);
+  const activeLookupId = parseStudentLookup(searchInput);
+  const cachedStudent = useMemo(() => findVerificationStudent(students, activeLookupId), [students, activeLookupId]);
+  const resolved = lookupResult.lookup === activeLookupId;
+  const student = cachedStudent || (resolved ? lookupResult.student : null);
+  const lookupError = resolved ? lookupResult.error : '';
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setHasWaited(true), 1800);
-    return () => window.clearTimeout(timer);
-  }, []);
+    if (!activeLookupId || cachedStudent) return;
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      try {
+        const db = getFirestore();
+        const normalize = (record: { id: string; data: () => unknown }): Student => {
+          const data = record.data() as Student;
+          return { ...data, firebaseUid: record.id, id: data.id || record.id,
+            fullName: data.fullName || `${data.firstName || ''} ${data.lastName || ''}`.trim() };
+        };
+        let match: Student | null = null;
+        // QR codes contain the document ID, so this works without loading the directory.
+        if (!activeLookupId.includes('/')) {
+          const record = await getDoc(doc(db, 'students', activeLookupId));
+          if (record.exists()) match = normalize(record);
+        }
+        if (!match) {
+          const records = await Promise.all([
+            ['firebaseUid', activeLookupId],
+            ['id', activeLookupId.toUpperCase()],
+            ['fullName', activeLookupId],
+          ].map(([field, value]) => getDocs(query(collection(db, 'students'), where(field, '==', value), limit(2)))));
+          const unique = new Map(records.flatMap(snapshot => snapshot.docs.map(record => [record.id, normalize(record)] as const)));
+          if (unique.size === 1) match = [...unique.values()][0];
+        }
+        if (!cancelled) setLookupResult({ lookup: activeLookupId, student: match, error: '' });
+      } catch {
+        if (!cancelled) setLookupResult({ lookup: activeLookupId, student: null,
+          error: 'Student records could not be loaded. Check your connection and try again. If this continues, contact the school.' });
+      }
+    }, 250);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [activeLookupId, cachedStudent, retryCount]);
 
   // When a student is found, trigger the animated "ID is Valid" banner first, then reveal card
   useEffect(() => {
@@ -114,7 +138,7 @@ export const StudentIdVerification: React.FC = () => {
     window.print();
   };
 
-  const isLoading = Boolean(urlCardId) && students.length === 0 && !hasWaited;
+  const isLoading = Boolean(activeLookupId) && !student && !resolved;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
@@ -304,11 +328,12 @@ export const StudentIdVerification: React.FC = () => {
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-rose-50 text-rose-500">
               <ShieldAlert size={40} />
             </div>
-            <h2 className="mt-5 text-2xl font-black uppercase tracking-tight text-slate-900">ID Not Recognized</h2>
+            <h2 className="mt-5 text-2xl font-black uppercase tracking-tight text-slate-900">{lookupError ? 'Verification Unavailable' : 'ID Not Recognized'}</h2>
             <p className="mt-2 text-xs font-medium leading-relaxed text-slate-500">
-              The query <span className="font-mono font-bold text-rose-600">"{activeLookupId}"</span> does not match an active student record in Defined Domains Inclusive School database.
+              {lookupError || <>The query <span className="font-mono font-bold text-rose-600">"{activeLookupId}"</span> could not uniquely identify an active student. Scan the QR code on the latest card or enter the student's full name.</>}
             </p>
 
+            {lookupError && <button onClick={() => { setLookupResult({ lookup: '', student: null, error: '' }); setRetryCount(value => value + 1); }} className="mt-4 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white">Retry verification</button>}
             <div className="mt-6 border-t border-slate-100 pt-6">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Try Searching Again</p>
               <div className="mt-3 flex gap-2">

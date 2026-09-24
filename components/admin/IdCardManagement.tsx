@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { Student } from '../../types';
+import { findVerificationStudent } from '../../utils/studentVerification';
 import { processStudentImage } from '../../utils/imageProcessor';
 
 import {
@@ -279,12 +280,7 @@ export const IdCardManagement: React.FC = () => {
 
   const verifyMatch = useMemo(() => {
     if (activeView !== 'verify' || !search.trim()) return null;
-    const query = search.trim().toLowerCase();
-    return students.find(student =>
-      student.id.toLowerCase() === query ||
-      student.firebaseUid?.toLowerCase() === query ||
-      student.fullName.toLowerCase() === query
-    ) || null;
+    return findVerificationStudent(students, search);
   }, [activeView, search, students]);
 
   return (

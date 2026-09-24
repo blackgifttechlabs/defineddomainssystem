@@ -127,9 +127,10 @@ export const StudentDirectory: React.FC = () => {
   // Keep selectedStudent synced with latest updates from store when not actively editing
   useEffect(() => {
     if (selectedStudent && !isEditing) {
-      const fresh = students.find(s => 
-        (selectedStudent.firebaseUid && s.firebaseUid === selectedStudent.firebaseUid) || 
-        (selectedStudent.id && s.id === selectedStudent.id)
+      // Display IDs can repeat in imported records; never let one override a document match.
+      const fresh = students.find(s => selectedStudent.firebaseUid
+        ? s.firebaseUid === selectedStudent.firebaseUid
+        : Boolean(selectedStudent.id) && s.id === selectedStudent.id
       );
       if (fresh) {
         if (fresh.fullName !== selectedStudent.fullName || 
@@ -410,7 +411,7 @@ export const StudentDirectory: React.FC = () => {
               </div>
             ) : paginatedStudents.map(student => (
               <button
-                key={student.id}
+                key={student.firebaseUid || student.id}
                 type="button"
                 onClick={() => openStudent(student)}
                 className="flex w-full min-w-0 items-center gap-3 px-4 py-4 text-left transition hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-slate-900"
@@ -457,7 +458,7 @@ export const StudentDirectory: React.FC = () => {
                 ) : (
                   paginatedStudents.map(student => (
                     <tr
-                      key={student.id}
+                      key={student.firebaseUid || student.id}
                       className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                       onClick={() => openStudent(student)}
                     >
@@ -527,7 +528,7 @@ export const StudentDirectory: React.FC = () => {
           <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:gap-4 sm:p-6 lg:grid-cols-3 xl:grid-cols-4">
             {paginatedStudents.map(student => (
               <div
-                key={student.id}
+                key={student.firebaseUid || student.id}
                 onClick={() => openStudent(student)}
                 className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-[9px] p-5 shadow-sm hover:shadow-md hover:border-blue-500 transition-all cursor-pointer flex flex-col justify-between"
               >

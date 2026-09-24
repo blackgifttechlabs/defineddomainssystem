@@ -383,6 +383,7 @@ export const useStore = create<AppState>((set, get) => {
           const full = (data.firstName && data.lastName) ? `${data.firstName} ${data.lastName}`.trim() : (data.fullName || `${fName} ${lName}`.trim());
           return {
             ...data,
+            firebaseUid: doc.id,
             firstName: fName,
             lastName: lName,
             fullName: full,
@@ -693,7 +694,7 @@ export const useStore = create<AppState>((set, get) => {
 
         await updateDoc(studentRef, processed);
         set(state => ({
-          students: state.students.map(s => (s.firebaseUid === uid || s.id === uid || (existingStudent && s.id === existingStudent.id)) ? { ...s, ...processed } : s)
+          students: state.students.map(s => s.firebaseUid === uid ? { ...s, ...processed, firebaseUid: uid } : s)
         }));
         get().notify('success', 'Student profile updated.');
       } catch (err: any) { get().notify('error', err.message); }

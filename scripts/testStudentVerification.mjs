@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import ts from 'typescript';
+
+const source = readFileSync(new URL('../utils/studentVerification.ts', import.meta.url), 'utf8');
+const { outputText } = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ES2022 } });
+const { parseStudentLookup, findVerificationStudent } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
+const other = { id: 'DD001', firebaseUid: 'OtherRecord', fullName: 'Mqhelewethu Ndlunkulu Ndlovu' };
+const student = { id: 'DD001', firebaseUid: 'MukundiRecord', fullName: 'Mukundi' };
+const students = [other, student];
+assert.equal(parseStudentLookup(' https://defineddomains.org/?id-card=MukundiRecord '), 'MukundiRecord');
+assert.equal(parseStudentLookup(' #DD001 '), 'DD001');
+assert.equal(findVerificationStudent(students, 'MukundiRecord'), student);
+assert.equal(findVerificationStudent(students, 'https://defineddomains.org/?id-card=MukundiRecord'), student);
+assert.equal(findVerificationStudent(students, ' mukundi '), student);
+assert.equal(findVerificationStudent(students, 'DD001'), null, 'Duplicated printed IDs must not select the first student');
+assert.equal(findVerificationStudent([student], 'dd001'), student);
+assert.equal(findVerificationStudent(students, 'mukundirecord'), null, 'Document IDs are case sensitive');
+assert.equal(findVerificationStudent(students, ''), null);
+assert.equal(findVerificationStudent(students, 'missing'), null);
+assert.equal(findVerificationStudent([{ ...other, id: 'MukundiRecord' }, student], 'MukundiRecord'), student);
+console.log('Student verification regression checks passed.');
