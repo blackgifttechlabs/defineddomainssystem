@@ -1,0 +1,2 @@
+export const verificationButton = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60';
+export const verificationPrimary = `${verificationButton} !border-neutral-950 !bg-neutral-950 !text-white hover:!bg-neutral-800`;
