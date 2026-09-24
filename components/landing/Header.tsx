@@ -92,9 +92,9 @@ export const Header: React.FC = () => {
 
   return (
     <>
-      <header className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-        scrolled 
-          ? 'h-16 lg:h-20 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 shadow-xl' 
+      <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+        scrolled || view !== 'landing'
+          ? 'h-16 lg:h-20 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 shadow-md' 
           : 'h-20 lg:h-24 bg-transparent border-b border-transparent'
       }`}>
         <div className="max-w-[1600px] mx-auto h-full flex items-center justify-between px-4 md:px-6 lg:px-12 gap-2 lg:gap-4">
