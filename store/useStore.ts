@@ -189,7 +189,16 @@ export const useStore = create<AppState>((set, get) => {
         const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
         if (userDoc.exists()) {
           const userData = userDoc.data() as User;
-          set({ user: userData, isLoggedIn: true, view: 'app', activeTab: 'dashboard' });
+          const currentView = get().view;
+          const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+          const hasVerifyParam = params && (params.has('id-card') || params.has('v'));
+          const isVerifying = currentView === 'id-verify' || currentView === 'verify' || hasVerifyParam;
+
+          set({ 
+            user: userData, 
+            isLoggedIn: true, 
+            ...(isVerifying ? {} : { view: 'app', activeTab: 'dashboard' }) 
+          });
         }
       } catch (err) {
         console.error("Auth sync error:", err);
@@ -209,7 +218,14 @@ export const useStore = create<AppState>((set, get) => {
     }),
     user: null,
     isLoggedIn: false,
-    view: 'landing',
+    view: (() => {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('id-card')) return 'id-verify';
+        if (params.has('v')) return 'verify';
+      }
+      return 'landing';
+    })(),
     setView: (view) => set({ view }),
     isMobileMenuOpen: false,
     toggleMobileMenu: (open) => set((state) => ({ isMobileMenuOpen: open !== undefined ? open : !state.isMobileMenuOpen })),

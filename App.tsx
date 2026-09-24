@@ -129,15 +129,24 @@ const App: React.FC = () => {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
-    initializeData();
-    
-    const params = new URLSearchParams(window.location.search);
-    if (params.has('v')) {
-      setView('verify');
-    } else if (params.has('id-card')) {
-      setView('id-verify');
-    }
   }, [theme]);
+
+  useEffect(() => {
+    initializeData();
+
+    const checkUrlRoute = () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('id-card')) {
+        setView('id-verify');
+      } else if (params.has('v')) {
+        setView('verify');
+      }
+    };
+
+    checkUrlRoute();
+    window.addEventListener('popstate', checkUrlRoute);
+    return () => window.removeEventListener('popstate', checkUrlRoute);
+  }, []);
 
   useEffect(() => {
     window.scrollTo(0, 0);
