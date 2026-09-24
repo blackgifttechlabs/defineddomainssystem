@@ -119,7 +119,7 @@ export const LoginPage: React.FC = () => {
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@defineddomain.com"
+                  placeholder="name@defineddomain.org"
                   required
                   disabled={loading}
                   className="w-full pl-12 pr-4 py-4 rounded-xl bg-slate-50 dark:bg-slate-900 border-2 border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-slate-950 transition-all outline-none font-medium placeholder:text-slate-400/70"

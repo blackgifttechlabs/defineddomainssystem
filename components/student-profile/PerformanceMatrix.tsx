@@ -99,7 +99,7 @@ export const PerformanceMatrix: React.FC<Props> = ({ student, logs, milestones, 
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text("27 Colnebrook Lane, Harare", 195, 15, { align: 'right' });
-    doc.text("admin@defineddomain.com", 195, 20, { align: 'right' });
+    doc.text("admin@defineddomain.org", 195, 20, { align: 'right' });
     doc.text("+263 775 926 454", 195, 25, { align: 'right' });
 
     // Report Identity

@@ -27,7 +27,7 @@ export const NAV_ITEMS = [
 export const MOCK_USER = {
   id: 'staff-1',
   name: 'Kevin Muzangaza',
-  email: 'kevin@defineddomain.com',
+  email: 'kevin@defineddomain.org',
   role: 'SUPER_ADMIN' as const,
   avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Kevin'
 };

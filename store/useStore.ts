@@ -456,7 +456,7 @@ export const useStore = create<AppState>((set, get) => {
         const count = snapshot.size + 1;
         const formattedId = `DD${count.toString().padStart(3, '0')}`;
         
-        const studentEmail = `${formattedId.toLowerCase()}@defineddomain.com`;
+        const studentEmail = `${formattedId.toLowerCase()}@defineddomain.org`;
         const studentPass = studentData.password && studentData.password.trim().length >= 6 ? studentData.password.trim() : "000000";
         const finalImageUrl = extractSrcFromHtml(studentData.imageUrl || '');
         let studentUid = '';
@@ -587,7 +587,7 @@ export const useStore = create<AppState>((set, get) => {
         processed.lastName = resolvedLastName;
         processed.fullName = `${resolvedFirstName} ${resolvedLastName}`.trim();
 
-        const studentEmail = (processed.email || existingStudent?.email || (existingStudent?.id ? `${existingStudent.id.toLowerCase()}@defineddomain.com` : '')).toLowerCase().trim();
+        const studentEmail = (processed.email || existingStudent?.email || (existingStudent?.id ? `${existingStudent.id.toLowerCase()}@defineddomain.org` : '')).toLowerCase().trim();
         const studentPass = processed.password?.trim();
 
         if (studentPass && studentEmail) {

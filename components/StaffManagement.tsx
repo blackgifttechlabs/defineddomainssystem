@@ -667,7 +667,7 @@ export const StaffManagement: React.FC = () => {
                   <div className="grid grid-cols-1 gap-5">
                     <div className="space-y-2">
                       <label className={googleLabel}>Email Address</label>
-                      <input required type="email" name="email" className={googleInput} placeholder="name@defineddomain.com" />
+                      <input required type="email" name="email" className={googleInput} placeholder="name@defineddomain.org" />
                       <p className="text-[11px] text-slate-400">Used for login and parent or school updates.</p>
                     </div>
                     <div className="space-y-2">

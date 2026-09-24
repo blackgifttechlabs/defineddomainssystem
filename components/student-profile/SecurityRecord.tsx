@@ -46,7 +46,7 @@ export const SecurityRecord: React.FC<Props> = ({ student, parentPassword, paren
               </div>
             </div>
             <p className="break-all text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {student.email || `${student.id.toLowerCase()}@defineddomain.com`}
+              {student.email || `${student.id.toLowerCase()}@defineddomain.org`}
             </p>
           </div>
 

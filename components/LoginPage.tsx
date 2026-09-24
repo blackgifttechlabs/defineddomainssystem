@@ -185,7 +185,7 @@ export const LoginPage: React.FC = () => {
       let loginPass = (bypassPass || password).trim();
 
       if (selectedRole === 'STUDENT' && selectedStudentProfile) {
-        loginEmail = (selectedStudentProfile.email || `${selectedStudentProfile.id.toLowerCase()}@defineddomain.com`).toLowerCase().trim();
+        loginEmail = (selectedStudentProfile.email || `${selectedStudentProfile.id.toLowerCase()}@defineddomain.org`).toLowerCase().trim();
       } else if (selectedRole === 'PARENT' && selectedParentProfile) {
         loginEmail = (selectedParentProfile.email || '').toLowerCase().trim();
       } else if (selectedRole === 'SPECIALIST' && selectedStaffProfile) {
@@ -440,7 +440,7 @@ export const LoginPage: React.FC = () => {
                             type="email" 
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="name@defineddomain.com"
+                            placeholder="name@defineddomain.org"
                             required
                             className="w-full pl-12 pr-6 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold dark:text-white text-sm"
                           />

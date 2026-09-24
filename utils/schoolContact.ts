@@ -10,7 +10,7 @@ export const schoolContact = {
   name: 'Defined Domains Inclusive School',
   address: '24 Eliot Street, Rhodene, Masvingo, Zimbabwe',
   phone: env.VITE_SCHOOL_PHONE || '+263 775 926 454',
-  email: env.VITE_SCHOOL_EMAIL || 'admin@defineddomain.com',
+  email: env.VITE_SCHOOL_EMAIL || 'admin@defineddomain.org',
   coordinates: parseCoordinates(env.VITE_SCHOOL_LATITUDE, env.VITE_SCHOOL_LONGITUDE),
 };
 export function directionsUrl(destination: Coordinates | string): string {

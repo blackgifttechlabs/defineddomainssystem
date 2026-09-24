@@ -12,7 +12,7 @@ const SCHOOL_LOGO_URL = 'https://i.ibb.co/spSVqW8s/definedlogo.png';
 const SCHOOL_DETAILS = {
   name: 'Defined Domain Day Services',
   address: '27 Colnebrook Lane, Harare',
-  email: 'admin@defineddomain.com',
+  email: 'admin@defineddomain.org',
   phone: '+263 775 926 454',
 };
 
@@ -243,7 +243,7 @@ export const generateReceiptPdf = async (data: ReceiptGeneratorData) => {
   doc.setFontSize(7); doc.setTextColor(...BRAND.footerText);
   doc.setFont('helvetica', 'normal');
   doc.text(
-    `24hr Client Care   E: ${SCHOOL_DETAILS.email}   W: defineddomain.com`,
+    `24hr Client Care   E: ${SCHOOL_DETAILS.email}   W: defineddomain.org`,
     pageW / 2, footerTop + 4, { align: 'center' }
   );
   doc.text(
@@ -436,7 +436,7 @@ export const generateReceiptImage = async (data: ReceiptGeneratorData) => {
   ctx.fillStyle = '#999';
   ctx.font = '400 10px Arial, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(`24hr Client Care   E: ${SCHOOL_DETAILS.email}   W: defineddomain.com`, W / 2, footerTop - 28);
+  ctx.fillText(`24hr Client Care   E: ${SCHOOL_DETAILS.email}   W: defineddomain.org`, W / 2, footerTop - 28);
   ctx.fillText(`${SCHOOL_DETAILS.name} is an authorised private institution. Receipt generated automatically.`, W / 2, footerTop - 14);
   ctx.fillText(`Unique Document No: ${ref} | V1.0 - ${new Date().toLocaleDateString()}   Page 1 of 1`, W / 2, footerTop);
   ctx.textAlign = 'left';

@@ -54,6 +54,7 @@ export const Header: React.FC = () => {
 
   const navLinks = [
     { label: 'Home', id: 'home', href: 'home', type: 'scroll' },
+    { label: 'School Tour', id: 'tour', href: 'tour', type: 'view' },
     { label: 'Services', id: 'services', href: 'services', type: 'scroll' },
     { label: 'Uniforms', id: 'shop', href: 'shop', type: 'view' },
     { label: 'Applications', id: 'applications_trigger', href: '#', type: 'modal' },

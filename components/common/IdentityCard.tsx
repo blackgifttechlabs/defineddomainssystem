@@ -198,7 +198,7 @@ const BackFace: React.FC<{
           </section>
           <section className="col-span-2 rounded-xl border border-white/20 bg-purple-950/35 px-3 py-2.5 backdrop-blur-sm">
             <p className="text-[8.5px] font-black uppercase tracking-[0.18em] text-emerald-200">School details</p>
-            <div className="mt-1.5 flex items-center gap-5 text-[10px] font-bold"><span>+263 775 926 454</span><span>admin@defineddomain.com</span><span>defineddomain.com</span></div>
+            <div className="mt-1.5 flex items-center gap-5 text-[10px] font-bold"><span>+263 775 926 454</span><span>admin@defineddomain.org</span><span>defineddomain.org</span></div>
           </section>
         </div>
       </div>

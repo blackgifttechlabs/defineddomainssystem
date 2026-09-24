@@ -30,9 +30,9 @@ const SCHOOL_LOGO_URL = 'https://i.ibb.co/spSVqW8s/definedlogo.png';
 const SCHOOL_DETAILS = {
   name: 'Defined Domain Day Services',
   address: '27 Colnebrook Lane, Harare',
-  email: 'admin@defineddomain.com',
+  email: 'admin@defineddomain.org',
   phone: '+263 775 926 454',
-  website: 'defineddomain.com',
+  website: 'defineddomain.org',
 };
 
 const loadImage = (src: string) =>

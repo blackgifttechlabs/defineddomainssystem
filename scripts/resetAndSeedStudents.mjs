@@ -154,9 +154,9 @@ export async function resetAndSeedStudents() {
     const lastName = nameParts.slice(1).join(' ') || '';
     const fullName = item.name.trim();
     const gender = item.classCode === 'DDF' ? 'Female' : 'Male';
-    const email = `${formattedId.toLowerCase()}@defineddomain.com`;
+    const email = `${formattedId.toLowerCase()}@defineddomain.org`;
     const password = '000000';
-    const parentEmail = `parent.${formattedId.toLowerCase()}@defineddomain.com`;
+    const parentEmail = `parent.${formattedId.toLowerCase()}@defineddomain.org`;
     const parentPhone = '+263 775 000 000';
     const parentName = `Guardian of ${fullName}`;
     const categoryName = formatCategory(item.category);
