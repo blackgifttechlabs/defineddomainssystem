@@ -134,38 +134,114 @@ export const StudentIdVerification: React.FC = () => {
       </header>
       <main className="flex-1">
         {showHelp ? <LostStudentHelp student={student} onBack={() => { setShowHelp(false); window.scrollTo(0, 0); }} /> : (
-          <div className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-14">
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-5 sm:mb-10">
-              <div><p className="mb-3 flex items-center gap-2 text-xs font-medium text-neutral-500"><ShieldCheck size={14} />DEFINED DOMAINS / IDENTITY</p><h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Student ID verification</h1><p className="mt-3 max-w-lg text-sm leading-6 text-neutral-500">Confirm a student’s identity. Find support when it matters.</p></div>
-              {student && <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700"><Check size={13} />Verified student</span>}
+          <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
+            {/* Header: Student ID verification + Valid badge */}
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-neutral-100 pb-5">
+              <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+                Student ID verification
+              </h1>
+              {student && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-700">
+                  <Check size={14} className="stroke-[2.5]" />
+                  ID is Valid
+                </span>
+              )}
             </div>
-            {isLoading ? <div role="status" className="flex min-h-64 flex-col items-center justify-center rounded-lg border border-neutral-200 p-8 text-center"><Loader2 size={24} className="animate-spin text-neutral-500" /><h2 className="mt-5 text-lg font-medium">Verifying student ID</h2><p className="mt-2 text-sm text-neutral-500">Checking the school’s student records…</p></div> : student ? (
-              <div className="grid items-start gap-6 lg:grid-cols-[310px_minmax(0,1fr)]">
-                <div className="space-y-5">
-                  <section className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
-                    <div className="border-b border-neutral-200 p-6">
-                      <div className="mb-5 flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-400">{student.imageUrl || student.idCardImageUrl ? <img src={student.imageUrl || student.idCardImageUrl} alt={student.fullName} className="h-full w-full object-cover" /> : <UserRound size={30} />}</div>
-                      <h2 className="break-words text-2xl font-semibold leading-tight tracking-tight">{student.fullName}</h2><p className="mt-2 font-mono text-sm text-neutral-500">{student.id}</p>
-                    </div>
-                    <dl className="space-y-5 p-6 text-sm"><div className="flex items-center justify-between gap-3"><dt className="text-neutral-500">Status</dt><dd className="inline-flex items-center gap-1.5 font-medium text-emerald-700"><BadgeCheck size={15} />ID verified</dd></div><div className="flex items-start justify-between gap-3"><dt className="shrink-0 text-neutral-500">Class / Grade</dt><dd className="text-right font-medium">{student.assignedClass || 'Not assigned'}</dd></div><div className="flex items-start justify-between gap-3"><dt className="text-neutral-500">School</dt><dd className="text-right font-medium">Defined Domains<br /><span className="font-normal text-neutral-500">Inclusive School</span></dd></div></dl>
-                  </section>
-                  <section className="rounded-lg border border-neutral-200 bg-neutral-50 p-5 print:hidden"><HelpCircle size={19} className="mb-3 text-neutral-500" /><h2 className="text-sm font-semibold">Found a student who needs help?</h2><p className="mt-2 text-sm leading-6 text-neutral-500">Reach their parent or the school, and find your way to us.</p><button onClick={() => setShowHelp(true)} className={`${primary} mt-4 w-full`}>Lost Student? <ArrowUpRight size={16} /></button></section>
-                </div>
-                <section className="min-w-0 overflow-hidden rounded-lg border border-neutral-200">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 px-5 py-4"><div><h2 className="text-sm font-medium">Official student card</h2><p className="mt-1 text-xs text-neutral-500">{showingBack ? 'Back' : 'Front'} side</p></div><div className="flex gap-2 print:hidden"><button onClick={() => setShowingBack(value => !value)} className={`${button} !px-3`}><Repeat2 size={15} />Flip card</button><button onClick={handlePrint} aria-label="Print student card" className={`${button} !px-3`}><Printer size={15} /><span className="hidden sm:inline">Print</span></button></div></div>
-                  <div className="bg-neutral-50 px-2 py-6 sm:px-5 sm:py-10">
-                    <div ref={previewRef} className="relative w-full overflow-hidden" style={{ height: CARD_HEIGHT * scale }}>
-                      <div className="absolute left-1/2 top-0" style={{ width: CARD_WIDTH, height: CARD_HEIGHT, transform: `translateX(-50%) scale(${scale})`, transformOrigin: 'top center' }}><IdentityCard ref={cardRef} student={student} showingBack={showingBack} qrDataUrl={qrDataUrl} forceStatic /></div>
+
+            {isLoading ? (
+              <div role="status" className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-neutral-200 p-8 text-center">
+                <Loader2 size={24} className="animate-spin text-neutral-500" />
+                <h2 className="mt-4 text-base font-semibold text-neutral-800">Verifying student ID...</h2>
+              </div>
+            ) : student ? (
+              <div className="space-y-6">
+                {/* Box with image and details */}
+                <div className="flex flex-col gap-6 rounded-2xl border border-neutral-200 bg-white p-5 sm:flex-row sm:items-center sm:p-6 shadow-sm">
+                  <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50 text-neutral-400">
+                    {student.imageUrl || student.idCardImageUrl ? (
+                      <img src={student.imageUrl || student.idCardImageUrl} alt={student.fullName} className="h-full w-full object-cover" />
+                    ) : (
+                      <UserRound size={36} />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="truncate text-xl font-bold text-neutral-900 sm:text-2xl">{student.fullName}</h2>
+                    <p className="mt-1 font-mono text-sm font-semibold text-violet-600">ID: {student.id}</p>
+                    <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-neutral-600">
+                      <div><span className="text-neutral-400">Class: </span><span className="font-medium text-neutral-800">{student.assignedClass || 'Not assigned'}</span></div>
+                      <div><span className="text-neutral-400">School: </span><span className="font-medium text-neutral-800">Defined Domains Inclusive School</span></div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-2 border-t border-neutral-200 p-5 text-xs leading-5 text-neutral-500"><ShieldCheck size={15} className="mt-0.5 shrink-0" /><p>This identity matches the school’s student records. Contact the school if any details appear incorrect.</p></div>
-                </section>
+                </div>
+
+                {/* The ID Card Preview */}
+                <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+                  <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-3.5 print:hidden">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Student Card ({showingBack ? 'Back' : 'Front'})</span>
+                    <div className="flex gap-2">
+                      <button onClick={() => setShowingBack(value => !value)} className={`${button} !py-1.5 !px-3 text-xs`}>
+                        <Repeat2 size={14} />Flip card
+                      </button>
+                      <button onClick={handlePrint} className={`${button} !py-1.5 !px-3 text-xs`}>
+                        <Printer size={14} />Print
+                      </button>
+                    </div>
+                  </div>
+                  <div className="bg-neutral-50 px-3 py-6 sm:px-6 sm:py-8">
+                    <div ref={previewRef} className="relative w-full overflow-hidden" style={{ height: CARD_HEIGHT * scale }}>
+                      <div className="absolute left-1/2 top-0" style={{ width: CARD_WIDTH, height: CARD_HEIGHT, transform: `translateX(-50%) scale(${scale})`, transformOrigin: 'top center' }}>
+                        <IdentityCard ref={cardRef} student={student} showingBack={showingBack} qrDataUrl={qrDataUrl} forceStatic />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom button for lost student */}
+                <div className="pt-2 print:hidden">
+                  <button onClick={() => setShowHelp(true)} className={`${primary} w-full justify-center !py-3.5 text-sm`}>
+                    <HelpCircle size={17} />
+                    Lost Student? Get Help & Directions
+                    <ArrowUpRight size={16} />
+                  </button>
+                </div>
               </div>
             ) : (
-              <section className="mx-auto max-w-xl rounded-lg border border-neutral-200 p-6 sm:p-8">
-                {activeLookupId ? <><ShieldAlert size={25} className="mb-5 text-neutral-500" /><h2 className="text-xl font-semibold tracking-tight">{lookupError ? 'Verification unavailable' : 'Student not found'}</h2><p role="status" className="mt-3 break-words text-sm leading-6 text-neutral-500">{lookupError || `“${activeLookupId}” could not uniquely identify a student. Scan the latest card, or try their full name.`}</p></> : <><Search size={25} className="mb-5 text-neutral-500" /><h2 className="text-xl font-semibold tracking-tight">Find a student</h2><p className="mt-3 text-sm leading-6 text-neutral-500">Enter a student ID, full name, or the link from their QR code.</p></>}
-                <form onSubmit={submitSearch} className="mt-6"><label htmlFor="student-lookup" className="mb-2 block text-xs font-medium text-neutral-700">Student ID or full name</label><input id="student-lookup" value={searchInput} onChange={event => setSearchInput(event.target.value)} placeholder="e.g. DD002" autoComplete="off" required className="min-h-12 w-full rounded-md border border-neutral-300 bg-white px-3 text-base outline-none focus:border-neutral-950 focus:ring-2 focus:ring-neutral-100 sm:text-sm" /><button type="submit" className={`${primary} mt-3 w-full`}>{lookupError ? 'Retry verification' : 'Verify student'}<ArrowRight size={16} /></button></form>
-                <div className="mt-6 border-t border-neutral-200 pt-5"><button onClick={() => setShowHelp(true)} className="inline-flex min-h-11 items-center gap-2 text-sm text-neutral-600 hover:text-black">Need help? Contact the school <ArrowUpRight size={15} /></button></div>
+              <section className="mx-auto max-w-lg rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8 shadow-sm">
+                {activeLookupId ? (
+                  <>
+                    <ShieldAlert size={26} className="mb-4 text-amber-500" />
+                    <h2 className="text-lg font-bold text-neutral-900">{lookupError ? 'Verification unavailable' : 'Student not found'}</h2>
+                    <p role="status" className="mt-2 text-sm text-neutral-500 leading-relaxed">
+                      {lookupError || `“${activeLookupId}” could not be found. Please check the ID or scan again.`}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Search size={26} className="mb-4 text-neutral-400" />
+                    <h2 className="text-lg font-bold text-neutral-900">Find a student</h2>
+                    <p className="mt-1 text-sm text-neutral-500">Enter a student ID or full name.</p>
+                  </>
+                )}
+                <form onSubmit={submitSearch} className="mt-5">
+                  <input
+                    id="student-lookup"
+                    value={searchInput}
+                    onChange={event => setSearchInput(event.target.value)}
+                    placeholder="e.g. DD002"
+                    autoComplete="off"
+                    required
+                    className="min-h-11 w-full rounded-lg border border-neutral-300 bg-white px-3.5 text-sm outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
+                  />
+                  <button type="submit" className={`${primary} mt-3 w-full justify-center !py-2.5`}>
+                    {lookupError ? 'Retry verification' : 'Verify student'}
+                    <ArrowRight size={15} />
+                  </button>
+                </form>
+                <div className="mt-5 border-t border-neutral-100 pt-4 text-center">
+                  <button onClick={() => setShowHelp(true)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-600 hover:text-black">
+                    <HelpCircle size={14} /> Need help? Lost student support
+                  </button>
+                </div>
               </section>
             )}
           </div>
