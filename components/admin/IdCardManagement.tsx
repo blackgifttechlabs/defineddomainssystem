@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import html2canvas from 'html2canvas';
+import { exportIdentityCard } from '../../utils/exportIdentityCard';
 import QRCode from 'qrcode';
 import {
   BadgeCheck,
@@ -94,9 +94,9 @@ export const IdCardManagement: React.FC = () => {
     return () => observer.disconnect();
   }, [selectedStudent]);
 
-  const exportCanvas = async (element = cardRef.current) => {
+  const exportCanvas = async (element = showingBack ? backExportRef.current : frontExportRef.current) => {
     if (!element || !selectedStudent) return null;
-    return html2canvas(element, { scale: 3, backgroundColor: '#ffffff', useCORS: true });
+    return exportIdentityCard(element);
   };
 
   const downloadCard = async () => {

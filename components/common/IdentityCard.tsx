@@ -66,7 +66,7 @@ const FrontFace: React.FC<{
       </div>
     </header>
 
-    <div className="relative z-10 flex h-[398px] gap-6 px-8 py-5">
+    <div className="relative z-10 flex h-[394px] gap-6 px-8 py-5">
       <div className="flex w-[210px] shrink-0 flex-col items-center justify-start">
         <div className="w-[205px] overflow-hidden rounded-[16px] border-2 border-[#0b1b36] bg-white shadow-md">
           <div className="h-[210px] w-full bg-white"><StudentPhoto student={student} /></div>
@@ -80,7 +80,7 @@ const FrontFace: React.FC<{
       <div className="flex min-w-0 flex-1 flex-col justify-between">
         <div>
           <p className="text-[9px] font-black uppercase tracking-[0.18em] text-violet-600">Full name</p>
-          <h3 className="mt-1 truncate text-[28px] font-black uppercase leading-tight tracking-tight text-[#0b1b36]">{student.fullName}</h3>
+          <h3 className="mt-1 break-words text-[28px] font-black uppercase leading-tight tracking-tight text-[#0b1b36]">{student.fullName}</h3>
         </div>
 
         <div className="flex items-stretch gap-3">
@@ -167,7 +167,7 @@ const BackFace: React.FC<{
       <span className="relative z-10 rounded-xl border border-white/25 bg-gradient-to-r from-purple-950/80 to-violet-700/70 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-violet-100 shadow-lg backdrop-blur-sm">Campus security</span>
     </header>
 
-    <div className="relative flex h-[400px] items-center justify-between gap-7 overflow-hidden bg-gradient-to-br from-[#25064a] via-[#4c1588] to-[#6d28d9] px-8 py-6">
+    <div className="relative flex h-[396px] items-center justify-between gap-7 overflow-hidden bg-gradient-to-br from-[#25064a] via-[#4c1588] to-[#6d28d9] px-8 py-6">
       <div className="absolute inset-0 opacity-25 [background-image:radial-gradient(circle_at_center,rgba(255,255,255,0.45)_1px,transparent_1px)] [background-size:18px_18px]" />
       <div className="absolute -left-14 bottom-[-78px] h-80 w-80 rounded-full border-[38px] border-violet-300/10" />
       <div className="absolute left-8 top-24 h-52 w-52 opacity-[0.07]"><img src={LogoImg} alt="" className="h-full w-full object-contain grayscale brightness-0 invert" crossOrigin="anonymous" /></div>
@@ -189,7 +189,7 @@ const BackFace: React.FC<{
         <div className="grid max-w-[500px] grid-cols-2 gap-3">
           <section className="rounded-xl border border-white/20 bg-purple-950/35 p-3 backdrop-blur-sm">
             <p className="text-[8.5px] font-black uppercase tracking-[0.18em] text-rose-200">Emergency contact</p>
-            <p className="mt-1.5 truncate text-[12px] font-black">{student.parentName || 'Parent / Guardian'}</p>
+            <p className="mt-1.5 break-words text-[12px] font-black">{student.parentName || 'Parent / Guardian'}</p>
             <p className="mt-0.5 font-mono text-[11px] font-bold text-white">{student.parentPhone || 'Not recorded'}</p>
           </section>
           <section className="rounded-xl border border-white/20 bg-purple-950/35 p-3 backdrop-blur-sm">
@@ -232,7 +232,7 @@ export const IdentityCard = React.forwardRef<HTMLDivElement, {
 }>(({ student, showingBack, qrDataUrl, forceStatic }, ref) => {
   const { issueDate, expiryDate } = getCardDates(student);
 
-  // If forceStatic is true (for html2canvas export without 3d transform issues), render static side
+  // If forceStatic is true (for PNG export without 3D transform issues), render static side
   if (forceStatic) {
     return (
       <div ref={ref} className="relative h-[540px] w-[856px] overflow-hidden rounded-[22px] border-2 border-slate-200 bg-white font-sans shadow-2xl">
