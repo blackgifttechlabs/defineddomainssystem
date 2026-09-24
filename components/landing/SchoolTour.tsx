@@ -585,15 +585,14 @@ export const SchoolTour: React.FC = () => {
           <img 
             src="/tour/school-students-hula-hoops.jpg" 
             alt="Defined Domains Students" 
-            className="w-full h-full object-cover object-center filter brightness-[0.32] scale-105"
+            className="w-full h-full object-cover object-center brightness-[0.35] scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/60 to-slate-950"></div>
-          <div className="absolute inset-0 [background-image:radial-gradient(circle_at_center,rgba(59,130,246,0.15)_1px,transparent_1px)] [background-size:24px_24px] opacity-30"></div>
         </div>
 
         <div className="relative z-10 max-w-6xl mx-auto px-6 text-center space-y-8">
-          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 backdrop-blur-md shadow-lg">
-            <Sparkles size={16} className="text-blue-400 animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-blue-600/30 border border-blue-400/50 text-blue-200 backdrop-blur-md shadow-lg">
+            <Sparkles size={16} className="animate-pulse" />
             <span className="text-[11px] font-black uppercase tracking-[0.3em]">
               Virtual Campus & Community Tour
             </span>
@@ -606,43 +605,43 @@ export const SchoolTour: React.FC = () => {
             </span>
           </h1>
 
-          <p className="text-lg md:text-2xl text-slate-300 max-w-3xl mx-auto font-medium leading-relaxed">
+          <p className="text-lg md:text-xl text-slate-100 max-w-3xl mx-auto font-medium leading-relaxed">
             Take an authentic visual walkthrough of our specialized inclusive day center. Explore our therapeutic classrooms, open-air field trips, birthday celebrations, and practical culinary masterclasses.
           </p>
 
           {/* Quick Metrics Bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto pt-6 text-left">
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+            <div className="p-4 rounded-2xl bg-slate-800/90 border border-slate-600 shadow-lg">
               <div className="flex items-center gap-2 text-blue-400 mb-1">
                 <Camera size={18} />
                 <span className="text-[10px] font-black uppercase tracking-wider">Photo Gallery</span>
               </div>
               <p className="text-2xl font-black text-white">{totalPhotosCount} Photos</p>
-              <p className="text-[11px] text-slate-400">Authentic school moments</p>
+              <p className="text-[11px] text-slate-300">Authentic school moments</p>
             </div>
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+            <div className="p-4 rounded-2xl bg-slate-800/90 border border-slate-600 shadow-lg">
               <div className="flex items-center gap-2 text-emerald-400 mb-1">
                 <ShieldCheck size={18} />
                 <span className="text-[10px] font-black uppercase tracking-wider">Accredited</span>
               </div>
               <p className="text-2xl font-black text-white">Inclusive Care</p>
-              <p className="text-[11px] text-slate-400">Rhodene, Masvingo & Harare</p>
+              <p className="text-[11px] text-slate-300">Rhodene, Masvingo & Harare</p>
             </div>
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+            <div className="p-4 rounded-2xl bg-slate-800/90 border border-slate-600 shadow-lg">
               <div className="flex items-center gap-2 text-amber-400 mb-1">
                 <ChefHat size={18} />
                 <span className="text-[10px] font-black uppercase tracking-wider">Life-Skills</span>
               </div>
               <p className="text-2xl font-black text-white">Cooking & Baking</p>
-              <p className="text-[11px] text-slate-400">Hands-on autonomy</p>
+              <p className="text-[11px] text-slate-300">Hands-on autonomy</p>
             </div>
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+            <div className="p-4 rounded-2xl bg-slate-800/90 border border-slate-600 shadow-lg">
               <div className="flex items-center gap-2 text-rose-400 mb-1">
                 <Cake size={18} />
                 <span className="text-[10px] font-black uppercase tracking-wider">Milestones</span>
               </div>
               <p className="text-2xl font-black text-white">Birthdays & Joy</p>
-              <p className="text-[11px] text-slate-400">Honoring every learner</p>
+              <p className="text-[11px] text-slate-300">Honoring every learner</p>
             </div>
           </div>
 
@@ -665,7 +664,7 @@ export const SchoolTour: React.FC = () => {
       </section>
 
       {/* ── STICKY SECTION NAV TABS ─────────────────────────────────────────────── */}
-      <div className="sticky top-20 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-y border-slate-200 dark:border-slate-800 shadow-sm transition-all py-3">
+      <div className="sticky top-16 lg:top-20 z-40 bg-white dark:bg-slate-950 border-y border-slate-200 dark:border-slate-800 shadow-md py-3">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-3 overflow-x-auto no-scrollbar">
           <div className="flex items-center gap-2">
             <button
