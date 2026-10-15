@@ -34,7 +34,12 @@ import { IncidentsMedication } from './components/IncidentsMedication';
 import { IepPlans } from './components/IepPlans';
 import { TermReports } from './components/TermReports';
 import { SchedulePlanner } from './components/SchedulePlanner';
-import { AlertCircle, BarChart3, Bell, CheckCircle2, FileText, Home, Info, LogOut, Receipt, X } from 'lucide-react';
+import { Messages } from './components/Messages';
+import { FeeArrears } from './components/FeeArrears';
+import { Transport } from './components/Transport';
+import { DataExport } from './components/DataExport';
+import { AccessibilityToggle } from './components/common/AccessibilityToggle';
+import { AlertCircle, BarChart3, Bell, CheckCircle2, FileText, Home, Info, LogOut, MessageCircle, Receipt, X } from 'lucide-react';
 
 const NotificationHost = () => {
   const { notifications, removeNotification } = useStore();
@@ -79,6 +84,7 @@ const ParentMobileShell: React.FC<{ children: React.ReactNode }> = ({ children }
     { id: 'clinical-history', label: 'Reports', icon: FileText },
     { id: 'fees', label: 'Fees', icon: Receipt },
     { id: 'notices', label: 'Notices', icon: Bell },
+    ...(user?.role === 'PARENT' ? [{ id: 'messages', label: 'Chat', icon: MessageCircle }] : []),
   ];
 
   const handleNav = (id: string) => {
@@ -176,6 +182,11 @@ const App: React.FC = () => {
 
     const role = user?.role;
 
+    if (activeTab === 'messages' && role !== 'STUDENT') return <Messages />;
+    if (activeTab === 'transport') return <Transport />;
+    if (role === 'SUPER_ADMIN' && activeTab === 'arrears') return <FeeArrears />;
+    if (role === 'SUPER_ADMIN' && activeTab === 'export') return <DataExport />;
+
     if (role === 'STUDENT' || role === 'PARENT') {
       if (activeTab === 'dashboard' || activeTab === 'progress') return <StudentDashboard />;
       if (activeTab === 'students' || activeTab === 'my-students') return <StudentDirectory />;
@@ -245,6 +256,7 @@ const App: React.FC = () => {
   return (
     <>
       <NotificationHost />
+      {isLoggedIn && <AccessibilityToggle className={isParentPortal ? 'left-5 top-5' : 'left-4 bottom-4'} />}
       {!isParentPortal && <NoticesSlideOver />}
       {isParentPortal ? (
         <ParentMobileShell>
