@@ -469,7 +469,8 @@ export const useStore = create<AppState>((set, get) => {
         const studentsRef = collection(db, 'students');
         const q = query(studentsRef);
         const snapshot = await getDocs(q);
-        const count = snapshot.size + 1;
+        const highest = snapshot.docs.reduce((max, d) => Math.max(max, parseInt(String(d.data().id || '').replace(/\D/g, ''), 10) || 0), 0);
+        const count = highest + 1;
         const formattedId = `DD${count.toString().padStart(3, '0')}`;
         
         const studentEmail = `${formattedId.toLowerCase()}@defineddomain.org`;
