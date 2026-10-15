@@ -251,3 +251,50 @@ export interface SystemLog {
   details: string;
   timestamp: string;
 }
+
+// ---- Communication & Operations ----
+export interface ThreadMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  message: string;
+  timestamp: string;
+}
+
+// Firestore: message_threads
+export interface MessageThread {
+  id: string;
+  subject: string;
+  studentId: string;
+  studentName: string;
+  parentUserId: string;
+  parentName: string;
+  staffUserId: string;
+  staffName: string;
+  messages: ThreadMessage[];
+  lastMessageAt: string;
+  readBy: string[]; // user ids that have seen the latest message
+}
+
+export interface TransportStop {
+  id: string;
+  name: string;
+  time: string;
+}
+
+export interface TransportAssignment {
+  studentId: string;
+  stopId: string;
+}
+
+// Firestore: transport_routes
+export interface TransportRoute {
+  id: string;
+  name: string;
+  driverName: string;
+  driverPhone: string;
+  vehicleReg: string;
+  capacity: number;
+  stops: TransportStop[];
+  assignments: TransportAssignment[];
+}

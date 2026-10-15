@@ -2,7 +2,7 @@ import React from 'react';
 import { useStore } from '../../store/useStore';
 import { 
   LayoutDashboard, Users, HeartPulse, ShoppingCart, 
-  Briefcase, X, Settings, History, Send, Receipt, BellRing, ShieldAlert, Brain, ClipboardList, Coffee, BadgeCheck
+  Briefcase, X, Settings, History, Send, Receipt, BellRing, ShieldAlert, Brain, ClipboardList, Coffee, BadgeCheck, MessageCircle, Bus, Wallet, FileSpreadsheet
 } from 'lucide-react';
 
 const LogoImg = "https://i.ibb.co/spSVqW8s/definedlogo.png";
@@ -22,6 +22,10 @@ export const Sidebar: React.FC = () => {
         { id: 'id-cards', label: 'Student ID Cards', icon: <BadgeCheck size={18} /> },
         { id: 'staff', label: 'Staff members', icon: <Briefcase size={18} /> },
         { id: 'notices', label: 'Announcements', icon: <BellRing size={18} /> },
+        { id: 'messages', label: 'Messages', icon: <MessageCircle size={18} /> },
+        { id: 'arrears', label: 'Fee Arrears', icon: <Wallet size={18} /> },
+        { id: 'transport', label: 'Transport', icon: <Bus size={18} /> },
+        { id: 'export', label: 'Data Export', icon: <FileSpreadsheet size={18} /> },
         { id: 'applications', label: 'Careers', icon: <Send size={18} /> },
         { id: 'orders', label: 'Orders', icon: <Receipt size={18} /> },
         { id: 'system-logs', label: 'Audit Logs', icon: <ShieldAlert size={18} /> },
@@ -37,6 +41,8 @@ export const Sidebar: React.FC = () => {
         { id: 'clinical', label: 'Checklist', icon: <Brain size={18} /> },
         { id: 'clinical-logs', label: 'Task Analysis', icon: <History size={18} /> },
         { id: 'lounge', label: 'Teach Lounge', icon: <Coffee size={18} /> },
+        { id: 'messages', label: 'Messages', icon: <MessageCircle size={18} /> },
+        { id: 'transport', label: 'Transport', icon: <Bus size={18} /> },
         { id: 'settings', label: 'My Profile', icon: <Settings size={18} /> },
       ];
     }

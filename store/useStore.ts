@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { User, Role, Student, Staff, Parent, SystemSettings, SystemLog, SessionLog, Application, ShopItem, Order, MilestoneRecord, PaymentRecord, Notice, NoticeTarget, NoticeType, StudentApplication } from '../types';
+import { User, Role, Student, Staff, Parent, SystemSettings, SystemLog, SessionLog, Application, ShopItem, Order, MilestoneRecord, PaymentRecord, Notice, NoticeTarget, NoticeType, StudentApplication, MessageThread, TransportRoute } from '../types';
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import { 
   getAuth, 
@@ -180,6 +180,15 @@ interface AppState {
   addNotice: (title: string, content: string, type: NoticeType, target: NoticeTarget) => Promise<void>;
   replyToNotice: (noticeId: string, message: string) => Promise<void>;
   markNoticeAsViewed: (noticeId: string) => Promise<void>;
+  // Communication & operations
+  messageThreads: MessageThread[];
+  transportRoutes: TransportRoute[];
+  startThread: (data: Omit<MessageThread, 'id' | 'messages' | 'lastMessageAt' | 'readBy'>, firstMessage: string) => Promise<void>;
+  replyToThread: (threadId: string, message: string) => Promise<void>;
+  markThreadRead: (threadId: string) => Promise<void>;
+  sendDirectNotice: (recipientUserId: string, studentId: string, title: string, content: string, type: NoticeType, target: NoticeTarget) => Promise<boolean>;
+  saveTransportRoute: (route: Omit<TransportRoute, 'id'> & { id?: string }) => Promise<void>;
+  deleteTransportRoute: (id: string) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => {
@@ -255,6 +264,8 @@ export const useStore = create<AppState>((set, get) => {
     milestoneRecords: [],
     milestoneTemplates: [],
     notices: [],
+    messageThreads: [],
+    transportRoutes: [],
     login: async (role, credentials) => {
       const { email, pass } = credentials;
       const cleanEmail = email.toLowerCase().trim();
@@ -442,6 +453,12 @@ export const useStore = create<AppState>((set, get) => {
       onSnapshot(query(collection(db, 'student_applications'), orderBy('timestamp', 'desc')), (snapshot) => {
         set({ studentApplications: snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as StudentApplication)) });
       });
+      onSnapshot(query(collection(db, 'message_threads'), orderBy('lastMessageAt', 'desc')), (snapshot) => {
+        set({ messageThreads: snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as MessageThread)) });
+      }, (err) => console.warn('message_threads listener:', err.message));
+      onSnapshot(query(collection(db, 'transport_routes'), orderBy('name')), (snapshot) => {
+        set({ transportRoutes: snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as TransportRoute)) });
+      }, (err) => console.warn('transport_routes listener:', err.message));
       onSnapshot(doc(db, 'settings', 'global'), (snapshot) => {
         if (snapshot.exists()) set({ settings: snapshot.data() as SystemSettings });
       });
@@ -1053,6 +1070,63 @@ export const useStore = create<AppState>((set, get) => {
           await updateDoc(noticeRef, { views: arrayUnion(view) });
         }
       }
+    },
+    startThread: async (data, firstMessage) => {
+      const u = get().user;
+      if (!u) return;
+      try {
+        const now = new Date().toISOString();
+        await addDoc(collection(db, 'message_threads'), {
+          ...data,
+          messages: [{ id: Math.random().toString(36).substring(7), senderId: u.id, senderName: u.name, message: firstMessage, timestamp: now }],
+          lastMessageAt: now,
+          readBy: [u.id]
+        });
+      } catch (err: any) { get().notify('error', 'Message failed.'); }
+    },
+    replyToThread: async (threadId, message) => {
+      const u = get().user;
+      if (!u) return;
+      try {
+        const now = new Date().toISOString();
+        const msg = { id: Math.random().toString(36).substring(7), senderId: u.id, senderName: u.name, message, timestamp: now };
+        await updateDoc(doc(db, 'message_threads', threadId), { messages: arrayUnion(msg), lastMessageAt: now, readBy: [u.id] });
+      } catch (err: any) { get().notify('error', 'Reply failed.'); }
+    },
+    markThreadRead: async (threadId) => {
+      const u = get().user;
+      if (!u) return;
+      try {
+        await updateDoc(doc(db, 'message_threads', threadId), { readBy: arrayUnion(u.id) });
+      } catch (err) { /* non-critical */ }
+    },
+    sendDirectNotice: async (recipientUserId, studentId, title, content, type, target) => {
+      const u = get().user;
+      if (!u) return false;
+      try {
+        await addDoc(collection(db, 'notices'), {
+          title, content, type, target,
+          authorId: u.id, authorName: u.name,
+          timestamp: new Date().toISOString(),
+          replies: [], views: [],
+          recipientUserId, studentId
+        });
+        return true;
+      } catch (err: any) { get().notify('error', 'Notice failed.'); return false; }
+    },
+    saveTransportRoute: async (route) => {
+      try {
+        const { id, ...data } = route;
+        if (id) await setDoc(doc(db, 'transport_routes', id), data);
+        else await addDoc(collection(db, 'transport_routes'), data);
+        get().notify('success', 'Route saved.');
+      } catch (err: any) { get().notify('error', err.message); }
+    },
+    deleteTransportRoute: async (id) => {
+      try {
+        await deleteDoc(doc(db, 'transport_routes', id));
+        get().notify('success', 'Route removed.');
+      } catch (err: any) { get().notify('error', err.message); }
     }
   };
 });
