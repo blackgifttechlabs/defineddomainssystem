@@ -2,7 +2,7 @@ import React from 'react';
 import { useStore } from '../../store/useStore';
 import { 
   LayoutDashboard, Users, HeartPulse, ShoppingCart, 
-  Briefcase, X, Settings, History, Send, Receipt, BellRing, ShieldAlert, Brain, ClipboardList, Coffee, BadgeCheck
+  Briefcase, X, Settings, History, Send, Receipt, BellRing, ShieldAlert, Brain, ClipboardList, Coffee, BadgeCheck, CalendarCheck, Pill
 } from 'lucide-react';
 
 const LogoImg = "https://i.ibb.co/spSVqW8s/definedlogo.png";
@@ -20,6 +20,8 @@ export const Sidebar: React.FC = () => {
         { id: 'student-applications', label: 'Student Applicants', icon: <ClipboardList size={18} /> },
         { id: 'students', label: 'Students', icon: <Users size={18} /> },
         { id: 'id-cards', label: 'Student ID Cards', icon: <BadgeCheck size={18} /> },
+        { id: 'attendance', label: 'Attendance', icon: <CalendarCheck size={18} /> },
+        { id: 'care-log', label: 'Incidents & Meds', icon: <Pill size={18} /> },
         { id: 'staff', label: 'Staff members', icon: <Briefcase size={18} /> },
         { id: 'notices', label: 'Announcements', icon: <BellRing size={18} /> },
         { id: 'applications', label: 'Careers', icon: <Send size={18} /> },
@@ -34,6 +36,8 @@ export const Sidebar: React.FC = () => {
       return [
         ...base,
         { id: 'my-students', label: 'My Students', icon: <Users size={18} /> },
+        { id: 'attendance', label: 'Attendance', icon: <CalendarCheck size={18} /> },
+        { id: 'care-log', label: 'Incidents & Meds', icon: <Pill size={18} /> },
         { id: 'clinical', label: 'Checklist', icon: <Brain size={18} /> },
         { id: 'clinical-logs', label: 'Task Analysis', icon: <History size={18} /> },
         { id: 'lounge', label: 'Teach Lounge', icon: <Coffee size={18} /> },
