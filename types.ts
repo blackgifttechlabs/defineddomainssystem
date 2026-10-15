@@ -330,4 +330,60 @@ export interface MedicationLogEntry {
   givenById: string;
   givenByName: string;
   timestamp: string;
+// ---- Planning & Reports (IEP, therapy scheduling, timetable) ----
+export type IepGoalStatus = 'Not Started' | 'In Progress' | 'Achieved' | 'Discontinued';
+
+export interface IepGoal {
+  id: string;
+  area: string;
+  goal: string;
+  strategies: string;
+  reviewDate: string;
+  status: IepGoalStatus;
+}
+
+export interface IepSignOff {
+  name: string;
+  role: 'PARENT' | 'THERAPIST' | 'TEACHER';
+  signedAt: string;
+}
+
+export interface IepPlan {
+  id: string;
+  studentId: string;
+  studentName: string;
+  term: string;
+  startDate: string;
+  reviewDate: string;
+  goals: IepGoal[];
+  signOffs: IepSignOff[];
+  createdBy: string;
+  updatedAt: string;
+}
+
+export type TherapyType = 'Speech' | 'Occupational' | 'Physio' | 'Other';
+
+export interface TherapySession {
+  id: string;
+  studentId: string;
+  studentName: string;
+  therapyType: TherapyType;
+  therapistId: string;
+  therapistName: string;
+  date: string;
+  time: string;
+  durationMins: number;
+  notes?: string;
+  status: 'Booked' | 'Completed' | 'Cancelled';
+  reminderSent?: boolean;
+}
+
+export interface TimetableSlot {
+  id: string;
+  className: string;
+  day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
+  startTime: string;
+  endTime: string;
+  subject: string;
+  staffName?: string;
 }

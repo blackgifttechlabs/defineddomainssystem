@@ -31,6 +31,9 @@ import { AdminNotices } from './components/AdminNotices';
 import { SystemLogs } from './components/SystemLogs';
 import { Attendance } from './components/Attendance';
 import { IncidentsMedication } from './components/IncidentsMedication';
+import { IepPlans } from './components/IepPlans';
+import { TermReports } from './components/TermReports';
+import { SchedulePlanner } from './components/SchedulePlanner';
 import { AlertCircle, BarChart3, Bell, CheckCircle2, FileText, Home, Info, LogOut, Receipt, X } from 'lucide-react';
 
 const NotificationHost = () => {
@@ -222,6 +225,9 @@ const App: React.FC = () => {
       case 'id-cards': return <IdCardManagement />;
       case 'attendance': return <Attendance />;
       case 'care-log': return <IncidentsMedication />;
+      case 'iep-plans': return <IepPlans />;
+      case 'term-reports': return <TermReports />;
+      case 'schedule': return <SchedulePlanner />;
       
       default:
         return (

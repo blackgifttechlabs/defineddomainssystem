@@ -23,6 +23,9 @@ export const Sidebar: React.FC = () => {
         { id: 'attendance', label: 'Attendance', icon: <CalendarCheck size={18} /> },
         { id: 'care-log', label: 'Incidents & Meds', icon: <Pill size={18} /> },
         { id: 'staff', label: 'Staff members', icon: <Briefcase size={18} /> },
+        { id: 'iep-plans', label: 'Education Plans', icon: <ClipboardList size={18} /> },
+        { id: 'term-reports', label: 'Term Reports', icon: <ClipboardList size={18} /> },
+        { id: 'schedule', label: 'Schedule', icon: <ClipboardList size={18} /> },
         { id: 'notices', label: 'Announcements', icon: <BellRing size={18} /> },
         { id: 'applications', label: 'Careers', icon: <Send size={18} /> },
         { id: 'orders', label: 'Orders', icon: <Receipt size={18} /> },
@@ -40,6 +43,9 @@ export const Sidebar: React.FC = () => {
         { id: 'care-log', label: 'Incidents & Meds', icon: <Pill size={18} /> },
         { id: 'clinical', label: 'Checklist', icon: <Brain size={18} /> },
         { id: 'clinical-logs', label: 'Task Analysis', icon: <History size={18} /> },
+        { id: 'iep-plans', label: 'Education Plans', icon: <ClipboardList size={18} /> },
+        { id: 'term-reports', label: 'Term Reports', icon: <ClipboardList size={18} /> },
+        { id: 'schedule', label: 'Schedule', icon: <ClipboardList size={18} /> },
         { id: 'lounge', label: 'Teach Lounge', icon: <Coffee size={18} /> },
         { id: 'settings', label: 'My Profile', icon: <Settings size={18} /> },
       ];
@@ -50,6 +56,8 @@ export const Sidebar: React.FC = () => {
         ...base,
         { id: 'students', label: 'Student Records', icon: <Users size={18} /> },
         { id: 'fees', label: 'School Fees', icon: <Receipt size={18} /> },
+        { id: 'iep-plans', label: 'Education Plan', icon: <ClipboardList size={18} /> },
+        { id: 'schedule', label: 'Schedule', icon: <ClipboardList size={18} /> },
       ];
       if (role === 'PARENT') {
         items.push({ id: 'order-history', label: 'My Orders', icon: <Receipt size={18} /> });
