@@ -9,6 +9,8 @@ import { Student, Role } from '../types';
 import { processStudentImage } from '../utils/imageProcessor';
 import { PersonalInfo } from './student-profile/PersonalInfo';
 import { HealthRecord } from './student-profile/HealthRecord';
+import { MedicalAlertBanner, MedicalAlertsEditor } from './student-profile/MedicalAlertBanner';
+import { PickupContacts } from './student-profile/PickupContacts';
 import { PerformanceMatrix } from './student-profile/PerformanceMatrix';
 import { PaymentLedger } from './student-profile/PaymentLedger';
 import { SecurityRecord } from './student-profile/SecurityRecord';
@@ -33,7 +35,7 @@ export const StudentDirectory: React.FC = () => {
   const { students, staff, updateStudent, deleteStudent, settings, user, clinicalLogs, milestoneRecords, parents, payments, notify } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [activeProfileTab, setActiveProfileTab] = useState<'personal' | 'health' | 'records' | 'payments' | 'security'>('personal');
+  const [activeProfileTab, setActiveProfileTab] = useState<'personal' | 'health' | 'records' | 'payments' | 'security' | 'safety'>('personal');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -726,6 +728,8 @@ export const StudentDirectory: React.FC = () => {
           </div>
         </div>
 
+        <MedicalAlertBanner student={selectedStudent} />
+
         {/* Underline Tabs matching reference screenshot */}
         <div className="no-scrollbar flex gap-5 overflow-x-auto border-b border-slate-200 bg-white px-4 sm:gap-7 sm:px-6 md:px-8 dark:border-slate-800 dark:bg-slate-950">
           {[
@@ -733,6 +737,7 @@ export const StudentDirectory: React.FC = () => {
             { id: 'health', label: 'Health', count: '04' },
             { id: 'records', label: 'Progress', count: totalRecordsCount.toString().padStart(2, '0') },
             { id: 'payments', label: 'Billing', count: selectedStudentPayments.length.toString().padStart(2, '0') },
+            ...(!isParent ? [{ id: 'safety', label: 'Pickup & Contacts', count: '' }] : []),
             ...(isAdmin ? [{ id: 'security', label: 'Security', count: '02' }] : [])
           ].map(tab => (
             <button
@@ -777,6 +782,8 @@ export const StudentDirectory: React.FC = () => {
               onUploadPdf={() => {}}
             />
           )}
+          {activeProfileTab === 'health' && !isParent && <MedicalAlertsEditor key={selectedStudent.id} student={selectedStudent} />}
+          {activeProfileTab === 'safety' && !isParent && <PickupContacts student={selectedStudent} />}
           {activeProfileTab === 'records' && (
             <PerformanceMatrix
               student={selectedStudent}

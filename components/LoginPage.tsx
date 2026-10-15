@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { Role, Student, Parent, Staff } from '../types';
-import { Mail, Lock, ShieldCheck, Activity, Users, Loader2, ArrowLeft, GraduationCap, ChevronRight, Search, Zap, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ShieldCheck, Activity, Users, Loader2, ArrowLeft, GraduationCap, ChevronRight, Search, Eye, EyeOff } from 'lucide-react';
 import * as THREE from 'three';
 
 const LogoImg = "https://i.ibb.co/spSVqW8s/definedlogo.png";
@@ -176,13 +176,13 @@ export const LoginPage: React.FC = () => {
     };
   }, []);
 
-  const handleLogin = async (e?: React.FormEvent, bypassEmail?: string, bypassPass?: string) => {
+  const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
     setLoading(true);
     
     try {
-      let loginEmail = (bypassEmail || email).toLowerCase().trim();
-      let loginPass = (bypassPass || password).trim();
+      let loginEmail = email.toLowerCase().trim();
+      let loginPass = password.trim();
 
       if (selectedRole === 'STUDENT' && selectedStudentProfile) {
         loginEmail = (selectedStudentProfile.email || `${selectedStudentProfile.id.toLowerCase()}@defineddomain.org`).toLowerCase().trim();
@@ -205,10 +205,6 @@ export const LoginPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleBypass = () => {
-    handleLogin(undefined, 'admin@gmail.com', 'pppppp');
   };
 
   const filteredStudentSuggestions = students.filter(s => {
@@ -477,17 +473,6 @@ export const LoginPage: React.FC = () => {
                     <button type="submit" disabled={loading || (selectedRole === 'STUDENT' && !selectedStudentProfile) || (selectedRole === 'PARENT' && !selectedParentProfile) || (selectedRole === 'SPECIALIST' && !selectedStaffProfile)} className="group w-full py-4 bg-[#002D50] dark:bg-blue-600 hover:bg-black dark:hover:bg-blue-700 text-white font-black uppercase tracking-widest rounded-xl shadow-xl transition-all flex items-center justify-center gap-4 disabled:opacity-50 active:scale-[0.98]">
                       {loading ? <Loader2 className="animate-spin" size={18} /> : <>Login Now <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" /></>}
                     </button>
-                    
-                    {selectedRole === 'SUPER_ADMIN' && (
-                      <button 
-                        type="button" 
-                        onClick={handleBypass}
-                        disabled={loading}
-                        className="w-full py-3 bg-slate-100 dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black uppercase tracking-widest rounded-xl text-[10px] hover:bg-slate-200 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-95"
-                      >
-                        <Zap size={14} className="text-amber-500" /> Bypass (Quick Log)
-                      </button>
-                    )}
                   </div>
                 </form>
                 <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800 text-center">

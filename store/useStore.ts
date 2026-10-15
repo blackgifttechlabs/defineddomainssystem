@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { User, Role, Student, Staff, Parent, SystemSettings, SystemLog, SessionLog, Application, ShopItem, Order, MilestoneRecord, PaymentRecord, Notice, NoticeTarget, NoticeType, StudentApplication } from '../types';
+import { User, Role, Student, Staff, Parent, SystemSettings, SystemLog, SessionLog, Application, ShopItem, Order, MilestoneRecord, PaymentRecord, Notice, NoticeTarget, NoticeType, StudentApplication, IepPlan, TherapySession, TimetableSlot, MessageThread, TransportRoute } from '../types';
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import { 
   getAuth, 
@@ -180,6 +180,27 @@ interface AppState {
   addNotice: (title: string, content: string, type: NoticeType, target: NoticeTarget) => Promise<void>;
   replyToNotice: (noticeId: string, message: string) => Promise<void>;
   markNoticeAsViewed: (noticeId: string) => Promise<void>;
+  // Planning & reports
+  iepPlans: IepPlan[];
+  therapySessions: TherapySession[];
+  timetableSlots: TimetableSlot[];
+  loadPlanningData: () => void;
+  saveIepPlan: (plan: Omit<IepPlan, 'id' | 'updatedAt' | 'createdBy'> & { id?: string }) => Promise<void>;
+  signOffIep: (planId: string, role: 'PARENT' | 'THERAPIST' | 'TEACHER') => Promise<void>;
+  deleteIepPlan: (id: string) => Promise<void>;
+  bookTherapySession: (s: Omit<TherapySession, 'id' | 'status' | 'reminderSent'>, sendReminder: boolean) => Promise<void>;
+  updateTherapySession: (id: string, data: Partial<TherapySession>) => Promise<void>;
+  saveTimetableSlot: (slot: Omit<TimetableSlot, 'id'>) => Promise<void>;
+  deleteTimetableSlot: (id: string) => Promise<void>;
+  // Communication & operations
+  messageThreads: MessageThread[];
+  transportRoutes: TransportRoute[];
+  startThread: (data: Omit<MessageThread, 'id' | 'messages' | 'lastMessageAt' | 'readBy'>, firstMessage: string) => Promise<void>;
+  replyToThread: (threadId: string, message: string) => Promise<void>;
+  markThreadRead: (threadId: string) => Promise<void>;
+  sendDirectNotice: (recipientUserId: string, studentId: string, title: string, content: string, type: NoticeType, target: NoticeTarget) => Promise<boolean>;
+  saveTransportRoute: (route: Omit<TransportRoute, 'id'> & { id?: string }) => Promise<void>;
+  deleteTransportRoute: (id: string) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => {
@@ -253,8 +274,13 @@ export const useStore = create<AppState>((set, get) => {
     orders: [],
     payments: [],
     milestoneRecords: [],
+    iepPlans: [],
+    therapySessions: [],
+    timetableSlots: [],
     milestoneTemplates: [],
     notices: [],
+    messageThreads: [],
+    transportRoutes: [],
     login: async (role, credentials) => {
       const { email, pass } = credentials;
       const cleanEmail = email.toLowerCase().trim();
@@ -442,6 +468,12 @@ export const useStore = create<AppState>((set, get) => {
       onSnapshot(query(collection(db, 'student_applications'), orderBy('timestamp', 'desc')), (snapshot) => {
         set({ studentApplications: snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as StudentApplication)) });
       });
+      onSnapshot(query(collection(db, 'message_threads'), orderBy('lastMessageAt', 'desc')), (snapshot) => {
+        set({ messageThreads: snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as MessageThread)) });
+      }, (err) => console.warn('message_threads listener:', err.message));
+      onSnapshot(query(collection(db, 'transport_routes'), orderBy('name')), (snapshot) => {
+        set({ transportRoutes: snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as TransportRoute)) });
+      }, (err) => console.warn('transport_routes listener:', err.message));
       onSnapshot(doc(db, 'settings', 'global'), (snapshot) => {
         if (snapshot.exists()) set({ settings: snapshot.data() as SystemSettings });
       });
@@ -1054,6 +1086,133 @@ export const useStore = create<AppState>((set, get) => {
           await updateDoc(noticeRef, { views: arrayUnion(view) });
         }
       }
+    },
+    // ---- Planning & reports ----
+    loadPlanningData: () => {
+      if ((get() as any)._planningLoaded) return;
+      (set as any)({ _planningLoaded: true });
+      const sub = (name: string, key: string) =>
+        onSnapshot(collection(db, name), (snap) => {
+          (set as any)({ [key]: snap.docs.map(d => ({ ...d.data(), id: d.id })) });
+        }, () => {});
+      sub('iep_plans', 'iepPlans');
+      sub('therapy_sessions', 'therapySessions');
+      sub('timetable_slots', 'timetableSlots');
+    },
+    saveIepPlan: async (plan) => {
+      const u = get().user;
+      try {
+        const { id, ...rest } = plan;
+        const data = { ...rest, createdBy: u?.name || '', updatedAt: new Date().toISOString() };
+        if (id) await setDoc(doc(db, 'iep_plans', id), data, { merge: true });
+        else await addDoc(collection(db, 'iep_plans'), data);
+        get().notify('success', 'Education plan saved.');
+      } catch (err: any) { get().notify('error', 'Could not save plan.'); }
+    },
+    signOffIep: async (planId, role) => {
+      const u = get().user;
+      if (!u) return;
+      try {
+        await updateDoc(doc(db, 'iep_plans', planId), {
+          signOffs: arrayUnion({ name: u.name, role, signedAt: new Date().toISOString() }),
+          updatedAt: new Date().toISOString()
+        });
+        get().notify('success', 'Plan signed.');
+      } catch (err: any) { get().notify('error', 'Sign-off failed.'); }
+    },
+    deleteIepPlan: async (id) => {
+      try { await deleteDoc(doc(db, 'iep_plans', id)); } catch (err: any) { get().notify('error', 'Delete failed.'); }
+    },
+    bookTherapySession: async (s, sendReminder) => {
+      const u = get().user;
+      try {
+        const clash = get().therapySessions.some(x => x.status === 'Booked' && x.date === s.date && x.time === s.time &&
+          (x.therapistId === s.therapistId || x.studentId === s.studentId));
+        if (clash) { get().notify('error', 'That time is already booked for this therapist or student.'); return; }
+        await addDoc(collection(db, 'therapy_sessions'), { ...s, status: 'Booked', reminderSent: sendReminder });
+        if (sendReminder && u) {
+          const parent = get().parents.find(p => p.studentId === s.studentId);
+          const student = get().students.find(st => st.id === s.studentId);
+          const recipientUserId = parent?.firebaseUid || student?.firebaseUid;
+          await addDoc(collection(db, 'notices'), {
+            title: `${s.therapyType} therapy: ${s.studentName}`,
+            content: `${s.studentName} has a ${s.therapyType} therapy session with ${s.therapistName} on ${s.date} at ${s.time} (${s.durationMins} min).`,
+            type: 'Meeting', target: 'PARENT',
+            authorId: u.id, authorName: u.name,
+            timestamp: new Date().toISOString(),
+            replies: [], views: [],
+            ...(recipientUserId ? { recipientUserId } : {}),
+            studentId: s.studentId
+          });
+        }
+        get().notify('success', 'Session booked.');
+      } catch (err: any) { get().notify('error', 'Booking failed.'); }
+    },
+    updateTherapySession: async (id, data) => {
+      try { await updateDoc(doc(db, 'therapy_sessions', id), data as any); } catch (err: any) { get().notify('error', 'Update failed.'); }
+    },
+    saveTimetableSlot: async (slot) => {
+      try { await addDoc(collection(db, 'timetable_slots'), slot); } catch (err: any) { get().notify('error', 'Could not save slot.'); }
+    },
+    deleteTimetableSlot: async (id) => {
+      try { await deleteDoc(doc(db, 'timetable_slots', id)); } catch (err: any) { get().notify('error', 'Delete failed.'); }
+    },
+    startThread: async (data, firstMessage) => {
+      const u = get().user;
+      if (!u) return;
+      try {
+        const now = new Date().toISOString();
+        await addDoc(collection(db, 'message_threads'), {
+          ...data,
+          messages: [{ id: Math.random().toString(36).substring(7), senderId: u.id, senderName: u.name, message: firstMessage, timestamp: now }],
+          lastMessageAt: now,
+          readBy: [u.id]
+        });
+      } catch (err: any) { get().notify('error', 'Message failed.'); }
+    },
+    replyToThread: async (threadId, message) => {
+      const u = get().user;
+      if (!u) return;
+      try {
+        const now = new Date().toISOString();
+        const msg = { id: Math.random().toString(36).substring(7), senderId: u.id, senderName: u.name, message, timestamp: now };
+        await updateDoc(doc(db, 'message_threads', threadId), { messages: arrayUnion(msg), lastMessageAt: now, readBy: [u.id] });
+      } catch (err: any) { get().notify('error', 'Reply failed.'); }
+    },
+    markThreadRead: async (threadId) => {
+      const u = get().user;
+      if (!u) return;
+      try {
+        await updateDoc(doc(db, 'message_threads', threadId), { readBy: arrayUnion(u.id) });
+      } catch (err) { /* non-critical */ }
+    },
+    sendDirectNotice: async (recipientUserId, studentId, title, content, type, target) => {
+      const u = get().user;
+      if (!u) return false;
+      try {
+        await addDoc(collection(db, 'notices'), {
+          title, content, type, target,
+          authorId: u.id, authorName: u.name,
+          timestamp: new Date().toISOString(),
+          replies: [], views: [],
+          recipientUserId, studentId
+        });
+        return true;
+      } catch (err: any) { get().notify('error', 'Notice failed.'); return false; }
+    },
+    saveTransportRoute: async (route) => {
+      try {
+        const { id, ...data } = route;
+        if (id) await setDoc(doc(db, 'transport_routes', id), data);
+        else await addDoc(collection(db, 'transport_routes'), data);
+        get().notify('success', 'Route saved.');
+      } catch (err: any) { get().notify('error', err.message); }
+    },
+    deleteTransportRoute: async (id) => {
+      try {
+        await deleteDoc(doc(db, 'transport_routes', id));
+        get().notify('success', 'Route removed.');
+      } catch (err: any) { get().notify('error', err.message); }
     }
   };
 });

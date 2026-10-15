@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useStore } from '../../store/useStore';
 import { Student } from '../../types';
 import { FileText } from 'lucide-react';
 
@@ -25,6 +26,8 @@ const RecordBlock = ({ category, title, children }: { category: string; title: s
   </section>
 );
 
+const viewedHealthRecords = new Set<string>();
+
 export const HealthRecord: React.FC<Props> = ({
   student,
   isEditing,
@@ -33,6 +36,13 @@ export const HealthRecord: React.FC<Props> = ({
   onViewPdf,
   onUploadPdf
 }) => {
+  const addSystemLog = useStore(state => state.addSystemLog);
+  // Audit trail: log that this student's clinical/health record was viewed (once per student per session).
+  useEffect(() => {
+    if (!student?.id || viewedHealthRecords.has(student.id)) return;
+    viewedHealthRecords.add(student.id);
+    addSystemLog('VIEW_HEALTH_RECORD', `Viewed clinical/health record of ${student.fullName} (${student.id})`);
+  }, [student?.id]);
   return (
     <div className="grid w-full grid-cols-1 items-start gap-5 animate-in fade-in duration-300 xl:grid-cols-2">
       <RecordBlock category="Clinical record" title="Professional diagnosis">

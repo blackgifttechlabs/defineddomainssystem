@@ -29,7 +29,19 @@ import { IdCardManagement } from './components/admin/IdCardManagement';
 import { NoticesSlideOver } from './components/common/NoticesSlideOver';
 import { AdminNotices } from './components/AdminNotices';
 import { SystemLogs } from './components/SystemLogs';
-import { AlertCircle, BarChart3, Bell, CheckCircle2, FileText, Home, Info, LogOut, Receipt, X } from 'lucide-react';
+import { Attendance } from './components/Attendance';
+import { IncidentsMedication } from './components/IncidentsMedication';
+import { IepPlans } from './components/IepPlans';
+import { TermReports } from './components/TermReports';
+import { SchedulePlanner } from './components/SchedulePlanner';
+import { ChildCare } from './components/student/ChildCare';
+import { ParentMore } from './components/student/ParentMore';
+import { Messages } from './components/Messages';
+import { FeeArrears } from './components/FeeArrears';
+import { Transport } from './components/Transport';
+import { DataExport } from './components/DataExport';
+import { AccessibilityToggle } from './components/common/AccessibilityToggle';
+import { AlertCircle, BarChart3, Bell, CheckCircle2, FileText, Home, Info, LogOut, MessageCircle, MoreHorizontal, Receipt, X } from 'lucide-react';
 
 const NotificationHost = () => {
   const { notifications, removeNotification } = useStore();
@@ -74,6 +86,8 @@ const ParentMobileShell: React.FC<{ children: React.ReactNode }> = ({ children }
     { id: 'clinical-history', label: 'Reports', icon: FileText },
     { id: 'fees', label: 'Fees', icon: Receipt },
     { id: 'notices', label: 'Notices', icon: Bell },
+    ...(user?.role === 'PARENT' ? [{ id: 'messages', label: 'Chat', icon: MessageCircle }] : []),
+    { id: 'more', label: 'More', icon: MoreHorizontal },
   ];
 
   const handleNav = (id: string) => {
@@ -171,6 +185,13 @@ const App: React.FC = () => {
 
     const role = user?.role;
 
+    if (activeTab === 'messages' && role !== 'STUDENT') return <Messages />;
+    if (activeTab === 'transport') return <Transport />;
+    if ((role === 'PARENT' || role === 'STUDENT') && activeTab === 'more') return <ParentMore />;
+    if ((role === 'PARENT' || role === 'STUDENT') && activeTab === 'child-care') return <ChildCare />;
+    if ((role === 'SUPER_ADMIN' || role === 'ADMIN_SUPPORT') && activeTab === 'arrears') return <FeeArrears />;
+    if ((role === 'SUPER_ADMIN' || role === 'ADMIN_SUPPORT') && activeTab === 'export') return <DataExport />;
+
     if (role === 'STUDENT' || role === 'PARENT') {
       if (activeTab === 'dashboard' || activeTab === 'progress') return <StudentDashboard />;
       if (activeTab === 'students' || activeTab === 'my-students') return <StudentDirectory />;
@@ -188,6 +209,8 @@ const App: React.FC = () => {
       if (activeTab === 'clinical') return <ClinicalABA />;
       if (activeTab === 'clinical-logs') return <LessonLogs />;
       if (activeTab === 'lounge') return <TeachLounge />;
+      if (activeTab === 'attendance') return <Attendance />;
+      if (activeTab === 'care-log') return <IncidentsMedication />;
       if (activeTab === 'settings') return <SystemSettings />;
     }
 
@@ -216,6 +239,11 @@ const App: React.FC = () => {
       case 'notices': return <AdminNotices />;
       case 'system-logs': return <SystemLogs />;
       case 'id-cards': return <IdCardManagement />;
+      case 'attendance': return <Attendance />;
+      case 'care-log': return <IncidentsMedication />;
+      case 'iep-plans': return <IepPlans />;
+      case 'term-reports': return <TermReports />;
+      case 'schedule': return <SchedulePlanner />;
       
       default:
         return (
@@ -233,6 +261,7 @@ const App: React.FC = () => {
   return (
     <>
       <NotificationHost />
+      {isLoggedIn && <AccessibilityToggle className={isParentPortal ? 'left-5 top-5' : 'left-4 bottom-4'} />}
       {!isParentPortal && <NoticesSlideOver />}
       {isParentPortal ? (
         <ParentMobileShell>

@@ -1,0 +1,148 @@
+rules_version = '2';
+// Phase 1 Firestore rules. See SECURITY_NOTES.md.
+//
+// IMPORTANT - TRANSITIONAL FLAGS: the current client (store/useStore.ts) still
+//  (a) reads users/students/parents/staff while UNAUTHENTICATED (login page
+//      suggestions + the plaintext-password fallback login), and
+//  (b) opens unfiltered onSnapshot listeners on every collection for every role.
+// Locking these down now would break logins and parent/student dashboards, so
+// they are controlled by the two functions below. Flip them to `false` once the
+// login is moved to Firebase Auth only and listeners are scoped per role (Phase 2).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function legacyPublicDirectory() { return true; }  // TODO Phase 2: false
+    function legacyOpenReadForSignedIn() { return true; } // TODO Phase 2: false
+
+    // ---------- identity helpers ----------
+    function signedIn() { return request.auth != null; }
+    function myUser() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function hasUserDoc() { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function role() { return hasUserDoc() ? myUser().role : ''; }
+    function isAdmin() { return role() in ['SUPER_ADMIN', 'ADMIN_SUPPORT']; }
+    function isSuperAdmin() { return role() == 'SUPER_ADMIN'; }
+    function isStaff() { return role() == 'SPECIALIST' || isAdmin(); }
+    function isParent() { return role() == 'PARENT'; }
+    function isStudent() { return role() == 'STUDENT'; }
+
+    // Printed student id (e.g. "STU001") that this signed-in parent/student belongs to.
+    function myStudentId() {
+      return isParent()
+        ? get(/databases/$(database)/documents/parents/$(request.auth.uid)).data.studentId
+        : (isStudent()
+            ? get(/databases/$(database)/documents/students/$(request.auth.uid)).data.id
+            : '');
+    }
+    function ownsStudentId(sid) { return (isParent() || isStudent()) && myStudentId() == sid; }
+    function canReadStudentData(sid) {
+      return isStaff() || ownsStudentId(sid) || (signedIn() && legacyOpenReadForSignedIn());
+    }
+
+    // ---------- users ----------
+    match /users/{uid} {
+      allow read: if legacyPublicDirectory() || (signedIn() && (request.auth.uid == uid || isAdmin()));
+      // Users may create/update their own doc but never change their own role; admins manage all.
+      allow create: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow update: if isAdmin() || (signedIn() && request.auth.uid == uid
+                         && request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+
+    // ---------- students ----------
+    // Public read is needed today for landing-page ID verification
+    // (StudentIdVerification.tsx: getDoc by doc id, query by id/fullName) and login.
+    match /students/{uid} {
+      allow read: if legacyPublicDirectory() || isStaff() || (signedIn() && request.auth.uid == uid)
+                  || (isParent() && resource.data.id == myStudentId());
+      allow create, delete: if isAdmin();
+      allow update: if isStaff() || (signedIn() && request.auth.uid == uid);
+    }
+
+    // ---------- parents ----------
+    match /parents/{uid} {
+      allow read: if legacyPublicDirectory() || isStaff() || (signedIn() && request.auth.uid == uid);
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (signedIn() && request.auth.uid == uid);
+    }
+
+    // ---------- staff ----------
+    match /staff/{uid} {
+      allow read: if legacyPublicDirectory() || isStaff() || (signedIn() && request.auth.uid == uid);
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (signedIn() && request.auth.uid == uid);
+    }
+
+    // ---------- clinical / learning data keyed by studentId ----------
+    match /clinical_logs/{id} {
+      allow read: if signedIn() && canReadStudentData(resource.data.studentId);
+      allow create: if isStaff();
+      allow update, delete: if isAdmin() || (isStaff() && resource.data.staffId == request.auth.uid);
+    }
+    match /milestone_records/{id} {
+      allow read: if signedIn() && canReadStudentData(resource.data.studentId);
+      allow create, update: if isStaff();
+      allow delete: if isAdmin();
+    }
+    match /milestone_templates/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // ---------- money / shop ----------
+    match /payments/{id} {
+      allow read: if signedIn() && canReadStudentData(resource.data.studentId);
+      allow create: if signedIn();          // parents pay via the shop flow
+      allow update, delete: if isAdmin();
+    }
+    match /orders/{id} {
+      allow read: if signedIn() && canReadStudentData(resource.data.studentId);
+      allow create: if signedIn();
+      allow update, delete: if isAdmin();
+    }
+    match /shop_items/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // ---------- notices ----------
+    match /notices/{id} {
+      allow read: if signedIn();
+      allow create: if isStaff() || signedIn();   // replies/notices created by parents too
+      allow update: if signedIn();                // views/replies are appended in-place
+      allow delete: if isAdmin();
+    }
+
+    // ---------- audit log (SystemLogs) ----------
+    match /logs/{id} {
+      allow read: if isAdmin();
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;             // append-only
+    }
+
+    // ---------- public intake: landing-page forms ----------
+    // OnlineApplication.tsx -> student_applications, CareersPage.tsx -> applications.
+    match /student_applications/{id} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+    match /applications/{id} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ---------- settings / misc ----------
+    match /settings/{id} {
+      allow read: if true;                        // landing page branding/fees
+      allow write: if isAdmin();
+    }
+    match /lounge_posts/{id} {
+      allow read, create: if isStaff();
+      allow update, delete: if isAdmin();
+    }
+
+    // Everything else: deny.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
