@@ -41,6 +41,9 @@ export interface Student {
   idCardExpiresAt?: string;
   idCardImageUrl?: string;
   idCardAcademicYear?: string;
+  medicalAlerts?: MedicalAlerts;
+  guardians?: Guardian[];
+  authorisedPickups?: AuthorisedPickup[];
 }
 
 export interface StudentApplication {
@@ -249,5 +252,82 @@ export interface SystemLog {
   userName: string;
   action: string;
   details: string;
+  timestamp: string;
+}
+
+// ---- Daily-use features: attendance, medical alerts, pickup, incidents, medication ----
+export interface MedicalAlerts {
+  allergies?: string;
+  seizures?: string;
+  mobilityNeeds?: string;
+  medication?: string;
+  other?: string;
+}
+
+export interface Guardian {
+  id: string;
+  name: string;
+  relationship: string;
+  phone: string;
+  isPrimary?: boolean;
+}
+
+export interface AuthorisedPickup {
+  id: string;
+  name: string;
+  relationship: string;
+  phone: string;
+  idNumber?: string;
+  pickupCode?: string; // one-time code, cleared once used
+  codeIssuedAt?: string;
+}
+
+export type AttendanceStatus = 'Present' | 'Absent' | 'Late';
+
+export interface AttendanceRegister {
+  id: string; // `${date}_${className}`
+  date: string; // YYYY-MM-DD
+  className: string;
+  records: Record<string, AttendanceStatus>; // studentId -> status
+  takenById: string;
+  takenByName: string;
+  timestamp: string;
+}
+
+export interface PickupLogEntry {
+  id: string;
+  studentId: string;
+  studentName: string;
+  pickupName: string;
+  relationship: string;
+  codeVerified: boolean;
+  releasedById: string;
+  releasedByName: string;
+  timestamp: string;
+}
+
+export interface IncidentReport {
+  id: string;
+  studentId: string;
+  studentName: string;
+  kind: 'Incident' | 'Injury';
+  severity: 'Minor' | 'Moderate' | 'Serious';
+  description: string;
+  actionTaken: string;
+  parentNotified: boolean;
+  reportedById: string;
+  reportedByName: string;
+  timestamp: string;
+}
+
+export interface MedicationLogEntry {
+  id: string;
+  studentId: string;
+  studentName: string;
+  medication: string;
+  dose: string;
+  notes?: string;
+  givenById: string;
+  givenByName: string;
   timestamp: string;
 }

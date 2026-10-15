@@ -29,6 +29,8 @@ import { IdCardManagement } from './components/admin/IdCardManagement';
 import { NoticesSlideOver } from './components/common/NoticesSlideOver';
 import { AdminNotices } from './components/AdminNotices';
 import { SystemLogs } from './components/SystemLogs';
+import { Attendance } from './components/Attendance';
+import { IncidentsMedication } from './components/IncidentsMedication';
 import { AlertCircle, BarChart3, Bell, CheckCircle2, FileText, Home, Info, LogOut, Receipt, X } from 'lucide-react';
 
 const NotificationHost = () => {
@@ -188,6 +190,8 @@ const App: React.FC = () => {
       if (activeTab === 'clinical') return <ClinicalABA />;
       if (activeTab === 'clinical-logs') return <LessonLogs />;
       if (activeTab === 'lounge') return <TeachLounge />;
+      if (activeTab === 'attendance') return <Attendance />;
+      if (activeTab === 'care-log') return <IncidentsMedication />;
       if (activeTab === 'settings') return <SystemSettings />;
     }
 
@@ -216,6 +220,8 @@ const App: React.FC = () => {
       case 'notices': return <AdminNotices />;
       case 'system-logs': return <SystemLogs />;
       case 'id-cards': return <IdCardManagement />;
+      case 'attendance': return <Attendance />;
+      case 'care-log': return <IncidentsMedication />;
       
       default:
         return (
