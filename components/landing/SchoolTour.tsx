@@ -426,26 +426,26 @@ export const TOUR_SECTIONS: TourSectionData[] = [
 export const SchoolTour: React.FC = () => {
   const { setView } = useStore();
   const [activeTab, setActiveTab] = useState<string>('all');
-  const [lightbox, setLightbox] = useState<{
+  const [drawer, setDrawer] = useState<{
+    section: TourSectionData;
     images: TourImage[];
     currentIndex: number;
-    sectionTitle: string;
   } | null>(null);
 
-  // Keyboard navigation for lightbox
+  // Keyboard navigation for drawer
   useEffect(() => {
-    if (!lightbox) return;
+    if (!drawer) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setLightbox(null);
+        setDrawer(null);
       } else if (e.key === 'ArrowRight') {
-        setLightbox(prev => prev ? {
+        setDrawer(prev => prev ? {
           ...prev,
           currentIndex: (prev.currentIndex + 1) % prev.images.length
         } : null);
       } else if (e.key === 'ArrowLeft') {
-        setLightbox(prev => prev ? {
+        setDrawer(prev => prev ? {
           ...prev,
           currentIndex: (prev.currentIndex - 1 + prev.images.length) % prev.images.length
         } : null);
@@ -454,14 +454,14 @@ export const SchoolTour: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [lightbox]);
+  }, [drawer]);
 
-  const openLightboxForSection = (section: TourSectionData, imageIndex: number) => {
+  const openDrawer = (section: TourSectionData, imageIndex: number) => {
     const allSectionImages = [section.featuredImage, ...section.images];
-    setLightbox({
+    setDrawer({
+      section,
       images: allSectionImages,
       currentIndex: imageIndex,
-      sectionTitle: section.title
     });
   };
 
@@ -484,100 +484,216 @@ export const SchoolTour: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-blue-600 selection:text-white">
       
-      {/* ── LIGHTBOX MODAL ──────────────────────────────────────────────────────── */}
-      {lightbox && (
-        <div 
-          className="fixed inset-0 z-[1000] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-between p-4 md:p-6 animate-in fade-in duration-300"
-          onClick={() => setLightbox(null)}
-        >
-          {/* Top Bar */}
-          <div className="w-full max-w-7xl flex items-center justify-between text-white py-2 z-10" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-3">
-              <span className="px-3 py-1 bg-blue-600/30 border border-blue-500/40 rounded-full text-xs font-black uppercase tracking-wider text-blue-300">
-                {lightbox.sectionTitle}
-              </span>
-              <span className="text-xs font-bold text-slate-400">
-                {lightbox.currentIndex + 1} of {lightbox.images.length}
-              </span>
-            </div>
-            <button 
-              onClick={() => setLightbox(null)}
-              className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all active:scale-95 border border-white/10"
-              title="Close (Esc)"
-            >
-              <X size={22} />
-            </button>
-          </div>
-
-          {/* Main Photo Area */}
-          <div className="relative w-full max-w-6xl flex-1 flex items-center justify-center p-2" onClick={e => e.stopPropagation()}>
-            <img 
-              src={lightbox.images[lightbox.currentIndex].src} 
-              alt={lightbox.images[lightbox.currentIndex].title}
-              className="max-h-[72vh] max-w-full object-contain rounded-2xl shadow-2xl transition-all duration-300 animate-in zoom-in-95 border-2 border-white/10"
-            />
-
-            {/* Left Button */}
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                setLightbox(prev => prev ? {
-                  ...prev,
-                  currentIndex: (prev.currentIndex - 1 + prev.images.length) % prev.images.length
-                } : null);
-              }}
-              className="absolute left-2 md:left-4 p-3 md:p-4 rounded-full bg-black/60 hover:bg-blue-600 text-white transition-all border border-white/20 shadow-xl backdrop-blur-sm active:scale-90"
-              title="Previous photo"
-            >
-              <ChevronLeft size={28} />
-            </button>
-
-            {/* Right Button */}
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                setLightbox(prev => prev ? {
-                  ...prev,
-                  currentIndex: (prev.currentIndex + 1) % prev.images.length
-                } : null);
-              }}
-              className="absolute right-2 md:right-4 p-3 md:p-4 rounded-full bg-black/60 hover:bg-blue-600 text-white transition-all border border-white/20 shadow-xl backdrop-blur-sm active:scale-90"
-              title="Next photo"
-            >
-              <ChevronRight size={28} />
-            </button>
-          </div>
-
-          {/* Bottom Caption & Thumbnails Strip */}
-          <div className="w-full max-w-5xl space-y-4 text-center z-10" onClick={e => e.stopPropagation()}>
-            <div>
-              <h4 className="text-lg md:text-xl font-black text-white uppercase tracking-tight">
-                {lightbox.images[lightbox.currentIndex].title}
-              </h4>
-              <p className="text-xs md:text-sm text-slate-300 max-w-2xl mx-auto mt-1 leading-relaxed">
-                {lightbox.images[lightbox.currentIndex].caption}
-              </p>
-            </div>
-
-            {/* Thumbnail Row */}
-            <div className="flex items-center justify-center gap-2 overflow-x-auto py-2 no-scrollbar">
-              {lightbox.images.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setLightbox(prev => prev ? { ...prev, currentIndex: i } : null)}
-                  className={`relative shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-xl overflow-hidden border-2 transition-all ${
-                    lightbox.currentIndex === i 
-                      ? 'border-blue-500 scale-105 shadow-lg shadow-blue-500/30' 
-                      : 'border-white/20 opacity-40 hover:opacity-80'
-                  }`}
-                >
-                  <img src={img.src} alt={img.title} className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+      {/* ── DRAWER / BOTTOM SHEET ───────────────────────────────────────────────── */}
+      {/* Backdrop */}
+      {drawer && (
+        <div
+          className="fixed inset-0 z-[999] bg-black/60 backdrop-blur-sm"
+          onClick={() => setDrawer(null)}
+        />
       )}
+
+      {/* Desktop: right-side slide-in panel */}
+      <div
+        className={`fixed top-0 right-0 bottom-0 z-[1000] w-full max-w-[480px] bg-white dark:bg-slate-900 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out hidden md:flex ${
+          drawer ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {drawer && (
+          <>
+            {/* Panel header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
+              <div className="flex items-center gap-2">
+                {(() => { const Icon = drawer.section.icon; return <Icon size={16} className="text-blue-600" />; })()}
+                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider border ${drawer.section.tagColor}`}>
+                  {drawer.section.badge}
+                </span>
+                <span className="text-[11px] font-bold text-slate-400">
+                  {drawer.currentIndex + 1} / {drawer.images.length}
+                </span>
+              </div>
+              <button
+                onClick={() => setDrawer(null)}
+                className="p-2 rounded-[9px] bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-all active:scale-95"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Main image */}
+            <div className="relative overflow-hidden shrink-0 bg-slate-950" style={{ height: '260px' }}>
+              <img
+                key={drawer.currentIndex}
+                src={drawer.images[drawer.currentIndex].src}
+                alt={drawer.images[drawer.currentIndex].title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 text-white">
+                <h3 className="font-black text-sm uppercase tracking-tight leading-snug line-clamp-1">
+                  {drawer.images[drawer.currentIndex].title}
+                </h3>
+                <p className="text-xs text-slate-300 mt-0.5 line-clamp-2 leading-relaxed">
+                  {drawer.images[drawer.currentIndex].caption}
+                </p>
+              </div>
+              {/* Prev / Next */}
+              <button
+                onClick={() => setDrawer(prev => prev ? { ...prev, currentIndex: (prev.currentIndex - 1 + prev.images.length) % prev.images.length } : null)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 hover:bg-blue-600 text-white transition-all"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={() => setDrawer(prev => prev ? { ...prev, currentIndex: (prev.currentIndex + 1) % prev.images.length } : null)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 hover:bg-blue-600 text-white transition-all"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+              {/* Section title + description */}
+              <div className="space-y-1.5">
+                <h2 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+                  {drawer.section.title}
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {drawer.section.description}
+                </p>
+              </div>
+
+              {/* Highlights pills */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Highlights</p>
+                <div className="flex flex-wrap gap-2">
+                  {drawer.section.highlights.map((h, i) => (
+                    <span key={i} className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                      {h}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Thumbnail strip */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">All Photos</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {drawer.images.map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setDrawer(prev => prev ? { ...prev, currentIndex: i } : null)}
+                      className={`relative aspect-square rounded-[9px] overflow-hidden border-2 transition-all ${
+                        drawer.currentIndex === i
+                          ? 'border-blue-500 shadow-md shadow-blue-500/30'
+                          : 'border-transparent opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={img.src} alt={img.title} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Mobile: bottom sheet slide-up */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-[1000] bg-white dark:bg-slate-900 rounded-t-[20px] shadow-2xl flex flex-col transition-transform duration-300 ease-in-out md:hidden ${
+          drawer ? 'translate-y-0' : 'translate-y-full'
+        }`}
+        style={{ maxHeight: '88vh' }}
+      >
+        {drawer && (
+          <>
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1 shrink-0">
+              <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+            </div>
+
+            {/* Mobile header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
+              <div className="flex items-center gap-2">
+                {(() => { const Icon = drawer.section.icon; return <Icon size={14} className="text-blue-600" />; })()}
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${drawer.section.tagColor}`}>
+                  {drawer.section.badge}
+                </span>
+              </div>
+              <button
+                onClick={() => setDrawer(null)}
+                className="p-1.5 rounded-[9px] bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 transition-all"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Main image */}
+            <div className="relative overflow-hidden shrink-0 bg-slate-950" style={{ height: '220px' }}>
+              <img
+                key={drawer.currentIndex}
+                src={drawer.images[drawer.currentIndex].src}
+                alt={drawer.images[drawer.currentIndex].title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+              <div className="absolute bottom-3 left-3 right-3 text-white">
+                <h3 className="font-black text-sm uppercase tracking-tight line-clamp-1">
+                  {drawer.images[drawer.currentIndex].title}
+                </h3>
+              </div>
+              <button
+                onClick={() => setDrawer(prev => prev ? { ...prev, currentIndex: (prev.currentIndex - 1 + prev.images.length) % prev.images.length } : null)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 hover:bg-blue-600 text-white transition-all"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                onClick={() => setDrawer(prev => prev ? { ...prev, currentIndex: (prev.currentIndex + 1) % prev.images.length } : null)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 hover:bg-blue-600 text-white transition-all"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+
+            {/* Scrollable mobile content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div>
+                <h2 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white">
+                  {drawer.section.title}
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                  {drawer.section.description}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {drawer.section.highlights.map((h, i) => (
+                  <span key={i} className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                    {h}
+                  </span>
+                ))}
+              </div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {drawer.images.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setDrawer(prev => prev ? { ...prev, currentIndex: i } : null)}
+                    className={`relative aspect-square rounded-[9px] overflow-hidden border-2 transition-all ${
+                      drawer.currentIndex === i
+                        ? 'border-blue-500'
+                        : 'border-transparent opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={img.src} alt={img.title} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* ── HERO BANNER ────────────────────────────────────────────────────────── */}
       <section className="relative min-h-[75vh] flex items-center justify-center overflow-hidden bg-slate-950 pt-32 pb-20">
@@ -719,65 +835,35 @@ export const SchoolTour: React.FC = () => {
             <section 
               key={section.id} 
               id={section.id}
-              className="max-w-7xl mx-auto px-4 sm:px-6 scroll-mt-36"
+              className="px-12 scroll-mt-36"
             >
-              {/* Section Header Card */}
-              <div className="relative mb-14 overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 md:p-12 shadow-xl shadow-slate-200/50 dark:shadow-none">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-500/10 via-purple-500/5 to-transparent rounded-full blur-3xl pointer-events-none"></div>
-
-                <div className="relative z-10 flex flex-col lg:flex-row gap-8 lg:items-start justify-between">
-                  <div className="space-y-4 max-w-3xl">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="px-3.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 font-mono text-xs font-black text-slate-500 dark:text-slate-400">
-                        {section.number}
-                      </span>
-                      <div className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full border text-xs font-black uppercase tracking-wider ${section.tagColor}`}>
-                        <SectionIcon size={14} />
-                        <span>{section.badge}</span>
-                      </div>
-                      <span className="text-xs font-bold text-slate-400">
-                        {section.images.length + 1} Photos
-                      </span>
-                    </div>
-
-                    <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-slate-900 dark:text-white leading-tight">
-                      {section.title}
-                    </h2>
-
-                    <p className="text-lg md:text-xl font-bold text-blue-600 dark:text-blue-400">
-                      {section.subtitle}
-                    </p>
-
-                    <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-                      {section.description}
-                    </p>
+              {/* Section Header Card — trimmed */}
+              <div className="relative mb-10 overflow-hidden rounded-[9px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 md:p-8 shadow-lg shadow-slate-200/50 dark:shadow-none">
+                <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-blue-500/8 to-transparent rounded-full blur-3xl pointer-events-none" />
+                <div className="relative z-10 flex flex-wrap items-center gap-3">
+                  <span className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 font-mono text-xs font-black text-slate-500 dark:text-slate-400">
+                    {section.number}
+                  </span>
+                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-black uppercase tracking-wider ${section.tagColor}`}>
+                    <SectionIcon size={13} />
+                    <span>{section.badge}</span>
                   </div>
-
-                  {/* Quick Highlights Box */}
-                  <div className="lg:w-80 shrink-0 p-6 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 space-y-3">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                      <CheckCircle2 size={14} className="text-blue-500" />
-                      Key Highlights
-                    </h3>
-                    <ul className="space-y-2.5">
-                      {section.highlights.slice(0, 4).map((highlight, hIdx) => (
-                        <li key={hIdx} className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-start gap-2 leading-relaxed">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0 mt-1.5" />
-                          <span>{highlight}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+                    {section.title}
+                  </h2>
+                  <span className="ml-auto text-xs font-bold text-slate-400">
+                    {section.images.length + 1} Photos
+                  </span>
                 </div>
               </div>
 
               {/* Dynamic Photo Showcase */}
-              <div className="space-y-6">
+              <div className="space-y-5">
                 
                 {/* Featured Hero Photo */}
                 <div 
-                  onClick={() => openLightboxForSection(section, 0)}
-                  className="group relative cursor-pointer overflow-hidden rounded-3xl bg-slate-900 border-2 border-slate-200 dark:border-slate-800 shadow-2xl transition-all hover:border-blue-500"
+                  onClick={() => openDrawer(section, 0)}
+                  className="group relative cursor-pointer overflow-hidden rounded-[9px] bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl transition-all hover:border-blue-500"
                 >
                   <div className="relative aspect-[16/9] md:aspect-[21/9] w-full overflow-hidden">
                     <img 
@@ -786,72 +872,61 @@ export const SchoolTour: React.FC = () => {
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     
                     {/* Floating Zoom Button */}
-                    <div className="absolute top-6 right-6 p-3 rounded-full bg-black/50 hover:bg-blue-600 text-white backdrop-blur-md transition-all shadow-lg opacity-0 group-hover:opacity-100 group-hover:scale-110">
-                      <Maximize2 size={20} />
+                    <div className="absolute top-5 right-5 p-2.5 rounded-[9px] bg-black/50 hover:bg-blue-600 text-white backdrop-blur-md transition-all shadow-lg opacity-0 group-hover:opacity-100 group-hover:scale-105">
+                      <Maximize2 size={18} />
                     </div>
 
                     {/* Featured Tag */}
-                    <div className="absolute top-6 left-6 px-4 py-1.5 rounded-full bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg">
-                      Spotlight {section.featuredImage.tag}
+                    <div className="absolute top-5 left-5 px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg">
+                      {section.featuredImage.tag}
                     </div>
 
                     {/* Captions */}
-                    <div className="absolute bottom-6 left-6 right-6 md:bottom-8 md:left-8 md:right-8 text-white space-y-2">
-                      <h3 className="text-2xl md:text-4xl font-black uppercase tracking-tight">
+                    <div className="absolute bottom-5 left-5 right-5 md:bottom-7 md:left-7 md:right-7 text-white space-y-1.5">
+                      <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight">
                         {section.featuredImage.title}
                       </h3>
-                      <p className="text-sm md:text-base text-slate-200 max-w-3xl leading-relaxed">
-                        {section.featuredImage.caption}
-                      </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Sub Gallery Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {section.images.map((img, imgIdx) => {
                     const globalIdx = imgIdx + 1; // 0 was featured
                     return (
                       <div
                         key={imgIdx}
-                        onClick={() => openLightboxForSection(section, globalIdx)}
-                        className="group relative cursor-pointer overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 flex flex-col"
+                        onClick={() => openDrawer(section, globalIdx)}
+                        className="group relative cursor-pointer overflow-hidden rounded-[9px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500"
                       >
                         {/* Image Frame */}
                         <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 dark:bg-slate-950">
                           <img 
                             src={img.src} 
                             alt={img.title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-108"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             loading="lazy"
                           />
                           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <span className="p-3 rounded-full bg-white/90 text-slate-900 shadow-xl">
-                              <Eye size={20} />
+                            <span className="p-2.5 rounded-full bg-white/90 text-slate-900 shadow-xl">
+                              <Eye size={18} />
                             </span>
                           </div>
-                          <span className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-wider">
+                          <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-wider">
                             {img.tag}
                           </span>
                         </div>
 
-                        {/* Card Info */}
-                        <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
-                          <div>
-                            <h4 className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-white line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                              {img.title}
-                            </h4>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1 leading-relaxed">
-                              {img.caption}
-                            </p>
-                          </div>
-                          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-bold text-blue-600 dark:text-blue-400">
-                            <span>Inspect Photo</span>
-                            <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                          </div>
+                        {/* Card Info — title only */}
+                        <div className="px-3 py-2.5 flex items-center justify-between">
+                          <h4 className="font-black text-xs uppercase tracking-tight text-slate-900 dark:text-white line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {img.title}
+                          </h4>
+                          <ChevronRight size={13} className="text-blue-500 group-hover:translate-x-0.5 transition-transform shrink-0" />
                         </div>
                       </div>
                     );
@@ -866,11 +941,11 @@ export const SchoolTour: React.FC = () => {
 
       {/* ── TESTIMONIAL & CERTIFICATION BANNER ───────────────────────────────────── */}
       <section className="bg-white dark:bg-slate-900 py-24 border-y border-slate-200 dark:border-slate-800 my-16">
-        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+        <div className="px-12 grid md:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-600/10 text-blue-600 dark:text-blue-400 border border-blue-600/20 text-xs font-black uppercase tracking-wider">
               <Award size={14} />
-              Quality & Compassion
+              Quality &amp; Compassion
             </div>
             <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tight leading-tight">
               An Environment Where <br />
@@ -885,22 +960,22 @@ export const SchoolTour: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm font-black text-slate-900 dark:text-white uppercase">The Defined Domains Team</p>
-                <p className="text-xs text-slate-500">Multidisciplinary Educators & Developmental Specialists</p>
+                <p className="text-xs text-slate-500">Multidisciplinary Educators &amp; Developmental Specialists</p>
               </div>
             </div>
           </div>
 
           {/* Quick Contact & Visit Info */}
-          <div className="p-8 md:p-10 rounded-3xl bg-gradient-to-br from-slate-900 to-indigo-950 text-white space-y-6 shadow-2xl">
+          <div className="p-8 md:p-10 rounded-[9px] bg-gradient-to-br from-slate-900 to-indigo-950 text-white space-y-6 shadow-2xl">
             <h4 className="text-xl font-black uppercase tracking-tight flex items-center gap-2 text-blue-400">
-              <MapPin size={20} /> Campus Visits & Inquiries
+              <MapPin size={20} /> Campus Visits &amp; Inquiries
             </h4>
             <div className="space-y-4 text-sm text-slate-300">
               <div className="flex items-start gap-3">
                 <MapPin size={18} className="text-blue-400 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-white">Campus Locations</p>
-                  <p>24 Eliot Street, Rhodene, Masvingo & 27 Colnebrook Lane, Harare</p>
+                  <p>24 Eliot Street, Rhodene, Masvingo &amp; 27 Colnebrook Lane, Harare</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -921,7 +996,7 @@ export const SchoolTour: React.FC = () => {
             <div className="pt-2">
               <button
                 onClick={() => setView('apply')}
-                className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 font-black uppercase tracking-widest text-xs transition-all shadow-lg active:scale-95"
+                className="w-full py-4 rounded-[9px] bg-blue-600 hover:bg-blue-500 font-black uppercase tracking-widest text-xs transition-all shadow-lg active:scale-95"
               >
                 Schedule an In-Person Campus Tour
               </button>
@@ -931,10 +1006,8 @@ export const SchoolTour: React.FC = () => {
       </section>
 
       {/* ── FINAL CALL TO ACTION ─────────────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-28">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white p-10 md:p-16 text-center space-y-8 shadow-2xl">
-          <div className="absolute inset-0 [background-image:radial-gradient(circle_at_center,rgba(255,255,255,0.2)_1px,transparent_1px)] [background-size:20px_20px] opacity-20"></div>
-
+      <section className="px-12 pb-28">
+        <div className="relative overflow-hidden rounded-[9px] bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white p-10 md:p-16 text-center space-y-8 shadow-2xl">
           <div className="relative z-10 max-w-3xl mx-auto space-y-6">
             <span className="px-4 py-1.5 rounded-full bg-white/20 text-white text-xs font-black uppercase tracking-widest backdrop-blur-md">
               Admissions Open
@@ -951,7 +1024,7 @@ export const SchoolTour: React.FC = () => {
             <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
               <button 
                 onClick={() => setView('apply')}
-                className="px-8 py-4 rounded-xl bg-white text-blue-900 hover:bg-slate-100 font-black uppercase tracking-widest text-xs transition-all shadow-2xl active:scale-95 flex items-center gap-3"
+                className="px-8 py-4 rounded-[9px] bg-white text-blue-900 hover:bg-slate-100 font-black uppercase tracking-widest text-xs transition-all shadow-2xl active:scale-95 flex items-center gap-3"
               >
                 Apply for Enrollment <ArrowRight size={16} />
               </button>
@@ -962,7 +1035,7 @@ export const SchoolTour: React.FC = () => {
                     document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
                   }, 150);
                 }}
-                className="px-8 py-4 rounded-xl bg-black/30 hover:bg-black/40 text-white border border-white/30 font-black uppercase tracking-widest text-xs transition-all backdrop-blur-md active:scale-95"
+                className="px-8 py-4 rounded-[9px] bg-black/30 hover:bg-black/40 text-white border border-white/30 font-black uppercase tracking-widest text-xs transition-all backdrop-blur-md active:scale-95"
               >
                 Contact Admissions
               </button>

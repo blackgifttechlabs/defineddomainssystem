@@ -68,7 +68,7 @@ const NotificationHost = () => {
   );
 };
 
-const ParentMobileShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ParentPortalShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { activeTab, setActiveTab, logout, user, notices } = useStore();
 
   const unreadNotices = React.useMemo(() => {
@@ -95,20 +95,25 @@ const ParentMobileShell: React.FC<{ children: React.ReactNode }> = ({ children }
   };
 
   return (
-    <div className="min-h-screen bg-[#fbf8ff] dark:bg-slate-950 text-slate-950">
+    <div className="parent-portal min-h-screen bg-[#fbf8ff] dark:bg-slate-950 text-slate-950">
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-60 flex-col border-r border-slate-200 bg-white px-4 py-8">
+        <div className="flex items-center gap-3 px-3 mb-10"><img src="https://i.ibb.co/spSVqW8s/definedlogo.png" alt="Defined" className="h-10 w-10 object-contain" /><div><p className="font-black text-sm">Defined Domain</p><p className="text-xs text-slate-500">{user?.role === 'PARENT' ? 'Parent' : 'Student'} portal</p></div></div>
+        <nav aria-label="Desktop portal navigation" className="space-y-2">{navItems.map(item => <button key={item.id} onClick={() => handleNav(item.id)} aria-current={activeTab === item.id ? 'page' : undefined} className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${activeTab === item.id ? 'bg-violet-50 text-violet-700' : 'text-slate-500 hover:bg-slate-50'}`}><item.icon size={18} />{item.label}{item.id === 'notices' && unreadNotices > 0 && <span className="ml-auto rounded-full bg-violet-100 px-2 text-xs">{unreadNotices}</span>}</button>)}</nav>
+        <div className="mt-auto border-t border-slate-100 pt-5 px-3"><p className="truncate text-sm font-bold">{user?.name}</p><p className="mt-1 text-xs text-slate-400">Your school, connected.</p><button onClick={logout} className="mt-4 flex items-center gap-2 text-sm text-slate-500"><LogOut size={16} />Sign out</button></div>
+      </aside>
       <button
         onClick={logout}
-        className="fixed right-5 top-5 z-[90] h-10 w-10 rounded-full border border-slate-200 bg-white/90 text-slate-500 shadow-[0_10px_28px_rgba(15,23,42,0.10)] backdrop-blur-xl grid place-items-center hover:text-rose-600 transition-colors"
+        className="lg:hidden fixed right-5 top-5 z-[90] h-10 w-10 rounded-full border border-slate-200 bg-white/90 text-slate-500 shadow-[0_10px_28px_rgba(15,23,42,0.10)] backdrop-blur-xl grid place-items-center hover:text-rose-600 transition-colors"
         title={`Logout${user?.name ? ` ${user.name}` : ''}`}
       >
         <LogOut size={16} strokeWidth={2.6} />
       </button>
-      <main className="min-h-screen max-w-md mx-auto px-5 pt-5 pb-28 overflow-x-hidden">
-        <div key={activeTab} className="animate-parent-tab">
+      <main className="min-h-screen max-w-md mx-auto px-5 pt-5 pb-28 overflow-x-hidden lg:max-w-none lg:ml-60 lg:px-10 lg:py-9 xl:px-14">
+        <div key={activeTab} className="animate-parent-tab mx-auto lg:max-w-7xl">
           {children}
         </div>
       </main>
-      <nav className="fixed left-4 right-4 bottom-5 z-[80] max-w-sm mx-auto h-[58px] rounded-[29px] border border-white/80 bg-white/85 backdrop-blur-2xl shadow-[0_18px_45px_rgba(15,23,42,0.16)] px-2 flex items-center justify-between">
+      <nav className="lg:hidden fixed left-4 right-4 bottom-5 z-[80] max-w-sm mx-auto h-[58px] rounded-[29px] border border-white/80 bg-white/85 backdrop-blur-2xl shadow-[0_18px_45px_rgba(15,23,42,0.16)] px-2 flex items-center justify-between">
         {navItems.map(item => {
           const Icon = item.icon;
           const isActive = activeTab === item.id || (item.id === 'dashboard' && activeTab === 'students');
@@ -264,9 +269,9 @@ const App: React.FC = () => {
       {isLoggedIn && <AccessibilityToggle className={isParentPortal ? 'left-5 top-5' : 'left-4 bottom-4'} />}
       {!isParentPortal && <NoticesSlideOver />}
       {isParentPortal ? (
-        <ParentMobileShell>
+        <ParentPortalShell>
           {renderContent()}
-        </ParentMobileShell>
+        </ParentPortalShell>
       ) : isLoggedIn && view !== 'verify' && view !== 'id-verify' && view !== 'apply' && view !== 'careers' ? (
         <AppShell>
           {renderContent()}

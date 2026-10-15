@@ -120,3 +120,20 @@ body {
 html.a11y-large-text body { zoom: 1.2; }
 html.a11y-high-contrast { filter: contrast(1.35) saturate(1.1); }
 html.a11y-high-contrast :focus-visible { outline: 3px solid #000; outline-offset: 2px; }
+
+/* Desktop portal retains the existing mobile card layout below 1024px. */
+@media (min-width: 1024px) {
+  .parent-dashboard { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, 1fr); gap: 24px; align-items: start; }
+  .parent-dashboard > * { margin-top: 0 !important; min-width: 0; }
+  .parent-dashboard > header { grid-column: 1 / -1; padding: 0 0 12px; }
+  .parent-dashboard > header h1 { font-size: 24px; }
+  .parent-dashboard > section { height: 100%; }
+  .parent-dashboard > section:nth-child(2) { padding: 28px; }
+  .parent-dashboard > section:nth-child(3) { align-content: stretch; }
+  .parent-dashboard > section:nth-child(n+4) { padding: 24px; }
+  .parent-dashboard > section:nth-child(n+4) h2 { font-size: 15px; }
+  .parent-dashboard > section:nth-child(n+4) button { padding-top: 14px; padding-bottom: 14px; }
+  .fees-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 1.1fr); gap: 24px; align-items: start; }
+  .fees-layout > * { margin-top: 0 !important; min-width: 0; }
+  .fees-layout > header, .fees-layout > .payment-history { grid-column: 1 / -1; }
+}

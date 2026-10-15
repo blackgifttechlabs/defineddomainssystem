@@ -234,7 +234,7 @@ export const StudentDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="parent-dashboard space-y-4">
       <header className="flex items-center justify-between pr-12">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-12 w-12 rounded-full overflow-hidden bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)] shrink-0">
