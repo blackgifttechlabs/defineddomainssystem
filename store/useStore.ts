@@ -171,7 +171,7 @@ interface AppState {
   updateCartQuantity: (cartId: string, delta: number) => void;
   removeFromCart: (cartId: string) => void;
   clearCart: () => void;
-  placeOrder: (orderData: Omit<Order, 'id' | 'timestamp' | 'status'>) => Promise<void>;
+  placeOrder: (orderData: Omit<Order, 'id' | 'timestamp' | 'status'>) => Promise<boolean>;
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
   saveMilestoneRecord: (record: Omit<MilestoneRecord, 'id' | 'timestamp' | 'staffId'>) => Promise<void>;
   saveMilestoneTemplate: (template: MilestoneTemplate) => Promise<void>;
@@ -989,7 +989,8 @@ export const useStore = create<AppState>((set, get) => {
         await addDoc(collection(db, 'orders'), { ...orderData, status: 'Uncollected', timestamp: new Date().toISOString() });
         get().clearCart();
         get().notify('success', 'Your order was placed successfully.');
-      } catch (err: any) { get().notify('error', err.message); }
+        return true;
+      } catch (err: any) { get().notify('error', err.message); return false; }
     },
     updateOrderStatus: async (orderId, status) => {
       try {

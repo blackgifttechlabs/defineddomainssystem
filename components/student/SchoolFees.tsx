@@ -305,7 +305,7 @@ export const SchoolFees: React.FC = () => {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-black truncate">{payment.method}</p>
-                <span className={`text-[9px] font-bold ${payment.isMock ? 'text-amber-600' : 'text-emerald-600'}`}>{payment.isMock ? 'Demo payment' : 'Successful'}</span>
+                <span className={`text-[9px] font-bold ${payment.isMock ? 'text-amber-600' : 'text-emerald-600'}`}>{payment.isMock ? 'Not confirmed' : 'Successful'}</span>
                 <p className="text-[9px] font-bold text-slate-400">{new Date(payment.timestamp).toLocaleDateString()}</p>
               </div>
               <div className="flex items-center gap-2">

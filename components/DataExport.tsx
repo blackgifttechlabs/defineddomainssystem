@@ -19,8 +19,8 @@ export const DataExport: React.FC = () => {
 
   const exportPayments = () =>
     downloadCsv(`payments-${today}`,
-      ['Date', 'Student', 'Amount', 'Method', 'Reference', 'Test payment'],
-      payments.map(p => [p.timestamp, p.studentName, p.amount, p.method, p.reference, p.isMock ? 'Yes' : 'No']));
+      ['Date', 'Student', 'Amount', 'Method', 'Reference', 'Confirmed'],
+      payments.map(p => [p.timestamp, p.studentName, p.amount, p.method, p.reference, p.isMock ? 'No' : 'Yes']));
 
   // No attendance data exists yet: this is a printable class register template.
   const exportRegister = () => {

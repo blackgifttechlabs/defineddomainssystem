@@ -53,8 +53,7 @@ export const UniformShop: React.FC = () => {
   const handleCheckout = async () => {
     setIsProcessing(true);
     try {
-      await new Promise(r => setTimeout(r, 2000)); // Simulate processing
-      await placeOrder({
+      const placed = await placeOrder({
         userId: user?.id || 'guest',
         studentId: linkedStudent?.id || 'guest-user',
         studentName: linkedStudent?.fullName || 'Online Visitor',
@@ -62,6 +61,7 @@ export const UniformShop: React.FC = () => {
         total: subtotal,
         paymentMethod
       });
+      if (!placed) return;
       setOrderSuccess(true);
       setTimeout(() => { 
         setOrderSuccess(false); 
@@ -440,8 +440,8 @@ export const UniformShop: React.FC = () => {
                 <>
                   <header className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/50">
                      <div>
-                        <h3 className="text-base font-black uppercase tracking-widest dark:text-white">Payment Details</h3>
-                        <p className="text-[8px] font-black uppercase text-slate-400 mt-1">Choose your payment method</p>
+                        <h3 className="text-base font-black uppercase tracking-widest dark:text-white">Order Details</h3>
+                        <p className="text-[8px] font-black uppercase text-slate-400 mt-1">Choose how you will pay at collection</p>
                      </div>
                      <button onClick={() => setShowCheckout(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><X size={24}/></button>
                   </header>
@@ -461,10 +461,10 @@ export const UniformShop: React.FC = () => {
                      
                      <div className="bg-slate-50 dark:bg-slate-950 p-6 border border-slate-100 dark:border-slate-800 rounded-none">
                         <div className="flex items-center justify-between mb-2">
-                           <span className="text-[10px] font-black uppercase text-slate-400">Total to Pay</span>
+                           <span className="text-[10px] font-black uppercase text-slate-400">Order Total</span>
                            <span className="text-3xl font-black font-mono text-blue-600">${subtotal.toFixed(2)}</span>
                         </div>
-                        <p className="text-[8px] font-medium text-slate-400 italic">Secure payment processing with 256-bit encryption</p>
+                        <p className="text-[8px] font-medium text-slate-400 italic">Your order is saved with the school office. Payment is received at collection.</p>
                      </div>
 
                      <button 
@@ -472,7 +472,7 @@ export const UniformShop: React.FC = () => {
                       disabled={isProcessing}
                       className="w-full py-6 bg-slate-950 dark:bg-blue-600 text-white font-black uppercase text-xs tracking-[0.4em] shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center justify-center gap-4 hover:bg-blue-600 transition-all active:scale-[0.98]"
                      >
-                        {isProcessing ? <Loader2 className="animate-spin" size={20} /> : <>Verify and Pay Now <Lock size={18}/></>}
+                        {isProcessing ? <Loader2 className="animate-spin" size={20} /> : <>Place Order <ArrowRight size={18}/></>}
                      </button>
                   </div>
                 </>
