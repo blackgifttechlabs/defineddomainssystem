@@ -19,7 +19,7 @@ const newGoal = (): IepGoal => ({
 });
 
 export const IepPlans: React.FC = () => {
-  const { students, iepPlans, user, settings, loadPlanningData, saveIepPlan, signOffIep, deleteIepPlan } = useStore();
+  const { students, staff, iepPlans, user, settings, loadPlanningData, saveIepPlan, signOffIep, deleteIepPlan } = useStore();
   useEffect(() => { loadPlanningData(); }, []);
 
   const role = user?.role;
@@ -56,6 +56,12 @@ export const IepPlans: React.FC = () => {
     setEditing(null);
   };
 
+  const myStaff = staff.find(st => st.id === user?.id);
+  const isAssigned = (studentId: string) => {
+    const st = students.find(x => x.id === studentId);
+    if (!st || !myStaff) return false;
+    return st.assignedStaffId === myStaff.id || (myStaff.assignedClasses || []).includes(st.assignedClass);
+  };
   const signRole = role === 'PARENT' || role === 'STUDENT' ? 'PARENT' : role === 'SPECIALIST' ? 'THERAPIST' : 'TEACHER';
 
   return (
@@ -126,7 +132,7 @@ export const IepPlans: React.FC = () => {
                   </span>
                 );
               })}
-              {role !== 'SUPER_ADMIN' && !signed(signRole) && (signRole === 'PARENT' || signRole === 'THERAPIST') && (
+              {role !== 'SUPER_ADMIN' && !signed(signRole) && (signRole === 'PARENT' || (signRole === 'THERAPIST' && isAssigned(plan.studentId))) && (
                 <button onClick={() => signOffIep(plan.id, signRole)} className="ml-auto rounded-xl bg-emerald-600 px-4 py-1.5 text-xs font-black uppercase text-white">Sign off</button>
               )}
             </div>

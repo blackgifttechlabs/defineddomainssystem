@@ -53,6 +53,10 @@ export const Sidebar: React.FC = () => {
         { id: 'lounge', label: 'Teach Lounge', icon: <Coffee size={18} /> },
         { id: 'messages', label: 'Messages', icon: <MessageCircle size={18} /> },
         { id: 'transport', label: 'Transport', icon: <Bus size={18} /> },
+        ...(role === 'ADMIN_SUPPORT' ? [
+          { id: 'arrears', label: 'Fee Arrears', icon: <Wallet size={18} /> },
+          { id: 'export', label: 'Data Export', icon: <FileSpreadsheet size={18} /> },
+        ] : []),
         { id: 'settings', label: 'My Profile', icon: <Settings size={18} /> },
       ];
     }
@@ -64,6 +68,8 @@ export const Sidebar: React.FC = () => {
         { id: 'fees', label: 'School Fees', icon: <Receipt size={18} /> },
         { id: 'iep-plans', label: 'Education Plan', icon: <ClipboardList size={18} /> },
         { id: 'schedule', label: 'Schedule', icon: <ClipboardList size={18} /> },
+        { id: 'child-care', label: 'Care & Attendance', icon: <CalendarCheck size={18} /> },
+        { id: 'transport', label: 'Transport', icon: <Bus size={18} /> },
       ];
       if (role === 'PARENT') {
         items.push({ id: 'order-history', label: 'My Orders', icon: <Receipt size={18} /> });

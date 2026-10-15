@@ -34,12 +34,14 @@ import { IncidentsMedication } from './components/IncidentsMedication';
 import { IepPlans } from './components/IepPlans';
 import { TermReports } from './components/TermReports';
 import { SchedulePlanner } from './components/SchedulePlanner';
+import { ChildCare } from './components/student/ChildCare';
+import { ParentMore } from './components/student/ParentMore';
 import { Messages } from './components/Messages';
 import { FeeArrears } from './components/FeeArrears';
 import { Transport } from './components/Transport';
 import { DataExport } from './components/DataExport';
 import { AccessibilityToggle } from './components/common/AccessibilityToggle';
-import { AlertCircle, BarChart3, Bell, CheckCircle2, FileText, Home, Info, LogOut, MessageCircle, Receipt, X } from 'lucide-react';
+import { AlertCircle, BarChart3, Bell, CheckCircle2, FileText, Home, Info, LogOut, MessageCircle, MoreHorizontal, Receipt, X } from 'lucide-react';
 
 const NotificationHost = () => {
   const { notifications, removeNotification } = useStore();
@@ -85,6 +87,7 @@ const ParentMobileShell: React.FC<{ children: React.ReactNode }> = ({ children }
     { id: 'fees', label: 'Fees', icon: Receipt },
     { id: 'notices', label: 'Notices', icon: Bell },
     ...(user?.role === 'PARENT' ? [{ id: 'messages', label: 'Chat', icon: MessageCircle }] : []),
+    { id: 'more', label: 'More', icon: MoreHorizontal },
   ];
 
   const handleNav = (id: string) => {
@@ -184,8 +187,10 @@ const App: React.FC = () => {
 
     if (activeTab === 'messages' && role !== 'STUDENT') return <Messages />;
     if (activeTab === 'transport') return <Transport />;
-    if (role === 'SUPER_ADMIN' && activeTab === 'arrears') return <FeeArrears />;
-    if (role === 'SUPER_ADMIN' && activeTab === 'export') return <DataExport />;
+    if ((role === 'PARENT' || role === 'STUDENT') && activeTab === 'more') return <ParentMore />;
+    if ((role === 'PARENT' || role === 'STUDENT') && activeTab === 'child-care') return <ChildCare />;
+    if ((role === 'SUPER_ADMIN' || role === 'ADMIN_SUPPORT') && activeTab === 'arrears') return <FeeArrears />;
+    if ((role === 'SUPER_ADMIN' || role === 'ADMIN_SUPPORT') && activeTab === 'export') return <DataExport />;
 
     if (role === 'STUDENT' || role === 'PARENT') {
       if (activeTab === 'dashboard' || activeTab === 'progress') return <StudentDashboard />;
