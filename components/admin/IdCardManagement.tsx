@@ -246,7 +246,8 @@ export const IdCardManagement: React.FC = () => {
     if (!selectedStudent?.firebaseUid || !editedIdImage || isSavingId) return;
     const firstName = (editedIdForm.firstName || '').trim();
     const lastName = (editedIdForm.lastName || '').trim();
-    if (!firstName || !lastName || !editedIdForm.assignedClass || !editedIdForm.idCardAcademicYear || !editedIdForm.parentPhone || !editedIdForm.idCardIssuedAt || !editedIdForm.idCardExpiresAt) {
+    const schoolId = (editedIdForm.id || '').trim().toUpperCase();
+    if (!firstName || !lastName || !schoolId || !editedIdForm.assignedClass || !editedIdForm.idCardAcademicYear || !editedIdForm.parentPhone || !editedIdForm.idCardIssuedAt || !editedIdForm.idCardExpiresAt) {
       notify('error', 'Complete all ID card details before saving.');
       return;
     }
@@ -257,6 +258,7 @@ export const IdCardManagement: React.FC = () => {
     setIsSavingId(true);
     try {
       const changes: Partial<Student> = {
+        ...(schoolId !== selectedStudent.id ? { id: schoolId } : {}),
         firstName,
         lastName,
         fullName: `${firstName} ${lastName}`,
@@ -499,6 +501,7 @@ export const IdCardManagement: React.FC = () => {
                   <div className="mt-6 grid grid-cols-1 gap-4 border-t border-slate-200 pt-5 sm:grid-cols-2 dark:border-slate-800">
                     <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">First name</span><input value={editedIdForm.firstName || ''} onChange={event => setEditedIdForm({ ...editedIdForm, firstName: event.target.value })} className="w-full rounded-[9px] border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white" /></label>
                     <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Last name</span><input value={editedIdForm.lastName || ''} onChange={event => setEditedIdForm({ ...editedIdForm, lastName: event.target.value })} className="w-full rounded-[9px] border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white" /></label>
+                    <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">School ID number</span><input value={editedIdForm.id || ''} onChange={event => setEditedIdForm({ ...editedIdForm, id: event.target.value })} className="w-full rounded-[9px] border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white font-mono" /></label>
                     <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Class</span><input value={editedIdForm.assignedClass || ''} onChange={event => setEditedIdForm({ ...editedIdForm, assignedClass: event.target.value })} className="w-full rounded-[9px] border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white" /></label>
                     <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Academic year</span><input value={editedIdForm.idCardAcademicYear || ''} onChange={event => setEditedIdForm({ ...editedIdForm, idCardAcademicYear: event.target.value })} placeholder="e.g. 2026" className="w-full rounded-[9px] border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white" /></label>
                     <label className="space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Emergency contact</span><input type="tel" value={editedIdForm.parentPhone || ''} onChange={event => setEditedIdForm({ ...editedIdForm, parentPhone: event.target.value })} className="w-full rounded-[9px] border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white" /></label>
