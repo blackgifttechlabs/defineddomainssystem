@@ -50,7 +50,7 @@ export const TermReports: React.FC = () => {
       pdf.text(`Term Report${settings?.currentTerm ? ` - ${settings.currentTerm}` : ''}`, 36, 24);
       pdf.setFontSize(10);
       pdf.text(`Student: ${student.fullName}    Class: ${student.assignedClass || '-'}    DOB: ${student.dob || '-'}`, 14, 38);
-      pdf.text(`Period: ${from} to ${to}    Diagnosis: ${student.diagnosis || '-'}`, 14, 44);
+      pdf.text(`Period: ${from} to ${to}    Diagnosis: ${student.diagnosis || '-'}    Gender: ${student.gender || '-'}    Autism type: ${student.autismType || '-'}`, 14, 44);
 
       let y = 50;
       const section = (title: string) => { pdf.setFont('helvetica', 'bold'); pdf.setFontSize(11); pdf.text(title, 14, y); pdf.setFont('helvetica', 'normal'); y += 3; };

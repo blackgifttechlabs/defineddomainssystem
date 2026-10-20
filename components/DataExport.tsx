@@ -14,8 +14,8 @@ export const DataExport: React.FC = () => {
 
   const exportStudents = () =>
     downloadCsv(`students-${today}`,
-      ['Name', 'Gender', 'Date of Birth', 'Class', 'Teacher', 'Enrolled', 'Parent', 'Parent Phone', 'Parent Email', 'Address', 'Diagnosis', 'Total Paid'],
-      students.map(s => [s.fullName, s.gender, s.dob, s.assignedClass, staffName(s.assignedStaffId), s.enrollmentDate, s.parentName, s.parentPhone, s.parentEmail, s.homeAddress, s.diagnosis, s.totalPaid || 0]));
+      ['Name', 'Gender', 'Type of Autism', 'Date of Birth', 'Class', 'Teacher', 'Enrolled', 'Parent', 'Parent Phone', 'Parent Email', 'Address', 'Diagnosis', 'Total Paid'],
+      students.map(s => [s.fullName, s.gender, s.autismType || '', s.dob, s.assignedClass, staffName(s.assignedStaffId), s.enrollmentDate, s.parentName, s.parentPhone, s.parentEmail, s.homeAddress, s.diagnosis, s.totalPaid || 0]));
 
   const exportPayments = () =>
     downloadCsv(`payments-${today}`,
