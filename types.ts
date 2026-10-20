@@ -10,13 +10,27 @@ export interface User {
   password?: string;
 }
 
+export const GENDER_OPTIONS = ['Male', 'Female', 'Other / Not specified'] as const;
+export const AUTISM_TYPE_OPTIONS = [
+  'Autism Spectrum Disorder (ASD)',
+  'Level 1 (requiring support)',
+  'Level 2 (requiring substantial support)',
+  'Level 3 (requiring very substantial support)',
+  "Asperger's Syndrome",
+  'PDD-NOS',
+  'Rett Syndrome',
+  'Childhood Disintegrative Disorder',
+  'Other / Not specified',
+] as const;
+
 export interface Student {
   id: string;
   firstName: string;
   lastName: string;
   fullName: string;
   dob: string;
-  gender: 'Male' | 'Female';
+  gender: 'Male' | 'Female' | 'Other / Not specified';
+  autismType?: string;
   enrollmentDate: string;
   termEntry?: string;
   parentName: string;

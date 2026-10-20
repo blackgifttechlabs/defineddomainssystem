@@ -153,7 +153,7 @@ interface AppState {
   initializeData: () => void;
   updateSettings: (newSettings: Partial<SystemSettings>) => Promise<void>;
   addStudent: (student: Student) => Promise<void>;
-  updateStudent: (uid: string, data: Partial<Student>) => Promise<void>;
+  updateStudent: (uid: string, data: Partial<Student>) => Promise<boolean>;
   deleteStudent: (uid: string) => Promise<void>;
   addStaff: (staff: Staff) => Promise<void>;
   updateStaff: (id: string, data: Partial<Staff>) => Promise<void>;
@@ -618,6 +618,19 @@ export const useStore = create<AppState>((set, get) => {
         const studentSnap = await getDoc(studentRef);
         const existingStudent = studentSnap.exists() ? studentSnap.data() as Student : null;
 
+        // Admin may edit the school ID number. Validate and cascade it to linked records.
+        let previousSchoolId: string | null = null;
+        if (processed.id !== undefined) {
+          const newId = String(processed.id).trim().toUpperCase();
+          if (!newId) throw new Error('School ID number cannot be empty.');
+          processed.id = newId;
+          if (existingStudent && newId !== existingStudent.id) {
+            const dupSnap = await getDocs(query(collection(db, 'students'), where('id', '==', newId)));
+            if (dupSnap.docs.some(d => d.id !== uid)) throw new Error(`School ID ${newId} is already used by another student.`);
+            previousSchoolId = existingStudent.id;
+          }
+        }
+
         // Resolve first, last, and full names reliably
         const fallbackFirst = existingStudent?.firstName || (existingStudent?.fullName ? existingStudent.fullName.split(' ')[0] : '');
         const fallbackLast = existingStudent?.lastName || (existingStudent?.fullName ? existingStudent.fullName.split(' ').slice(1).join(' ') : '');
@@ -665,8 +678,21 @@ export const useStore = create<AppState>((set, get) => {
           }));
         }
 
+        // Re-point linked records at the new school ID
+        if (previousSchoolId) {
+          for (const col of ['parents', 'payments', 'orders', 'clinical_logs', 'logs', 'iep_plans', 'milestone_records', 'therapy_sessions', 'notices']) {
+            const snap = await getDocs(query(collection(db, col), where('studentId', '==', previousSchoolId)));
+            for (const d of snap.docs) await updateDoc(doc(db, col, d.id), { studentId: processed.id });
+          }
+          set(state => ({
+            parents: state.parents.map(p => p.studentId === previousSchoolId ? { ...p, studentId: processed.id! } : p),
+            payments: state.payments.map(p => p.studentId === previousSchoolId ? { ...p, studentId: processed.id! } : p),
+            orders: state.orders.map(o => o.studentId === previousSchoolId ? { ...o, studentId: processed.id! } : o),
+          }));
+        }
+
         // Sync parent details and parent user
-        const studentId = existingStudent?.id || processed.id;
+        const studentId = processed.id || existingStudent?.id;
         const parentEmail = (processed.parentEmail || existingStudent?.parentEmail || '').toLowerCase().trim();
         const parentPass = processed.parentPassword?.trim();
 
@@ -746,7 +772,8 @@ export const useStore = create<AppState>((set, get) => {
           students: state.students.map(s => s.firebaseUid === uid ? { ...s, ...processed, firebaseUid: uid } : s)
         }));
         get().notify('success', 'Student profile updated.');
-      } catch (err: any) { get().notify('error', err.message); }
+        return true;
+      } catch (err: any) { get().notify('error', err.message); return false; }
     },
     deleteStudent: async (uid) => {
       try {

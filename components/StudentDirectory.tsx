@@ -5,7 +5,7 @@ import {
   Search, ChevronRight, X, LayoutGrid, List, 
   Trash2, Edit2, ArrowLeft, Loader2, Save, History, Image as ImageIcon, Camera
 } from 'lucide-react';
-import { Student, Role } from '../types';
+import { Student, Role, GENDER_OPTIONS, AUTISM_TYPE_OPTIONS } from '../types';
 import { processStudentImage } from '../utils/imageProcessor';
 import { PersonalInfo } from './student-profile/PersonalInfo';
 import { HealthRecord } from './student-profile/HealthRecord';
@@ -168,7 +168,8 @@ export const StudentDirectory: React.FC = () => {
         fullName: computedFullName
       };
 
-      await updateStudent(selectedStudent.firebaseUid, payload);
+      const ok = await updateStudent(selectedStudent.firebaseUid, payload);
+      if (!ok) return;
       const updatedStudent = { ...selectedStudent, ...payload } as Student;
       setSelectedStudent(updatedStudent);
       setEditForm(updatedStudent);
@@ -315,6 +316,7 @@ export const StudentDirectory: React.FC = () => {
         (s.parentEmail || '').toLowerCase().includes(rawQuery) ||
         (s.email || '').toLowerCase().includes(rawQuery) ||
         (s.diagnosis || '').toLowerCase().includes(rawQuery) ||
+        (s.autismType || '').toLowerCase().includes(rawQuery) ||
         (s.medicalRecords || '').toLowerCase().includes(rawQuery) ||
         (s.homeAddress || '').toLowerCase().includes(rawQuery) ||
         (s.dob || '').includes(rawQuery) ||
@@ -431,6 +433,7 @@ export const StudentDirectory: React.FC = () => {
                   <div className="mt-2 flex min-w-0 items-center gap-2 text-[11px] text-slate-500">
                     <span className="truncate rounded-full bg-slate-100 px-2 py-0.5 dark:bg-slate-800">{student.assignedClass || 'General'}</span>
                     <span className="shrink-0">{student.dob || 'DOB not set'}</span>
+                    {student.gender && <span className="shrink-0">{student.gender}</span>}
                   </div>
                 </div>
                 <ChevronRight size={17} className="shrink-0 text-slate-400" />
@@ -684,6 +687,10 @@ export const StudentDirectory: React.FC = () => {
               </div>
               <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400 sm:text-xs">
                 <span>ID: #{selectedStudent.id}</span>
+                <span>•</span>
+                <span>{selectedStudent.gender || 'Gender not set'}</span>
+                <span>•</span>
+                <span>{selectedStudent.autismType || 'Autism type not set'}</span>
                 <span>•</span>
                 <span>{selectedStudent.parentPhone || '+263 775 926 454'}</span>
                 <span>•</span>
@@ -951,9 +958,15 @@ export const StudentDirectory: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <label className={googleLabel}>Gender</label>
-                  <select required value={newStudent.gender} onChange={e => setNewStudent({...newStudent, gender: e.target.value as 'Male' | 'Female'})} className={`${googleInput} appearance-none cursor-pointer`}>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
+                  <select required value={newStudent.gender} onChange={e => setNewStudent({...newStudent, gender: e.target.value as Student['gender']})} className={`${googleInput} appearance-none cursor-pointer`}>
+                    {GENDER_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className={googleLabel}>Type of Autism</label>
+                  <select value={newStudent.autismType || ''} onChange={e => setNewStudent({...newStudent, autismType: e.target.value})} className={`${googleInput} appearance-none cursor-pointer`}>
+                    <option value="">Not specified</option>
+                    {AUTISM_TYPE_OPTIONS.map(a => <option key={a} value={a}>{a}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2 md:col-span-2">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Student, Staff } from '../../types';
+import { Student, Staff, GENDER_OPTIONS, AUTISM_TYPE_OPTIONS } from '../../types';
 import { Camera, ImagePlus, Loader2, Sparkles, Wand2 } from 'lucide-react';
 import { processStudentImage } from '../../utils/imageProcessor';
 
@@ -257,7 +257,16 @@ export const PersonalInfo: React.FC<Props> = ({
             isEditing={isEditing}
             editForm={editForm}
             setEditForm={setEditForm}
-            options={['Male', 'Female']}
+            options={[...GENDER_OPTIONS]}
+          />
+          <InfoField
+            label="Type of Autism"
+            value={student.autismType || 'Not specified'}
+            field="autismType"
+            isEditing={isEditing}
+            editForm={editForm}
+            setEditForm={setEditForm}
+            options={[...AUTISM_TYPE_OPTIONS]}
           />
           <InfoField
             label="Enrollment Date"
@@ -312,7 +321,7 @@ export const PersonalInfo: React.FC<Props> = ({
           <div className="grid grid-cols-1 divide-y divide-slate-100 dark:divide-slate-800 sm:grid-cols-2 lg:grid-cols-4 lg:divide-y-0 lg:[&>*+*]:border-l lg:[&>*+*]:border-slate-100 lg:dark:[&>*+*]:border-slate-800">
             <InfoField label="Classroom" value={student.assignedClass || 'General'} field="assignedClass" isEditing={isEditing} editForm={editForm} setEditForm={setEditForm} options={settings?.classes || []} />
             <InfoField label="Assigned Specialist" value={assignedStaffMember?.fullName || 'Not assigned'} field="assignedStaffId" isEditing={isEditing && isAdmin} editForm={editForm} setEditForm={setEditForm} options={staff.map(s => ({ value: s.id, label: s.fullName }))} />
-            <InfoField label="Student ID" value={`#${student.id}`} isEditing={false} editForm={editForm} setEditForm={setEditForm} />
+            <InfoField label="School ID Number" value={isEditing && isAdmin ? student.id : `#${student.id}`} field="id" isEditing={isEditing && isAdmin} editForm={editForm} setEditForm={setEditForm} />
             <InfoField label="Status" value="Active" isEditing={false} editForm={editForm} setEditForm={setEditForm} />
           </div>
         </RecordSection>
