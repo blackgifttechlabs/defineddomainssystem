@@ -29,7 +29,7 @@ export interface Student {
   lastName: string;
   fullName: string;
   dob: string;
-  gender: 'Male' | 'Female' | 'Other / Not specified';
+  gender: 'Male' | 'Female' | 'Other / Not specified' | (string & {});
   autismType?: string;
   enrollmentDate: string;
   termEntry?: string;

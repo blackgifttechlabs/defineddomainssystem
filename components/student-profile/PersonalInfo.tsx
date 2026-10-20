@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SelectWithCustom } from './SelectWithCustom';
 import { Student, Staff, GENDER_OPTIONS, AUTISM_TYPE_OPTIONS } from '../../types';
 import { Camera, ImagePlus, Loader2, Sparkles, Wand2 } from 'lucide-react';
 import { processStudentImage } from '../../utils/imageProcessor';
@@ -32,7 +33,8 @@ const InfoField = ({
   isEditing,
   editForm,
   setEditForm,
-  options
+  options,
+  allowCustom
 }: {
   label: string;
   value?: string | number;
@@ -41,6 +43,7 @@ const InfoField = ({
   editForm: Partial<Student>;
   setEditForm: React.Dispatch<React.SetStateAction<Partial<Student>>>;
   options?: any[];
+  allowCustom?: boolean;
 }) => {
   return (
     <div className="min-w-0 px-4 py-4 sm:px-5">
@@ -48,7 +51,15 @@ const InfoField = ({
         {label}
       </p>
       {isEditing && field ? (
-        options ? (
+        field && allowCustom && (field === 'gender' || field === 'autismType') ? (
+          <SelectWithCustom
+            field={field}
+            value={(editForm as any)[field] !== undefined ? (editForm as any)[field] : String(value || '')}
+            options={options}
+            onChange={val => setEditForm(prev => ({ ...prev, [field]: val }))}
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+          />
+        ) : options ? (
           <select
             value={(editForm as any)[field] || ''}
             onChange={e => {
@@ -258,6 +269,7 @@ export const PersonalInfo: React.FC<Props> = ({
             editForm={editForm}
             setEditForm={setEditForm}
             options={[...GENDER_OPTIONS]}
+            allowCustom
           />
           <InfoField
             label="Type of Autism"
@@ -267,6 +279,7 @@ export const PersonalInfo: React.FC<Props> = ({
             editForm={editForm}
             setEditForm={setEditForm}
             options={[...AUTISM_TYPE_OPTIONS]}
+            allowCustom
           />
           <InfoField
             label="Enrollment Date"

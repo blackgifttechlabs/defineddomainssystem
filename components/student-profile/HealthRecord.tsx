@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { Student, AUTISM_TYPE_OPTIONS } from '../../types';
+import { SelectWithCustom } from './SelectWithCustom';
 import { FileText } from 'lucide-react';
 
 interface Props {
@@ -60,14 +61,13 @@ export const HealthRecord: React.FC<Props> = ({
         <div className="mb-3">
           <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">Type of autism</p>
           {isEditing ? (
-            <select
+            <SelectWithCustom
+              field="autismType"
               value={editForm.autismType || ''}
-              onChange={e => { const val = e.target.value; setEditForm(prev => ({ ...prev, autismType: val })); }}
+              options={AUTISM_TYPE_OPTIONS}
+              onChange={val => setEditForm(prev => ({ ...prev, autismType: val }))}
               className={recordInput}
-            >
-              <option value="">Not specified</option>
-              {AUTISM_TYPE_OPTIONS.map(a => <option key={a} value={a}>{a}</option>)}
-            </select>
+            />
           ) : (
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{student.autismType || 'Not specified'}</p>
           )}

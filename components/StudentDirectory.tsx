@@ -5,6 +5,7 @@ import {
   Search, ChevronRight, X, LayoutGrid, List, 
   Trash2, Edit2, ArrowLeft, Loader2, Save, History, Image as ImageIcon, Camera
 } from 'lucide-react';
+import { SelectWithCustom } from './student-profile/SelectWithCustom';
 import { Student, Role, GENDER_OPTIONS, AUTISM_TYPE_OPTIONS } from '../types';
 import { processStudentImage } from '../utils/imageProcessor';
 import { PersonalInfo } from './student-profile/PersonalInfo';
@@ -958,16 +959,11 @@ export const StudentDirectory: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <label className={googleLabel}>Gender</label>
-                  <select required value={newStudent.gender} onChange={e => setNewStudent({...newStudent, gender: e.target.value as Student['gender']})} className={`${googleInput} appearance-none cursor-pointer`}>
-                    {GENDER_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
-                  </select>
+                  <SelectWithCustom field="gender" value={newStudent.gender} options={GENDER_OPTIONS} onChange={val => setNewStudent({...newStudent, gender: val})} className={`${googleInput} appearance-none cursor-pointer`} />
                 </div>
                 <div className="space-y-2">
                   <label className={googleLabel}>Type of Autism</label>
-                  <select value={newStudent.autismType || ''} onChange={e => setNewStudent({...newStudent, autismType: e.target.value})} className={`${googleInput} appearance-none cursor-pointer`}>
-                    <option value="">Not specified</option>
-                    {AUTISM_TYPE_OPTIONS.map(a => <option key={a} value={a}>{a}</option>)}
-                  </select>
+                  <SelectWithCustom field="autismType" value={newStudent.autismType} options={AUTISM_TYPE_OPTIONS} onChange={val => setNewStudent({...newStudent, autismType: val})} className={`${googleInput} appearance-none cursor-pointer`} />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className={googleLabel}>Student Login Password (Default: 000000)</label>
