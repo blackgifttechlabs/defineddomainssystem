@@ -12,6 +12,7 @@ import {
   updatePassword
 } from 'firebase/auth';
 import { 
+  runTransaction,
   getFirestore, 
   doc, 
   setDoc, 
@@ -173,7 +174,7 @@ interface AppState {
   clearCart: () => void;
   placeOrder: (orderData: Omit<Order, 'id' | 'timestamp' | 'status'>) => Promise<boolean>;
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
-  saveMilestoneRecord: (record: Omit<MilestoneRecord, 'id' | 'timestamp' | 'staffId'>) => Promise<void>;
+  saveMilestoneRecord: (record: Omit<MilestoneRecord, 'id' | 'timestamp' | 'staffId'>, templateChanges?: { templateId: string; sections: { title: string; items: string[] }[] }) => Promise<void>;
   saveMilestoneTemplate: (template: MilestoneTemplate) => Promise<void>;
   deleteMilestoneTemplate: (id: string) => Promise<void>;
   addPayment: (payment: Omit<PaymentRecord, 'id' | 'qrCodeUrl' | 'verificationHash'>) => Promise<void>;
@@ -1025,13 +1026,37 @@ export const useStore = create<AppState>((set, get) => {
         get().notify('success', `Order marked as ${status.toLowerCase()}.`);
       } catch (err: any) { get().notify('error', err.message); }
     },
-    saveMilestoneRecord: async (record) => {
+    saveMilestoneRecord: async (record, templateChanges) => {
       try {
-        await addDoc(collection(db, 'milestone_records'), {
+        const recordData = {
           ...record,
           staffId: get().user?.id || 'system',
           timestamp: new Date().toISOString()
-        });
+        };
+        if (templateChanges?.sections.some(section => section.items.length)) {
+          const templateRef = doc(db, 'milestone_templates', templateChanges.templateId);
+          const recordRef = doc(collection(db, 'milestone_records'));
+          await runTransaction(db, async transaction => {
+            const snapshot = await transaction.get(templateRef);
+            if (!snapshot.exists()) throw new Error('This checklist template was removed. Reopen the checklist before saving.');
+            const template = snapshot.data() as MilestoneTemplate;
+            // Merge into the latest template so another teacher's additions are preserved.
+            const sections = template.sections.map(section => ({ ...section, items: [...section.items] }));
+            for (const change of templateChanges.sections) {
+              if (!change.items.length) continue;
+              const section = sections.find(area => area.title === change.title);
+              if (!section) throw new Error('A checklist category changed. Reopen the checklist before saving.');
+              for (const item of change.items) {
+                const text = item.trim();
+                if (text && !section.items.some(existing => existing.trim().toLowerCase() === text.toLowerCase())) section.items.push(text);
+              }
+            }
+            transaction.update(templateRef, { sections });
+            transaction.set(recordRef, recordData);
+          });
+        } else {
+          await addDoc(collection(db, 'milestone_records'), recordData);
+        }
         const u = get().user;
         const student = get().students.find(item => item.id === record.studentId);
         const parent = get().parents.find(item => item.studentId === record.studentId);
@@ -1056,12 +1081,15 @@ export const useStore = create<AppState>((set, get) => {
           }
         }
         get().notify('success', 'Record saved.');
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) { get().notify('error', err.message); throw err; }
     },
     saveMilestoneTemplate: async (template) => {
       try {
         await setDoc(doc(db, 'milestone_templates', template.id), template);
-      } catch (err: any) { get().notify('error', err.message); }
+      } catch (err: any) {
+        get().notify('error', err.message);
+        throw err;
+      }
     },
     deleteMilestoneTemplate: async (id) => {
       try {

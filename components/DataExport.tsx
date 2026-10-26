@@ -44,39 +44,40 @@ export const DataExport: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-4">
-      <header>
-        <p className="text-[10px] font-black uppercase tracking-widest text-[#22c55e]">Reports</p>
-        <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-950 dark:text-white">{t('export.title')}</h1>
-        <p className="mt-1 text-[11px] font-bold text-slate-500">Downloads open directly in Excel. Fee arrears can be exported from the Fee Arrears page.</p>
+    <div className="management-page">
+      <header className="management-page-header">
+        <div>
+          <h1 className="flex items-center gap-2 text-base font-semibold tracking-tight text-slate-950 dark:text-white md:text-lg">{t('export.title')}</h1>
+          <p className="mt-1 text-[11px] font-medium text-slate-500">Downloads open directly in Excel. Fee arrears can be exported from the Fee Arrears page.</p>
+        </div>
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2">
         {items.map(item => (
-          <button key={item.title} onClick={item.action} className="rounded-[24px] border border-slate-200 bg-white p-4 text-left flex items-center gap-3 shadow-[0_10px_28px_rgba(15,23,42,0.06)] hover:border-[#7c3aed]">
-            <div className="h-10 w-10 shrink-0 rounded-full bg-[#f2e8ff] text-[#7c3aed] grid place-items-center"><FileSpreadsheet size={16} /></div>
+          <button key={item.title} onClick={item.action} className="rounded-lg border border-slate-200 bg-white p-4 text-left flex items-center gap-3 transition-colors hover:border-slate-400 dark:bg-slate-900 dark:border-slate-800">
+            <div className="h-10 w-10 shrink-0 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 grid place-items-center"><FileSpreadsheet size={16} /></div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-black text-slate-950">{item.title}</p>
-              <p className="text-[11px] font-bold text-slate-500">{item.desc}</p>
+              <p className="text-sm font-semibold text-slate-950 dark:text-white">{item.title}</p>
+              <p className="text-[11px] font-medium text-slate-500">{item.desc}</p>
             </div>
             <Download size={14} className="text-slate-400" />
           </button>
         ))}
 
-        <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)] space-y-3">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3 dark:bg-slate-900 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 shrink-0 rounded-full bg-[#f2e8ff] text-[#7c3aed] grid place-items-center"><FileSpreadsheet size={16} /></div>
+            <div className="h-10 w-10 shrink-0 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 grid place-items-center"><FileSpreadsheet size={16} /></div>
             <div>
-              <p className="text-sm font-black text-slate-950">Class register</p>
-              <p className="text-[11px] font-bold text-slate-500">Blank weekly attendance sheet</p>
+              <p className="text-sm font-semibold text-slate-950 dark:text-white">Class register</p>
+              <p className="text-[11px] font-medium text-slate-500">Blank weekly attendance sheet</p>
             </div>
           </div>
           <div className="flex gap-2">
-            <select value={className} onChange={e => setClassName(e.target.value)} className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-900">
+            <select value={className} onChange={e => setClassName(e.target.value)} className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-900 dark:bg-slate-900 dark:border-slate-800 dark:text-white">
               <option value="">All classes</option>
               {settings.classes.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-            <button onClick={exportRegister} className="h-9 rounded-full bg-[#7c3aed] px-4 text-[11px] font-black text-white">Download</button>
+            <button onClick={exportRegister} className="h-9 rounded-md bg-slate-950 dark:bg-white dark:text-slate-950 px-4 text-[11px] font-semibold text-white">Download</button>
           </div>
         </div>
       </div>

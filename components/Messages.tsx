@@ -78,19 +78,18 @@ export const Messages: React.FC = () => {
     setReply('');
   };
 
-  const card = 'rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]';
-  const input = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-[#7c3aed]';
+  const card = 'rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900';
+  const input = 'min-w-0 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-950/5 dark:border-slate-700 dark:bg-slate-900 dark:text-white';
 
   return (
-    <div className="space-y-4 pb-2">
-      <header className="pr-12 flex items-start justify-between gap-3">
+    <div className="management-page">
+      <header className="management-page-header">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-[#22c55e]">{user?.role === 'PARENT' ? 'Parent portal' : 'School'}</p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-950">{t('messages.title')}</h1>
-          <p className="mt-1 text-[11px] font-bold text-slate-500">{t('messages.subtitle')}</p>
+          <h1 className="flex items-center gap-2 text-base font-semibold tracking-tight text-slate-950 dark:text-white md:text-lg">{t('messages.title')}</h1>
+          <p className="mt-1 text-[11px] font-medium text-slate-500">{t('messages.subtitle')}</p>
         </div>
         {!selected && !composing && candidates.length > 0 && (
-          <button onClick={() => setComposing(true)} className="shrink-0 h-10 rounded-full bg-[#7c3aed] px-4 text-[11px] font-black text-white flex items-center gap-1.5">
+          <button onClick={() => setComposing(true)} className="shrink-0 h-10 rounded-md bg-slate-950 dark:bg-white dark:text-slate-950 px-4 text-[11px] font-semibold text-white flex items-center gap-1.5">
             <Plus size={14} /> {t('messages.new')}
           </button>
         )}
@@ -105,29 +104,29 @@ export const Messages: React.FC = () => {
           <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Subject" className={input} />
           <textarea value={body} onChange={e => setBody(e.target.value)} rows={4} placeholder="Write your message..." className={input} />
           <div className="flex gap-2">
-            <button onClick={send} className="h-10 flex-1 rounded-full bg-[#7c3aed] text-[11px] font-black text-white">{t('messages.send')}</button>
-            <button onClick={() => setComposing(false)} className="h-10 rounded-full border border-slate-200 px-4 text-[11px] font-black text-slate-600">Cancel</button>
+            <button onClick={send} className="h-10 flex-1 rounded-md bg-slate-950 dark:bg-white dark:text-slate-950 text-[11px] font-semibold text-white">{t('messages.send')}</button>
+            <button onClick={() => setComposing(false)} className="h-10 rounded-md border border-slate-200 px-4 text-[11px] font-semibold text-slate-600 dark:border-slate-800 dark:text-slate-300">Cancel</button>
           </div>
         </section>
       )}
 
       {selected ? (
         <section className={`${card} space-y-3`}>
-          <button onClick={() => setSelectedId(null)} className="flex items-center gap-1 text-[11px] font-black text-slate-500">
+          <button onClick={() => setSelectedId(null)} className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
             <ArrowLeft size={14} /> Back
           </button>
           <div>
-            <p className="text-sm font-black text-slate-950">{selected.subject}</p>
-            <p className="text-[10px] font-bold text-slate-500">{selected.studentName} · {selected.parentName} &amp; {selected.staffName}</p>
+            <p className="text-sm font-semibold text-slate-950 dark:text-white">{selected.subject}</p>
+            <p className="text-[10px] font-medium text-slate-500">{selected.studentName} · {selected.parentName} &amp; {selected.staffName}</p>
           </div>
           <div className="space-y-2 max-h-[50vh] overflow-y-auto">
             {selected.messages.map(m => {
               const mine = m.senderId === user?.id;
               return (
                 <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] rounded-2xl px-3 py-2 ${mine ? 'bg-[#7c3aed] text-white' : 'bg-slate-100 text-slate-900'}`}>
-                    <p className="text-xs font-bold whitespace-pre-wrap break-words">{m.message}</p>
-                    <p className={`mt-1 text-[9px] font-bold ${mine ? 'text-white/70' : 'text-slate-500'}`}>{m.senderName} · {fmt(m.timestamp)}</p>
+                  <div className={`max-w-[85%] rounded-lg px-3 py-2 ${mine ? 'bg-slate-950 dark:bg-white dark:text-slate-950 text-white' : 'bg-slate-100 text-slate-900'}`}>
+                    <p className="text-xs font-medium whitespace-pre-wrap break-words">{m.message}</p>
+                    <p className={`mt-1 text-[9px] font-medium ${mine ? 'text-white/70 dark:text-slate-600' : 'text-slate-500'}`}>{m.senderName} · {fmt(m.timestamp)}</p>
                   </div>
                 </div>
               );
@@ -135,15 +134,15 @@ export const Messages: React.FC = () => {
           </div>
           <div className="flex gap-2">
             <input value={reply} onChange={e => setReply(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendReply()} placeholder="Reply..." className={input} />
-            <button onClick={sendReply} aria-label={t('messages.send')} className="h-9 w-9 shrink-0 rounded-full bg-[#7c3aed] text-white grid place-items-center">
+            <button onClick={sendReply} aria-label={t('messages.send')} className="h-9 w-9 shrink-0 rounded-md bg-slate-950 dark:bg-white dark:text-slate-950 text-white grid place-items-center">
               <Send size={14} />
             </button>
           </div>
         </section>
       ) : threads.length === 0 ? (
-        <section className={`${card} text-center p-6`}>
-          <div className="mx-auto h-12 w-12 rounded-full bg-slate-100 text-slate-400 grid place-items-center"><MessageCircle size={18} /></div>
-          <p className="mt-4 text-sm font-black">{t('messages.empty')}</p>
+        <section className={`${card} text-center py-14`}>
+          <div className="mx-auto h-12 w-12 rounded-md bg-slate-100 text-slate-400 grid place-items-center"><MessageCircle size={18} /></div>
+          <p className="mt-4 text-sm font-semibold">{t('messages.empty')}</p>
         </section>
       ) : (
         <section className="space-y-2">
@@ -151,16 +150,16 @@ export const Messages: React.FC = () => {
             const last = th.messages[th.messages.length - 1];
             const unread = !!user && !th.readBy?.includes(user.id);
             return (
-              <button key={th.id} onClick={() => open(th)} className="w-full rounded-[20px] border border-slate-200 bg-white p-3 text-left flex items-center gap-3 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
-                <div className="h-10 w-10 shrink-0 rounded-full bg-[#f2e8ff] text-[#7c3aed] grid place-items-center"><MessageCircle size={16} /></div>
+              <button key={th.id} onClick={() => open(th)} className="w-full rounded-lg border border-slate-200 bg-white p-3 text-left flex items-center gap-3  dark:bg-slate-900 dark:border-slate-800">
+                <div className="h-10 w-10 shrink-0 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 grid place-items-center"><MessageCircle size={16} /></div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="truncate text-xs font-black text-slate-950">{th.subject}</p>
-                    {unread && <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[8px] font-black uppercase text-emerald-700">New</span>}
+                    <p className="truncate text-xs font-semibold text-slate-950 dark:text-white">{th.subject}</p>
+                    {unread && <span className="shrink-0 rounded-md bg-emerald-100 px-2 py-0.5 text-[8px] font-semibold uppercase text-emerald-700">New</span>}
                   </div>
-                  <p className="truncate text-[11px] font-bold text-slate-500">{th.studentName} · {last?.message}</p>
+                  <p className="truncate text-[11px] font-medium text-slate-500">{th.studentName} · {last?.message}</p>
                 </div>
-                <span className="shrink-0 text-[9px] font-bold text-slate-400">{fmt(th.lastMessageAt)}</span>
+                <span className="shrink-0 text-[9px] font-medium text-slate-400">{fmt(th.lastMessageAt)}</span>
               </button>
             );
           })}

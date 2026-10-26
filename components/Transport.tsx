@@ -46,19 +46,18 @@ export const Transport: React.FC = () => {
     setDraft(null);
   };
 
-  const input = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-[#7c3aed]';
-  const card = 'rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]';
+  const input = 'min-w-0 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-950/5 dark:border-slate-700 dark:bg-slate-900 dark:text-white';
+  const card = 'rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900';
 
   return (
-    <div className="space-y-4 pb-2">
-      <header className="pr-12 flex items-start justify-between gap-3">
+    <div className="management-page">
+      <header className="management-page-header">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-[#22c55e]">School</p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-950">{t('transport.title')}</h1>
-          <p className="mt-1 text-[11px] font-bold text-slate-500">Routes, stops, pickup lists and driver contacts.</p>
+          <h1 className="flex items-center gap-2 text-base font-semibold tracking-tight text-slate-950 dark:text-white md:text-lg">{t('transport.title')}</h1>
+          <p className="mt-1 text-[11px] font-medium text-slate-500">Routes, stops, pickup lists and driver contacts.</p>
         </div>
         {canEdit && !draft && (
-          <button onClick={() => setDraft(blankRoute())} className="shrink-0 h-10 rounded-full bg-[#7c3aed] px-4 text-[11px] font-black text-white flex items-center gap-1.5">
+          <button onClick={() => setDraft(blankRoute())} className="shrink-0 h-10 rounded-md bg-slate-950 dark:bg-white dark:text-slate-950 px-4 text-[11px] font-semibold text-white flex items-center gap-1.5">
             <Plus size={14} /> New route
           </button>
         )}
@@ -75,7 +74,7 @@ export const Transport: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Stops</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Stops</p>
             {draft.stops.map((stop, i) => (
               <div key={stop.id} className="flex gap-2">
                 <input className={input} placeholder="Stop name" value={stop.name} onChange={e => update({ stops: draft.stops.map((s, j) => j === i ? { ...s, name: e.target.value } : s) })} />
@@ -83,14 +82,14 @@ export const Transport: React.FC = () => {
                 <button aria-label="Remove stop" onClick={() => update({ stops: draft.stops.filter((_, j) => j !== i), assignments: draft.assignments.filter(a => a.stopId !== stop.id) })} className="shrink-0 text-slate-400 hover:text-rose-600"><Trash2 size={14} /></button>
               </div>
             ))}
-            <button onClick={() => update({ stops: [...draft.stops, { id: uid(), name: '', time: '' }] })} className="text-[11px] font-black text-[#7c3aed]">+ Add stop</button>
+            <button onClick={() => update({ stops: [...draft.stops, { id: uid(), name: '', time: '' }] })} className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">+ Add stop</button>
           </div>
 
           <div className="space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Students ({draft.assignments.length}{draft.capacity ? `/${draft.capacity}` : ''})</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Students ({draft.assignments.length}{draft.capacity ? `/${draft.capacity}` : ''})</p>
             {draft.assignments.map((a, i) => (
               <div key={a.studentId} className="flex items-center gap-2">
-                <span className="flex-1 truncate text-xs font-bold text-slate-900">{studentName(a.studentId)}</span>
+                <span className="flex-1 truncate text-xs font-medium text-slate-900 dark:text-white">{studentName(a.studentId)}</span>
                 <select className={`${input} max-w-[160px]`} value={a.stopId} onChange={e => update({ assignments: draft.assignments.map((x, j) => j === i ? { ...x, stopId: e.target.value } : x) })}>
                   <option value="">Stop...</option>
                   {draft.stops.map(s => <option key={s.id} value={s.id}>{s.name || '(unnamed)'}</option>)}
@@ -107,16 +106,16 @@ export const Transport: React.FC = () => {
           </div>
 
           <div className="flex gap-2">
-            <button onClick={save} className="h-10 flex-1 rounded-full bg-[#7c3aed] text-[11px] font-black text-white">Save route</button>
-            <button onClick={() => setDraft(null)} className="h-10 rounded-full border border-slate-200 px-4 text-[11px] font-black text-slate-600">Cancel</button>
+            <button onClick={save} className="h-10 flex-1 rounded-md bg-slate-950 dark:bg-white dark:text-slate-950 text-[11px] font-semibold text-white">Save route</button>
+            <button onClick={() => setDraft(null)} className="h-10 rounded-md border border-slate-200 px-4 text-[11px] font-semibold text-slate-600 dark:border-slate-800 dark:text-slate-300">Cancel</button>
           </div>
         </section>
       )}
 
       {visibleRoutes.length === 0 && !draft && (
-        <section className={`${card} text-center p-6`}>
-          <div className="mx-auto h-12 w-12 rounded-full bg-slate-100 text-slate-400 grid place-items-center"><Bus size={18} /></div>
-          <p className="mt-4 text-sm font-black">{isFamily ? 'No transport assigned' : 'No routes yet'}</p>
+        <section className={`${card} text-center py-14`}>
+          <div className="mx-auto h-12 w-12 rounded-md bg-slate-100 text-slate-400 grid place-items-center"><Bus size={18} /></div>
+          <p className="mt-4 text-sm font-semibold">{isFamily ? 'No transport assigned' : 'No routes yet'}</p>
         </section>
       )}
 
@@ -124,21 +123,21 @@ export const Transport: React.FC = () => {
         <section key={route.id} className={`${card} space-y-3`}>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-sm font-black text-slate-950">{route.name}</p>
-              <p className="text-[11px] font-bold text-slate-500">
+              <p className="text-sm font-semibold text-slate-950 dark:text-white">{route.name}</p>
+              <p className="text-[11px] font-medium text-slate-500">
                 {route.vehicleReg || 'No vehicle'} · {route.assignments.length}{route.capacity ? `/${route.capacity}` : ''} students
               </p>
               {route.driverName && (
-                <a href={route.driverPhone ? `tel:${route.driverPhone}` : undefined} className="mt-1 inline-flex items-center gap-1.5 text-[11px] font-black text-[#7c3aed]">
+                <a href={route.driverPhone ? `tel:${route.driverPhone}` : undefined} className="mt-1 inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                   <Phone size={12} /> {route.driverName} {route.driverPhone}
                 </a>
               )}
             </div>
             {!isFamily && (
               <div className="flex shrink-0 gap-1.5">
-                <button aria-label="Export pickup list" onClick={() => exportPickup(route)} className="h-8 w-8 rounded-full border border-slate-200 text-slate-600 grid place-items-center"><Download size={13} /></button>
-                {canEdit && <button onClick={() => setDraft(route)} className="h-8 rounded-full bg-[#f2e8ff] px-3 text-[10px] font-black text-[#7c3aed]">Edit</button>}
-                {canEdit && <button aria-label="Delete route" onClick={() => window.confirm(`Delete route ${route.name}?`) && deleteTransportRoute(route.id)} className="h-8 w-8 rounded-full border border-slate-200 text-slate-400 hover:text-rose-600 grid place-items-center"><Trash2 size={13} /></button>}
+                <button aria-label="Export pickup list" onClick={() => exportPickup(route)} className="h-8 w-8 rounded-md border border-slate-200 text-slate-600 grid place-items-center dark:border-slate-800 dark:text-slate-300"><Download size={13} /></button>
+                {canEdit && <button onClick={() => setDraft(route)} className="h-8 rounded-md bg-slate-100 dark:bg-slate-800 px-3 text-[10px] font-semibold text-slate-600 dark:text-slate-300">Edit</button>}
+                {canEdit && <button aria-label="Delete route" onClick={() => window.confirm(`Delete route ${route.name}?`) && deleteTransportRoute(route.id)} className="h-8 w-8 rounded-md border border-slate-200 text-slate-400 hover:text-rose-600 grid place-items-center dark:border-slate-800"><Trash2 size={13} /></button>}
               </div>
             )}
           </div>
@@ -146,9 +145,9 @@ export const Transport: React.FC = () => {
             {route.stops.map(stop => {
               const onStop = route.assignments.filter(a => a.stopId === stop.id && (!isFamily || a.studentId === myStudentId));
               return (
-                <div key={stop.id} className="rounded-xl bg-slate-50 px-3 py-2">
-                  <p className="text-xs font-black text-slate-900">{stop.time || '--:--'} · {stop.name}</p>
-                  {onStop.length > 0 && <p className="mt-0.5 text-[11px] font-bold text-slate-600">{onStop.map(a => studentName(a.studentId)).join(', ')}</p>}
+                <div key={stop.id} className="rounded-md bg-slate-50 px-3 py-2">
+                  <p className="text-xs font-semibold text-slate-900 dark:text-white">{stop.time || '--:--'} · {stop.name}</p>
+                  {onStop.length > 0 && <p className="mt-0.5 text-[11px] font-medium text-slate-600 dark:text-slate-300">{onStop.map(a => studentName(a.studentId)).join(', ')}</p>}
                 </div>
               );
             })}

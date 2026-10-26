@@ -25,6 +25,7 @@ import {
   Users
 }from 'lucide-react';
 import { MilestoneRecord } from '../types';
+import { AddChecklistItem } from './common/AddChecklistItem';
 
 const LogoImg = 'https://i.ibb.co/spSVqW8s/definedlogo.png';
 
@@ -81,6 +82,7 @@ const STAGE_THEMES = [
 export const ClinicalABA: React.FC = () => {
   const { students, staff, user, selectedStudentIdForLog, setSelectedStudentIdForLog, saveMilestoneRecord, milestoneRecords, milestoneTemplates } = useStore();
   
+  const [customItems, setCustomItems] = useState<Record<string, Record<number, string[]>>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'new' | 'history'>('history'); 
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
@@ -124,7 +126,19 @@ export const ClinicalABA: React.FC = () => {
   }, [availableStudents, searchTerm]);
 
   const selectedStudent = students.find(s => s.id === selectedStudentIdForLog);
-  const activeTemplate = milestoneTemplates.find(t => t.id === activeTemplateId);
+  const savedTemplate = milestoneTemplates.find(t => t.id === activeTemplateId);
+  const draftKey = JSON.stringify([selectedStudentIdForLog, activeTemplateId]);
+  const activeTemplate = savedTemplate ? {
+    ...savedTemplate,
+    sections: savedTemplate.sections.map((section, index) => ({
+      ...section, items: [...section.items, ...(customItems[draftKey]?.[index] || [])]
+    }))
+  } : undefined;
+  const addCustomItem = (sectionIndex: number, text: string) => {
+    setCustomItems(previous => ({ ...previous, [draftKey]: {
+      ...previous[draftKey], [sectionIndex]: [...(previous[draftKey]?.[sectionIndex] || []), text]
+    } }));
+  };
   const studentAgeMonths = selectedStudent ? calculateAgeMonths(selectedStudent.dob) : 0;
   const selectedStudentIndex = selectedStudent ? availableStudents.findIndex(s => s.id === selectedStudent.id) : -1;
   const previousStudent = selectedStudentIndex > 0 ? availableStudents[selectedStudentIndex - 1] : undefined;
@@ -184,12 +198,21 @@ export const ClinicalABA: React.FC = () => {
         sections,
         redFlags,
         overallPercentage: Math.round((checkedCount / (totalItems || 1)) * 100)
+      }, {
+        templateId: activeTemplate.id,
+        sections: (savedTemplate?.sections || []).map((section, index) => ({
+          title: section.title,
+          items: customItems[draftKey]?.[index] || []
+        }))
       });
       
+      setCustomItems(previous => { const next = { ...previous }; delete next[draftKey]; return next; });
       setActiveTemplateId(null);
       setCheckedItems(new Set());
       setCheckedFlags(new Set());
       setActiveTab('history');
+    } catch {
+      // Keep the assessment draft when persistence fails; the store displays the error.
     } finally {
       setIsSaving(false);
     }
@@ -682,6 +705,9 @@ export const ClinicalABA: React.FC = () => {
                                   })}
                                </tbody>
                             </table>
+                         </div>
+                         <div className="border-t border-slate-100 px-4 py-4 sm:px-8 dark:border-slate-800">
+                           <AddChecklistItem key={draftKey + sIdx} category={section.title} onAdd={text => addCustomItem(sIdx, text)} />
                          </div>
                       </div>
                     ))}

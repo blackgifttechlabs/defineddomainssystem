@@ -62,15 +62,14 @@ export const Attendance: React.FC = () => {
   const histRows = attendance.filter(r => histStudent && r.records?.[histStudent.id]);
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-300">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="management-page">
+      <div className="management-page-header">
         <div>
-          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-blue-600">Daily register</p>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><CalendarCheck size={20} /> Attendance</h1>
+          <h1 className="flex items-center gap-2 text-base font-semibold tracking-tight text-slate-950 dark:text-white md:text-lg"><CalendarCheck size={20} /> Attendance</h1>
         </div>
         <div className="flex gap-2">
           {(['register', 'history'] as const).map(v => (
-            <button key={v} onClick={() => setView(v)} className={`px-3.5 py-1.5 rounded-[9px] text-xs font-bold border ${view === v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-900 text-slate-600 border-slate-200 dark:border-slate-700'}`}>
+            <button key={v} onClick={() => setView(v)} className={`px-3.5 py-1.5 rounded-md text-xs font-medium border ${view === v ? 'bg-slate-950 text-white border-slate-950 dark:bg-white dark:text-slate-950 dark:border-white' : 'bg-white dark:bg-slate-900 text-slate-600 border-slate-200 dark:border-slate-700'}`}>
               {v === 'register' ? 'Take register' : 'Student history'}
             </button>
           ))}
@@ -90,11 +89,11 @@ export const Attendance: React.FC = () => {
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {classStudents.map(s => (
               <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-                <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{s.fullName}</span>
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{s.fullName}</span>
                 <div className="flex gap-1.5">
                   {STATUSES.map(st => (
                     <button key={st} onClick={() => setMarks(m => ({ ...m, [s.id]: st }))}
-                      className={`px-3 py-1 rounded-md border text-[11px] font-bold ${marks[s.id] === st ? statusStyle[st] : 'bg-white dark:bg-slate-950 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
+                      className={`px-3 py-1 rounded-md border text-[11px] font-medium ${marks[s.id] === st ? statusStyle[st] : 'bg-white dark:bg-slate-950 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
                       {st}
                     </button>
                   ))}
@@ -113,7 +112,7 @@ export const Attendance: React.FC = () => {
       ) : (
         <div className="space-y-4">
           <div className={`${dailyCard} overflow-x-auto`}>
-            <table className="w-full text-left text-sm">
+            <table className="w-full min-w-[560px] text-left text-sm">
               <thead className="bg-slate-50 dark:bg-slate-800/50 text-[10px] uppercase tracking-wider text-slate-500">
                 <tr><th className="p-3">Student</th><th className="p-3">Class</th><th className="p-3">Days</th><th className="p-3">Absent</th><th className="p-3">Late</th><th className="p-3">Absence rate</th></tr>
               </thead>
@@ -122,10 +121,10 @@ export const Attendance: React.FC = () => {
                   const r = rateFor(s.id);
                   return (
                     <tr key={s.id} onClick={() => setHistoryStudent(s.id)} className="cursor-pointer border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                      <td className="p-3 font-bold text-slate-800 dark:text-slate-100">{s.fullName}</td>
+                      <td className="p-3 font-medium text-slate-800 dark:text-slate-100">{s.fullName}</td>
                       <td className="p-3 text-slate-500">{s.assignedClass}</td>
                       <td className="p-3">{r.total}</td><td className="p-3">{r.absent}</td><td className="p-3">{r.late}</td>
-                      <td className={`p-3 font-bold ${r.rate >= 20 ? 'text-rose-600' : 'text-slate-700 dark:text-slate-200'}`}>{r.total ? `${r.rate}%` : '-'}</td>
+                      <td className={`p-3 font-medium ${r.rate >= 20 ? 'text-rose-600' : 'text-slate-700 dark:text-slate-200'}`}>{r.total ? `${r.rate}%` : '-'}</td>
                     </tr>
                   );
                 })}
@@ -134,11 +133,11 @@ export const Attendance: React.FC = () => {
           </div>
           {histStudent && (
             <div className={`${dailyCard} p-4`}>
-              <h3 className="text-sm font-bold mb-2 text-slate-900 dark:text-white">{histStudent.fullName} - history</h3>
+              <h3 className="text-sm font-medium mb-2 text-slate-900 dark:text-white">{histStudent.fullName} - history</h3>
               <div className="flex flex-wrap gap-2">
                 {histRows.length === 0 && <p className="text-sm text-slate-500">No attendance recorded.</p>}
                 {histRows.map(r => (
-                  <span key={r.id} className={`px-2.5 py-1 rounded-md border text-[11px] font-bold ${statusStyle[r.records[histStudent.id]]}`}>{r.date}: {r.records[histStudent.id]}</span>
+                  <span key={r.id} className={`px-2.5 py-1 rounded-md border text-[11px] font-medium ${statusStyle[r.records[histStudent.id]]}`}>{r.date}: {r.records[histStudent.id]}</span>
                 ))}
               </div>
             </div>

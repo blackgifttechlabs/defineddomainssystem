@@ -33,15 +33,14 @@ export const IncidentsMedication: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-300">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="management-page">
+      <div className="management-page-header">
         <div>
-          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-blue-600">Care log</p>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white">Incidents and medication</h1>
+          <h1 className="flex items-center gap-2 text-base font-semibold tracking-tight text-slate-950 dark:text-white md:text-lg">Incidents and medication</h1>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setTab('incidents')} className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-[9px] text-xs font-bold border ${tab === 'incidents' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-900 text-slate-600 border-slate-200 dark:border-slate-700'}`}><ShieldAlert size={13} /> Incidents</button>
-          <button onClick={() => setTab('medication')} className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-[9px] text-xs font-bold border ${tab === 'medication' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-900 text-slate-600 border-slate-200 dark:border-slate-700'}`}><Pill size={13} /> Medication</button>
+          <button onClick={() => setTab('incidents')} className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium border ${tab === 'incidents' ? 'bg-slate-950 text-white border-slate-950 dark:bg-white dark:text-slate-950 dark:border-white' : 'bg-white dark:bg-slate-900 text-slate-600 border-slate-200 dark:border-slate-700'}`}><ShieldAlert size={13} /> Incidents</button>
+          <button onClick={() => setTab('medication')} className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium border ${tab === 'medication' ? 'bg-slate-950 text-white border-slate-950 dark:bg-white dark:text-slate-950 dark:border-white' : 'bg-white dark:bg-slate-900 text-slate-600 border-slate-200 dark:border-slate-700'}`}><Pill size={13} /> Medication</button>
         </div>
       </div>
 
@@ -51,7 +50,7 @@ export const IncidentsMedication: React.FC = () => {
           {students.map(s => <option key={s.id} value={s.id}>{s.fullName} - {s.assignedClass}</option>)}
         </select>
         {alerts && Object.values(alerts).some(Boolean) && (
-          <p className="rounded-md border border-rose-300 bg-rose-50 p-2.5 text-xs font-bold text-rose-800">
+          <p className="rounded-md border border-rose-300 bg-rose-50 p-2.5 text-xs font-medium text-rose-800">
             Medical alerts: {Object.entries(alerts).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join(' | ')}
           </p>
         )}
@@ -83,7 +82,7 @@ export const IncidentsMedication: React.FC = () => {
       </div>
 
       <div className={`${dailyCard} p-4`}>
-        <h3 className="text-sm font-bold mb-3 text-slate-900 dark:text-white">{tab === 'incidents' ? 'Recent reports' : 'Recent administrations'}</h3>
+        <h3 className="text-sm font-medium mb-3 text-slate-900 dark:text-white">{tab === 'incidents' ? 'Recent reports' : 'Recent administrations'}</h3>
         <ul className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
           {tab === 'incidents'
             ? incidents.filter(i => !studentId || i.studentId === studentId).map(i => (

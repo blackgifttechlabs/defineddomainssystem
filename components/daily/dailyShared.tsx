@@ -2,9 +2,9 @@ import { useEffect, useMemo } from 'react';
 import { useStore } from '../../store/useStore';
 import { useDailyStore } from '../../store/useDailyStore';
 
-export const dailyInput = "w-full rounded-md border border-slate-300 bg-white p-2.5 text-sm font-medium text-slate-900 outline-none focus:border-blue-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white";
-export const dailyBtn = "px-4 py-2 rounded-[9px] bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm disabled:opacity-60";
-export const dailyCard = "border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 rounded-xl";
+export const dailyInput = "w-full rounded-md border border-slate-200 bg-white p-2.5 text-sm font-medium text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-950/5 dark:border-slate-700 dark:bg-slate-950 dark:text-white";
+export const dailyBtn = "px-4 py-2 rounded-[9px] bg-slate-950 hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 text-white text-xs font-medium disabled:opacity-60";
+export const dailyCard = "border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 rounded-lg";
 
 export const todayStr = () => {
   const d = new Date();

@@ -5,8 +5,8 @@ import { TherapyType, TimetableSlot } from '../types';
 
 const DAYS: TimetableSlot['day'][] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const THERAPIES: TherapyType[] = ['Speech', 'Occupational', 'Physio', 'Other'];
-const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-purple-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white';
-const card = 'rounded-3xl border border-slate-100 bg-white p-5 dark:border-slate-800 dark:bg-slate-900';
+const inputCls = 'w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-950/5 dark:border-slate-700 dark:bg-slate-900 dark:text-white';
+const card = 'rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900';
 
 export const SchedulePlanner: React.FC = () => {
   const { students, staff, settings, user, therapySessions, timetableSlots, loadPlanningData,
@@ -42,18 +42,18 @@ export const SchedulePlanner: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="management-page">
+      <div className="management-page-header">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
-            <CalendarClock size={22} className="text-purple-600" /> Schedule
+          <h1 className="flex items-center gap-2 text-base font-semibold tracking-tight text-slate-950 dark:text-white md:text-lg">
+            <CalendarClock size={22} className="text-slate-500 dark:text-slate-400" /> Schedule
           </h1>
-          <p className="text-sm text-slate-500">Therapy bookings and class timetables.</p>
+          <p className="mt-1 text-xs text-slate-500">Therapy bookings and class timetables.</p>
         </div>
-        <div className="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+        <div className="flex rounded-md bg-slate-100 p-1 dark:bg-slate-800">
           {(['therapy', 'timetable'] as const).map(k => (
             <button key={k} onClick={() => setTab(k)}
-              className={`rounded-lg px-4 py-1.5 text-xs font-black uppercase ${tab === k ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-400'}`}>
+              className={`rounded-lg px-4 py-1.5 text-xs font-medium ${tab === k ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-400'}`}>
               {k === 'therapy' ? 'Therapy' : 'Timetable'}
             </button>
           ))}
@@ -64,41 +64,55 @@ export const SchedulePlanner: React.FC = () => {
         <>
           {canEdit && (
             <div className={card + ' grid gap-3 sm:grid-cols-3'}>
-              <select className={inputCls} value={t.studentId} onChange={e => setT({ ...t, studentId: e.target.value })}>
+              <label className="flex min-w-0 flex-col gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">Student
+                <select className={inputCls} value={t.studentId} onChange={e => setT({ ...t, studentId: e.target.value })}>
                 <option value="">Student</option>
                 {students.map(s => <option key={s.id} value={s.id}>{s.fullName}</option>)}
               </select>
-              <select className={inputCls} value={t.therapyType} onChange={e => setT({ ...t, therapyType: e.target.value as TherapyType })}>
+              </label>
+              <label className="flex min-w-0 flex-col gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">Therapy type
+                <select className={inputCls} value={t.therapyType} onChange={e => setT({ ...t, therapyType: e.target.value as TherapyType })}>
                 {THERAPIES.map(x => <option key={x}>{x}</option>)}
               </select>
-              <select className={inputCls} value={t.therapistId} onChange={e => setT({ ...t, therapistId: e.target.value })}>
+              </label>
+              <label className="flex min-w-0 flex-col gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">Therapist
+                <select className={inputCls} value={t.therapistId} onChange={e => setT({ ...t, therapistId: e.target.value })}>
                 <option value="">Therapist</option>
                 {staff.filter(s => s.role === 'SPECIALIST' || s.role === 'ADMIN_SUPPORT').map(s => <option key={s.id} value={s.id}>{s.fullName}</option>)}
               </select>
-              <input type="date" className={inputCls} value={t.date} onChange={e => setT({ ...t, date: e.target.value })} />
-              <input type="time" className={inputCls} value={t.time} onChange={e => setT({ ...t, time: e.target.value })} />
-              <input type="number" min={10} step={5} className={inputCls} value={t.durationMins} onChange={e => setT({ ...t, durationMins: Number(e.target.value) })} />
-              <input className={inputCls + ' sm:col-span-3'} placeholder="Notes (optional)" value={t.notes} onChange={e => setT({ ...t, notes: e.target.value })} />
-              <label className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 sm:col-span-2">
+              </label>
+              <label className="flex min-w-0 flex-col gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">Date
+                <input type="date" className={inputCls} value={t.date} onChange={e => setT({ ...t, date: e.target.value })} />
+              </label>
+              <label className="flex min-w-0 flex-col gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">Time
+                <input type="time" className={inputCls} value={t.time} onChange={e => setT({ ...t, time: e.target.value })} />
+              </label>
+              <label className="flex min-w-0 flex-col gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">Duration (minutes)
+                <input type="number" min={10} step={5} className={inputCls} value={t.durationMins} onChange={e => setT({ ...t, durationMins: Number(e.target.value) })} />
+              </label>
+              <label className="flex min-w-0 flex-col gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 sm:col-span-3">Notes
+                <input className={inputCls} placeholder="Notes (optional)" value={t.notes} onChange={e => setT({ ...t, notes: e.target.value })} />
+              </label>
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 sm:col-span-2">
                 <input type="checkbox" checked={t.remind} onChange={e => setT({ ...t, remind: e.target.checked })} /> Send reminder notice to parent
               </label>
-              <button onClick={book} className="rounded-xl bg-purple-600 py-2.5 text-xs font-black uppercase tracking-wider text-white">Book session</button>
+              <button onClick={book} className="rounded-md bg-slate-950 dark:bg-white dark:text-slate-950 py-2.5 text-xs font-semibold text-white">Book session</button>
             </div>
           )}
           <div className={card + ' space-y-2'}>
             {upcoming.length === 0 && <p className="text-sm text-slate-500">No sessions booked.</p>}
             {upcoming.map(s => (
-              <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-slate-50 p-3 dark:bg-slate-800">
+              <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
                 <div>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">{s.studentName} · {s.therapyType}</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">{s.studentName} · {s.therapyType}</p>
                   <p className="text-xs text-slate-500">{s.date} {s.time} · {s.durationMins} min · {s.therapistName}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${s.status === 'Booked' ? 'bg-amber-100 text-amber-700' : s.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>{s.status}</span>
+                  <span className={`rounded-md px-2.5 py-0.5 text-[10px] font-semibold uppercase ${s.status === 'Booked' ? 'bg-amber-100 text-amber-700' : s.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>{s.status}</span>
                   {canEdit && s.status === 'Booked' && (
                     <>
-                      <button onClick={() => updateTherapySession(s.id, { status: 'Completed' })} className="text-xs font-bold text-emerald-600">Done</button>
-                      <button onClick={() => updateTherapySession(s.id, { status: 'Cancelled' })} className="text-xs font-bold text-rose-600">Cancel</button>
+                      <button onClick={() => updateTherapySession(s.id, { status: 'Completed' })} className="text-xs font-medium text-emerald-600">Done</button>
+                      <button onClick={() => updateTherapySession(s.id, { status: 'Cancelled' })} className="text-xs font-medium text-rose-600">Cancel</button>
                     </>
                   )}
                 </div>
@@ -122,18 +136,18 @@ export const SchedulePlanner: React.FC = () => {
               <input type="time" className={inputCls} value={slot.startTime} onChange={e => setSlot({ ...slot, startTime: e.target.value })} />
               <input type="time" className={inputCls} value={slot.endTime} onChange={e => setSlot({ ...slot, endTime: e.target.value })} />
               <input className={inputCls} placeholder="Subject" value={slot.subject} onChange={e => setSlot({ ...slot, subject: e.target.value })} />
-              <button onClick={() => slot.subject && saveTimetableSlot({ ...slot, className: activeClass })} className="rounded-xl bg-purple-600 text-xs font-black uppercase text-white">Add slot</button>
+              <button onClick={() => slot.subject && saveTimetableSlot({ ...slot, className: activeClass })} className="rounded-md bg-slate-950 dark:bg-white dark:text-slate-950 text-xs font-semibold uppercase text-white">Add slot</button>
             </div>
           )}
           <div className="grid gap-3 md:grid-cols-5">
             {DAYS.map(d => (
               <div key={d} className={card + ' !p-3'}>
-                <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-purple-600">{d}</p>
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">{d}</p>
                 {daySlots(d).length === 0 && <p className="text-xs text-slate-400">Free</p>}
                 {daySlots(d).map(s => (
-                  <div key={s.id} className="mb-2 flex items-start justify-between gap-1 rounded-xl bg-slate-50 p-2 dark:bg-slate-800">
+                  <div key={s.id} className="mb-2 flex items-start justify-between gap-1 rounded-md bg-slate-50 p-2 dark:bg-slate-800">
                     <div>
-                      <p className="text-xs font-bold text-slate-900 dark:text-white">{s.subject}</p>
+                      <p className="text-xs font-medium text-slate-900 dark:text-white">{s.subject}</p>
                       <p className="text-[10px] text-slate-500">{s.startTime} - {s.endTime}</p>
                     </div>
                     {canEdit && <button onClick={() => deleteTimetableSlot(s.id)} className="text-rose-500"><Trash2 size={12} /></button>}

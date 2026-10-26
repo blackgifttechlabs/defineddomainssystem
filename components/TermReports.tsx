@@ -5,7 +5,7 @@ import autoTable from 'jspdf-autotable';
 import { useStore } from '../store/useStore';
 
 const LogoImg = 'https://i.ibb.co/spSVqW8s/definedlogo.png';
-const inputCls = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-purple-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white';
+const inputCls = 'w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-950/5 dark:border-slate-700 dark:bg-slate-900 dark:text-white';
 
 const isoDay = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -53,7 +53,7 @@ export const TermReports: React.FC = () => {
       pdf.text(`Period: ${from} to ${to}    Diagnosis: ${student.diagnosis || '-'}    Gender: ${student.gender || '-'}    Autism type: ${student.autismType || '-'}`, 14, 44);
 
       let y = 50;
-      const section = (title: string) => { pdf.setFont('helvetica', 'bold'); pdf.setFontSize(11); pdf.text(title, 14, y); pdf.setFont('helvetica', 'normal'); y += 3; };
+      const section = (title: string) => { if (y > 250) { pdf.addPage(); y = 20; } pdf.setFont('helvetica', 'bold'); pdf.setFontSize(11); pdf.text(title, 14, y); pdf.setFont('helvetica', 'normal'); y += 3; };
       const after = () => { y = (pdf as any).lastAutoTable.finalY + 8; };
 
       section('Attendance');
@@ -86,6 +86,23 @@ export const TermReports: React.FC = () => {
       });
       after();
 
+      for (const record of data.miles) {
+        if (y > 240) { pdf.addPage(); y = 20; }
+        section(`${record.ageCategory} - ${record.timestamp.slice(0, 10)}`);
+        const items = (record.sections || []).flatMap((area: any) =>
+          (area.items || []).map((item: any) => [area.title, item.text, item.checked ? 'Achieved' : 'Pending'])
+        );
+        const flags = (record.redFlags || []).filter((flag: any) => flag.checked)
+          .map((flag: any) => ['Warning signs', flag.text, 'Observed']);
+        autoTable(pdf, {
+          startY: y, head: [['Category', 'Checklist item', 'Status']],
+          body: [...items, ...flags],
+          headStyles: { fillColor: [124, 58, 237] },
+          styles: { fontSize: 9 }, columnStyles: { 1: { cellWidth: 110 } },
+        });
+        after();
+      }
+
       section('Education Plan Goals');
       const goals = data.plans.flatMap((p: any) => (p.goals || []).map((g: any) => [g.area, g.goal, g.status, g.reviewDate || '-']));
       autoTable(pdf, {
@@ -114,14 +131,14 @@ export const TermReports: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
-          <FileText size={22} className="text-purple-600" /> Term Reports
+    <div className="management-page">
+      <div className="management-page-header">
+        <h1 className="flex items-center gap-2 text-base font-semibold tracking-tight text-slate-950 dark:text-white md:text-lg">
+          <FileText size={22} className="text-slate-500 dark:text-slate-400" /> Term Reports
         </h1>
-        <p className="text-sm text-slate-500">Build a printable PDF from task analysis, milestones, education plan and attendance.</p>
+        <p className="mt-1 text-xs text-slate-500">Build a printable PDF from task analysis, milestones, education plan and attendance.</p>
       </div>
-      <div className="grid gap-3 rounded-3xl border border-slate-100 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:grid-cols-3">
+      <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:grid-cols-3">
         <select className={inputCls + ' sm:col-span-3'} value={studentId} onChange={e => setStudentId(e.target.value)}>
           <option value="">Select student</option>
           {students.map((s: any) => <option key={s.id} value={s.id}>{s.fullName}</option>)}
@@ -139,15 +156,15 @@ export const TermReports: React.FC = () => {
             ['Milestone checks', data.miles.length],
             ['Attendance', data.att ? `${data.att.length} days` : 'n/a'],
           ].map(([k, v]) => (
-            <div key={k as string} className="rounded-2xl border border-slate-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{k}</p>
-              <p className="text-xl font-black text-slate-900 dark:text-white">{v}</p>
+            <div key={k as string} className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{k}</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-white">{v}</p>
             </div>
           ))}
         </div>
       )}
       <button disabled={!student || busy} onClick={generate}
-        className="flex items-center gap-2 rounded-xl bg-purple-600 px-5 py-3 text-xs font-black uppercase tracking-wider text-white disabled:opacity-40">
+        className="flex items-center gap-2 rounded-md bg-slate-950 dark:bg-white dark:text-slate-950 px-5 py-3 text-xs font-semibold text-white disabled:opacity-40">
         {busy ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} Download PDF
       </button>
     </div>

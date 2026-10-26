@@ -22,12 +22,14 @@ export const ChecklistTemplates: React.FC<Props> = ({ onEdit, onAdd }) => {
     return fallback;
   };
 
+  const sortedTemplates = [...milestoneTemplates].sort((a, b) => a.minAge - b.minAge);
+
   return (
     <div className="animate-in fade-in duration-500">
       <div className="flex flex-col justify-between gap-4 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center md:px-6 dark:border-slate-800">
         <div>
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">Checklist Templates</h3>
-          <p className="mt-0.5 text-[10px] font-medium text-slate-400">Manage standard growth goals for students</p>
+          <p className="mt-0.5 text-[10px] font-medium text-slate-400">Customize assessment categories and checklist items for every stage</p>
         </div>
         <button onClick={onAdd} className="flex items-center gap-2 rounded-[9px] bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700">
           <Plus size={16} /> New Template
@@ -49,7 +51,7 @@ export const ChecklistTemplates: React.FC<Props> = ({ onEdit, onAdd }) => {
           <tbody className="divide-y divide-slate-100 text-xs dark:divide-slate-800">
             {milestoneTemplates.length === 0 ? (
               <tr><td colSpan={6} className="px-5 py-16 text-center font-medium text-slate-400">No checklist templates have been created.</td></tr>
-            ) : milestoneTemplates.map((template, index) => {
+            ) : sortedTemplates.map((template, index) => {
               const itemCount = template.sections.reduce((total, section) => total + section.items.length, 0);
               return (
                 <tr key={template.id} onClick={() => onEdit(template)} className="group cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/50">
