@@ -18,7 +18,7 @@ const NoticeIcon: React.FC<{ notice: Notice }> = ({ notice }) => {
 };
 
 export const ParentNotices: React.FC = () => {
-  const { notices, user, markNoticeAsViewed } = useStore();
+  const { notices, user, markNoticeAsViewed, setActiveTab } = useStore();
   const parentNotices = useMemo(() => {
     if (!user) return [];
     return notices
@@ -111,6 +111,11 @@ export const ParentNotices: React.FC = () => {
                 <CalendarDays size={11} /> Posted {formatNoticeDate(selectedNotice.timestamp)}
               </p>
               <p className="mt-4 whitespace-pre-wrap text-sm font-medium leading-6 text-slate-700">{selectedNotice.content}</p>
+              {selectedNotice.type === 'Record' && (
+                <button type="button" onClick={() => setActiveTab('clinical-history')} className="mt-4 rounded-xl bg-[#7c3aed] px-4 py-3 text-sm font-bold text-white">
+                  View reports
+                </button>
+              )}
               <div className="mt-5 rounded-[18px] bg-slate-50 p-3">
                 <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
                   <MessageCircle size={12} /> Replies

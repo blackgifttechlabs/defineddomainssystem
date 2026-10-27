@@ -72,7 +72,7 @@ export const AdminClinicalLogs: React.FC = () => {
         const student = students.find(s => s.firebaseUid === user.id);
         if (student) setSelectedStudent(student);
       } else if (user?.role === 'PARENT') {
-        const parent = parents.find(p => p.firebaseUid === user.id);
+        const parent = parents.find(p => p.firebaseUid === user.id || p.id === user.id);
         if (parent) {
           const student = students.find(s => s.id === parent.studentId);
           if (student) setSelectedStudent(student);
@@ -234,8 +234,59 @@ export const AdminClinicalLogs: React.FC = () => {
         <header className="pr-12">
           <p className="text-[10px] font-black uppercase tracking-widest text-[#22c55e]">Parent portal</p>
           <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-950">Reports</h1>
-          <p className="mt-1 text-[11px] font-bold text-slate-500">{selectedStudent.fullName} learning records.</p>
+          <p className="mt-1 text-[11px] font-bold text-slate-500">{selectedStudent.fullName} learning records and assessments.</p>
         </header>
+
+        <section className="rounded-[24px] border border-slate-200 bg-white p-4 space-y-3">
+          <h2 className="text-sm font-black text-slate-950">Developmental assessments ({studentMilestones.length})</h2>
+          <p className="text-xs text-slate-500">Open an assessment to view the therapist’s completed checklist.</p>
+          {studentMilestones.length === 0 ? (
+            <p className="text-xs text-slate-400">No assessments have been posted yet.</p>
+          ) : studentMilestones.map(record => {
+            const expanded = (activeMilestone?.id || studentMilestones[0]?.id) === record.id;
+            return (
+              <div key={record.id} className="rounded-2xl border border-slate-200 overflow-hidden">
+                <button type="button" aria-expanded={expanded} onClick={() => setActiveMilestone(record)} className="w-full flex items-center justify-between gap-3 bg-purple-50 p-3 text-left">
+                  <span className="min-w-0">
+                    <span className="block text-xs font-bold text-slate-950">{record.ageCategory} checklist</span>
+                    <span className="block mt-1 text-xs text-slate-500">{new Date(record.timestamp).toLocaleDateString()}</span>
+                  </span>
+                  <span className="text-sm font-black text-purple-700">{Math.round(record.overallPercentage)}%</span>
+                </button>
+                {expanded && (
+                  <div className="p-3 space-y-4">
+                    {record.sections.map((section, index) => (
+                      <div key={index}>
+                        <h3 className="text-xs font-black text-slate-900">{section.title}</h3>
+                        <ul className="mt-2 space-y-2">
+                          {section.items.map((item, itemIndex) => (
+                            <li key={itemIndex} className="flex items-start justify-between gap-3 text-xs">
+                              <span className="text-slate-700">{item.text}</span>
+                              <span className={`shrink-0 font-bold ${item.checked ? 'text-green-700' : 'text-slate-500'}`}>{item.checked ? 'Achieved' : 'Pending'}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                    <div>
+                      <h3 className="text-xs font-black text-slate-900">Warning signs</h3>
+                      {record.redFlags.length ? (
+                        <ul className="mt-2 space-y-2">
+                          {record.redFlags.map((flag, index) => (
+                            <li key={index} className="flex items-start justify-between gap-3 text-xs">
+                              <span className="text-slate-700">{flag.text}</span>
+                              <span className={`shrink-0 font-bold ${flag.checked ? 'text-amber-700' : 'text-slate-500'}`}>{flag.checked ? 'Observed' : 'Not observed'}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : <p className="mt-2 text-xs text-slate-500">No warning signs were included in this assessment.</p>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </section>
 
         <section className="rounded-[26px] bg-gradient-to-br from-[#7c3aed] via-[#8b5cf6] to-[#22c55e] p-4 text-white shadow-[0_14px_34px_rgba(124,58,237,0.22)] overflow-hidden relative">
           <div className="absolute -right-10 -bottom-14 h-36 w-36 rounded-full border border-white/30" />
