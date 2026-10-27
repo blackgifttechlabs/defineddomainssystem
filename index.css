@@ -148,3 +148,32 @@ html.a11y-high-contrast :focus-visible { outline: 3px solid #000; outline-offset
     @apply -mx-4 -mt-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-950 sm:-mx-6 sm:-mt-6 sm:px-6 md:-mx-8 md:px-8;
   }
 }
+
+/* Parent portal: quiet surfaces, consistent controls and readable tables. */
+.parent-portal { color-scheme: light; }
+.parent-portal button:focus-visible, .parent-portal a:focus-visible { outline: 2px solid #3b1764; outline-offset: 3px; }
+.parent-primary { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; background: #3b1764; color: white; padding: 10px 16px; font-size: 14px; font-weight: 500; }
+.parent-primary:hover { background: #291044; }
+.parent-primary:disabled { opacity: .5; }
+.parent-table-wrap { max-width: 100%; overflow-x: auto; border: 1px solid #e5e5e5; border-radius: 12px; }
+.parent-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+.parent-table th { background: #f9f9fa; font-weight: 500; color: #525252; }
+.parent-table th, .parent-table td { padding: 14px 16px; vertical-align: top; }
+.parent-table td { border-top: 1px solid #ededed; color: #404040; }
+.parent-table td:nth-child(2) { min-width: 160px; overflow-wrap: anywhere; }
+.parent-result { display: inline-block; border-radius: 5px; background: #f5f5f5; padding: 3px 7px; font-size: 12px; white-space: nowrap; }
+.parent-result.is-achieved { background: #eee8f5; color: #3b1764; }
+@media (max-width: 639px) {
+  .parent-table { font-size: 12px; }
+  .parent-table th, .parent-table td { padding: 12px 10px; }
+  .parent-table td:first-child { min-width: 84px; }
+}
+/* Shared pages inherit the same quiet parent portal typography and surfaces. */
+.parent-portal main .font-black { font-weight: 600; }
+.parent-portal main .tracking-widest { letter-spacing: normal; }
+.parent-portal main .uppercase { text-transform: none; }
+.parent-portal main [class*="shadow-"] { box-shadow: none; }
+.parent-portal main [class*="bg-gradient-"] { background-image: none; background-color: #3b1764; }
+.parent-portal main [class*="rounded-[2"], .parent-portal main [class*="rounded-3xl"] { border-radius: 12px; }
+.parent-portal main [class*="text-[#7c3aed]"], .parent-portal main [class*="text-violet-"], .parent-portal main [class*="text-purple-"] { color: #3b1764; }
+.parent-portal main [class*="bg-[#7c3aed]"], .parent-portal main .bg-violet-600 { background-color: #3b1764; }

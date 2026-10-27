@@ -1,142 +1,29 @@
-import React, { useMemo, useState } from 'react';
-import { Bell, CalendarDays, ChevronRight, CreditCard, FileText, Flame, MessageCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { useStore } from '../../store/useStore';
-import { Notice } from '../../types';
-
-const formatNoticeDate = (timestamp: string) =>
-  new Date(timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-
-const isNewNotice = (timestamp: string) => {
-  const ageMs = Date.now() - new Date(timestamp).getTime();
-  return ageMs >= 0 && ageMs < 3 * 24 * 60 * 60 * 1000;
-};
-
-const NoticeIcon: React.FC<{ notice: Notice }> = ({ notice }) => {
-  if (notice.type === 'Fees') return <CreditCard size={16} />;
-  if (notice.type === 'Meeting') return <Flame size={16} />;
-  return <FileText size={16} />;
-};
 
 export const ParentNotices: React.FC = () => {
   const { notices, user, markNoticeAsViewed, setActiveTab } = useStore();
-  const parentNotices = useMemo(() => {
-    if (!user) return [];
-    return notices
-      .filter(notice =>
-        (notice.target === 'ALL' || notice.target === user.role) &&
-        (!notice.recipientUserId || notice.recipientUserId === user.id)
-      )
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [notices, user]);
-
-  const [selectedId, setSelectedId] = useState<string | null>(parentNotices[0]?.id || null);
-  const selectedNotice = parentNotices.find(notice => notice.id === selectedId) || parentNotices[0] || null;
-
-  const openNotice = (notice: Notice) => {
-    setSelectedId(notice.id);
-    if (user && !notice.views?.some(view => view.userId === user.id)) {
-      markNoticeAsViewed(notice.id);
-    }
-  };
-
-  return (
-    <div className="space-y-4 pb-2">
-      <header className="pr-12">
-        <p className="text-[10px] font-black uppercase tracking-widest text-[#22c55e]">Parent portal</p>
-        <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-950">Notices</h1>
-        <p className="mt-1 text-[11px] font-bold text-slate-500">Messages and updates from the school office.</p>
-      </header>
-
-      {parentNotices.length === 0 ? (
-        <section className="rounded-[24px] border border-slate-200 bg-white p-6 text-center shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
-          <div className="mx-auto h-12 w-12 rounded-full bg-slate-100 text-slate-400 grid place-items-center">
-            <Bell size={18} />
-          </div>
-          <p className="mt-4 text-sm font-black">No notices yet</p>
-          <p className="mt-1 text-xs font-bold text-slate-500">New school notices will appear here.</p>
-        </section>
-      ) : (
-        <>
-          <section className="space-y-2">
-            {parentNotices.map(notice => {
-              const active = selectedNotice?.id === notice.id;
-              return (
-                <button
-                  key={notice.id}
-                  onClick={() => openNotice(notice)}
-                  className={`w-full rounded-[20px] border p-3 text-left flex items-center gap-3 transition-all ${
-                    active
-                      ? 'border-[#7c3aed] bg-white shadow-[0_12px_28px_rgba(124,58,237,0.12)]'
-                      : 'border-slate-200 bg-white/80 shadow-[0_8px_20px_rgba(15,23,42,0.04)]'
-                  }`}
-                >
-                  <div className={`h-10 w-10 rounded-full grid place-items-center shrink-0 ${active ? 'bg-[#7c3aed] text-white' : 'bg-[#f2e8ff] text-[#7c3aed]'}`}>
-                    <NoticeIcon notice={notice} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-xs font-black text-slate-950">{notice.title}</p>
-                      {isNewNotice(notice.timestamp) && (
-                        <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[8px] font-black uppercase text-emerald-700">New</span>
-                      )}
-                    </div>
-                    <p className="mt-0.5 truncate text-[10px] font-bold text-slate-500">{notice.content}</p>
-                    <p className="mt-1 flex items-center gap-1 text-[9px] font-black uppercase tracking-wide text-slate-400">
-                      <CalendarDays size={10} /> {formatNoticeDate(notice.timestamp)}
-                    </p>
-                  </div>
-                  <ChevronRight size={14} className="text-slate-300 shrink-0" />
-                </button>
-              );
-            })}
-          </section>
-
-          {selectedNotice && (
-            <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-[#f2e8ff] px-2.5 py-1 text-[9px] font-black uppercase text-[#7c3aed]">{selectedNotice.type}</span>
-                    {isNewNotice(selectedNotice.timestamp) && (
-                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[9px] font-black uppercase text-emerald-700">New</span>
-                    )}
-                  </div>
-                  <h2 className="mt-3 text-lg font-black leading-tight text-slate-950">{selectedNotice.title}</h2>
-                </div>
-                <div className="h-10 w-10 rounded-full bg-[#7c3aed] text-white grid place-items-center shrink-0">
-                  <NoticeIcon notice={selectedNotice} />
-                </div>
-              </div>
-              <p className="mt-2 flex items-center gap-1 text-[10px] font-black uppercase tracking-wide text-slate-400">
-                <CalendarDays size={11} /> Posted {formatNoticeDate(selectedNotice.timestamp)}
-              </p>
-              <p className="mt-4 whitespace-pre-wrap text-sm font-medium leading-6 text-slate-700">{selectedNotice.content}</p>
-              {selectedNotice.type === 'Record' && (
-                <button type="button" onClick={() => setActiveTab('clinical-history')} className="mt-4 rounded-xl bg-[#7c3aed] px-4 py-3 text-sm font-bold text-white">
-                  View reports
-                </button>
-              )}
-              <div className="mt-5 rounded-[18px] bg-slate-50 p-3">
-                <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  <MessageCircle size={12} /> Replies
-                </p>
-                {selectedNotice.replies?.length ? (
-                  <div className="mt-3 space-y-2">
-                    {selectedNotice.replies.map(reply => (
-                      <div key={reply.id} className="rounded-2xl bg-white px-3 py-2">
-                        <p className="text-[10px] font-black text-slate-900">{reply.userName}</p>
-                        <p className="mt-1 text-xs font-medium text-slate-600">{reply.message}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-2 text-xs font-bold text-slate-400">No replies yet.</p>
-                )}
-              </div>
-            </section>
-          )}
-        </>
-      )}
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const available = notices.filter(n => (n.target === 'ALL' || n.target === user?.role) && (!n.recipientUserId || n.recipientUserId === user?.id)).sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+  const selected = available.find(n => n.id === selectedId);
+  if (selected) return <div className="space-y-6">
+    <button onClick={() => setSelectedId(null)} className="flex min-h-11 items-center gap-2 text-sm text-neutral-600"><ArrowLeft size={17} />Notices</button>
+    <header><h1 className="text-2xl font-semibold tracking-tight">{selected.title}</h1><p className="mt-2 text-sm text-neutral-500">{new Date(selected.timestamp).toLocaleDateString()}</p></header>
+    <p className="max-w-3xl whitespace-pre-wrap text-sm leading-7 text-neutral-700">{selected.content}</p>
+    {selected.type === 'Record' && <button className="parent-primary" onClick={() => setActiveTab('clinical-history')}>View reports</button>}
+    {!!selected.replies?.length && <section className="max-w-3xl space-y-4 border-t border-neutral-200 pt-5"><h2 className="text-base font-semibold">Replies</h2>{selected.replies.map(reply => <div key={reply.id}><p className="text-sm font-medium">{reply.userName}</p><p className="mt-1 text-sm text-neutral-600">{reply.message}</p></div>)}</section>}
+  </div>;
+  return <div className="space-y-6">
+    <h1 className="text-2xl font-semibold tracking-tight">Notices</h1>
+    <div className="divide-y divide-neutral-100 rounded-xl border border-neutral-200">
+      {available.length ? available.map(notice => {
+        const unread = !notice.views?.some(v => v.userId === user?.id);
+        return <button key={notice.id} onClick={() => { setSelectedId(notice.id); if (unread) markNoticeAsViewed(notice.id); }} className="flex w-full items-center gap-3 p-4 text-left hover:bg-neutral-50">
+          <span className={`h-2 w-2 shrink-0 rounded-full ${unread ? 'bg-[#3b1764]' : 'bg-neutral-200'}`} aria-label={unread ? 'Unread' : 'Read'} />
+          <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{notice.title}</span><span className="mt-1 block text-xs text-neutral-500">{new Date(notice.timestamp).toLocaleDateString()}</span></span><ChevronRight size={17} className="text-neutral-400" />
+        </button>;
+      }) : <p className="p-8 text-sm text-neutral-500">No notices yet.</p>}
     </div>
-  );
+  </div>;
 };

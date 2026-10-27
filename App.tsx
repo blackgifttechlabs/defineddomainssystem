@@ -41,7 +41,7 @@ import { FeeArrears } from './components/FeeArrears';
 import { Transport } from './components/Transport';
 import { DataExport } from './components/DataExport';
 import { AccessibilityToggle } from './components/common/AccessibilityToggle';
-import { AlertCircle, BarChart3, Bell, CheckCircle2, FileText, Home, Info, LogOut, MessageCircle, MoreHorizontal, Receipt, X } from 'lucide-react';
+import { AlertCircle, BarChart3, Bell, CheckCircle2, FileText, Home, Info, LogOut, MessageCircle, MoreHorizontal, Receipt, X, Menu, CalendarDays, ClipboardList, HeartPulse, Bus, Settings, ShoppingBag } from 'lucide-react';
 
 const NotificationHost = () => {
   const { notifications, removeNotification } = useStore();
@@ -70,74 +70,74 @@ const NotificationHost = () => {
 
 const ParentPortalShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { activeTab, setActiveTab, logout, user, notices } = useStore();
-
-  const unreadNotices = React.useMemo(() => {
-    if (!user) return 0;
-    return notices.filter(notice =>
-      (notice.target === 'ALL' || notice.target === user.role) &&
-      (!notice.recipientUserId || notice.recipientUserId === user.id) &&
-      !(notice.views || []).some(view => view.userId === user.id)
-    ).length;
-  }, [notices, user]);
-
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const menuButton = React.useRef<HTMLButtonElement>(null);
+  const menuPanel = React.useRef<HTMLElement>(null);
+  const unread = notices.filter(n => (n.target === 'ALL' || n.target === user?.role) &&
+    (!n.recipientUserId || n.recipientUserId === user?.id) && !n.views?.some(v => v.userId === user?.id)).length;
   const navItems = [
     { id: 'dashboard', label: 'Home', icon: Home },
-    { id: 'progress', label: 'Progress', icon: BarChart3 },
     { id: 'clinical-history', label: 'Reports', icon: FileText },
     { id: 'fees', label: 'Fees', icon: Receipt },
     { id: 'notices', label: 'Notices', icon: Bell },
-    ...(user?.role === 'PARENT' ? [{ id: 'messages', label: 'Chat', icon: MessageCircle }] : []),
-    { id: 'more', label: 'More', icon: MoreHorizontal },
+    ...(user?.role === 'PARENT' ? [{ id: 'messages', label: 'Messages', icon: MessageCircle }] : []),
+    { id: 'schedule', label: 'Schedule', icon: CalendarDays },
+    { id: 'iep-plans', label: 'Learning plan', icon: ClipboardList },
+    { id: 'child-care', label: 'Care', icon: HeartPulse },
+    { id: 'transport', label: 'Transport', icon: Bus },
+    { id: 'shop', label: 'Shop', icon: ShoppingBag },
+    { id: 'order-history', label: 'Orders', icon: Receipt },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
-
-  const handleNav = (id: string) => {
-    setActiveTab(id);
-  };
-
+  const closeMenu = () => { setMenuOpen(false); menuButton.current?.focus(); };
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    menuPanel.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeMenu();
+      if (event.key === 'Tab') {
+        const buttons = menuPanel.current?.querySelectorAll<HTMLButtonElement>('button');
+        if (!buttons?.length) return;
+        const first = buttons[0], last = buttons[buttons.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    };
+    const onResize = () => { if (window.innerWidth >= 1024) setMenuOpen(false); };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('resize', onResize);
+    return () => { document.body.style.overflow = previous; window.removeEventListener('keydown', onKey); window.removeEventListener('resize', onResize); };
+  }, [menuOpen]);
+  const navigation = <>
+    <div className="flex items-center gap-3 px-3 py-5 text-sm font-semibold"><img src="https://i.ibb.co/spSVqW8s/definedlogo.png" alt="" className="h-7 w-7 object-contain" />Defined Domain</div>
+    <nav aria-label="Portal navigation" className="flex-1 space-y-1 overflow-y-auto py-3">
+      {navItems.map(item => {
+        const selected = activeTab === item.id || (item.id === 'clinical-history' && activeTab === 'reports');
+        return <button key={item.id} aria-current={selected ? 'page' : undefined} onClick={() => { setActiveTab(item.id); closeMenu(); }} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${selected ? 'bg-[#eee8f5] text-[#3b1764] font-semibold' : 'text-neutral-600 hover:bg-neutral-200/60'}`}>
+          <item.icon size={18} strokeWidth={1.7} />{item.label}
+          {item.id === 'notices' && unread > 0 && <span className="ml-auto rounded bg-[#3b1764] px-1.5 text-xs text-white">{unread}</span>}
+        </button>;
+      })}
+    </nav>
+    <div className="border-t border-neutral-200 px-3 py-4"><p className="truncate text-sm font-medium">{user?.name}</p><button onClick={logout} className="mt-3 flex items-center gap-2 py-2 text-sm text-neutral-600"><LogOut size={16} />Sign out</button></div>
+  </>;
   return (
-    <div className="parent-portal min-h-screen bg-[#fbf8ff] dark:bg-slate-950 text-slate-950">
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-60 flex-col border-r border-slate-200 bg-white px-4 py-8">
-        <div className="flex items-center gap-3 px-3 mb-10"><img src="https://i.ibb.co/spSVqW8s/definedlogo.png" alt="Defined" className="h-10 w-10 object-contain" /><div><p className="font-black text-sm">Defined Domain</p><p className="text-xs text-slate-500">{user?.role === 'PARENT' ? 'Parent' : 'Student'} portal</p></div></div>
-        <nav aria-label="Desktop portal navigation" className="space-y-2">{navItems.map(item => <button key={item.id} onClick={() => handleNav(item.id)} aria-current={activeTab === item.id ? 'page' : undefined} className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${activeTab === item.id ? 'bg-violet-50 text-violet-700' : 'text-slate-500 hover:bg-slate-50'}`}><item.icon size={18} />{item.label}{item.id === 'notices' && unreadNotices > 0 && <span className="ml-auto rounded-full bg-violet-100 px-2 text-xs">{unreadNotices}</span>}</button>)}</nav>
-        <div className="mt-auto border-t border-slate-100 pt-5 px-3"><p className="truncate text-sm font-bold">{user?.name}</p><p className="mt-1 text-xs text-slate-400">Your school, connected.</p><button onClick={logout} className="mt-4 flex items-center gap-2 text-sm text-slate-500"><LogOut size={16} />Sign out</button></div>
-      </aside>
-      <button
-        onClick={logout}
-        className="lg:hidden fixed right-5 top-5 z-[90] h-10 w-10 rounded-full border border-slate-200 bg-white/90 text-slate-500 shadow-[0_10px_28px_rgba(15,23,42,0.10)] backdrop-blur-xl grid place-items-center hover:text-rose-600 transition-colors"
-        title={`Logout${user?.name ? ` ${user.name}` : ''}`}
-      >
-        <LogOut size={16} strokeWidth={2.6} />
-      </button>
-      <main className="min-h-screen max-w-md mx-auto px-5 pt-5 pb-28 overflow-x-hidden lg:max-w-none lg:ml-60 lg:px-10 lg:py-9 xl:px-14">
-        <div key={activeTab} className="animate-parent-tab mx-auto lg:max-w-7xl">
-          {children}
-        </div>
-      </main>
-      <nav className="lg:hidden fixed left-4 right-4 bottom-5 z-[80] max-w-sm mx-auto h-[58px] rounded-[29px] border border-white/80 bg-white/85 backdrop-blur-2xl shadow-[0_18px_45px_rgba(15,23,42,0.16)] px-2 flex items-center justify-between">
-        {navItems.map(item => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id || (item.id === 'dashboard' && activeTab === 'students');
-          return (
-            <button
-              key={item.id}
-              onClick={() => handleNav(item.id)}
-              className={`h-11 min-w-0 flex-1 rounded-[22px] flex flex-col items-center justify-center gap-0.5 transition-all duration-300 ${
-                isActive ? 'bg-[#7c3aed] text-white shadow-[0_10px_24px_rgba(124,58,237,0.32)] scale-[1.02]' : 'text-slate-500 hover:text-[#7c3aed]'
-              }`}
-            >
-              <span className="relative">
-                <Icon size={15} strokeWidth={2.6} />
-                {item.id === 'notices' && unreadNotices > 0 && (
-                  <span className="absolute -right-3 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[7px] font-black text-white ring-2 ring-white">
-                    {unreadNotices > 9 ? '9+' : unreadNotices}
-                  </span>
-                )}
-              </span>
-              <span className="text-[7.5px] font-black leading-none">{item.label}</span>
-            </button>
-          );
-        })}
-      </nav>
+    <div className="parent-portal min-h-screen bg-white text-neutral-950">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-neutral-200 bg-[#f9f9fa] px-3 lg:flex">{navigation}</aside>
+      <header className="sticky top-0 z-40 flex h-16 items-center gap-3 border-b border-neutral-200 bg-white px-4 lg:hidden">
+        <button ref={menuButton} aria-label="Open menu" aria-expanded={menuOpen} aria-controls="parent-mobile-menu" onClick={() => setMenuOpen(true)} className="grid h-11 w-11 place-items-center rounded-lg hover:bg-neutral-100"><Menu size={22} /></button>
+        <span className="text-sm font-semibold">Defined Domain</span>
+      </header>
+      {menuOpen && <div className="fixed inset-0 z-[200] lg:hidden">
+        <div className="absolute inset-0 bg-black/30" onClick={closeMenu} aria-hidden="true" />
+        <aside ref={menuPanel} id="parent-mobile-menu" role="dialog" aria-modal="true" aria-label="Menu" className="absolute inset-y-0 left-0 flex w-[min(85vw,320px)] flex-col bg-[#f9f9fa] px-3 shadow-xl">
+          <button aria-label="Close menu" onClick={closeMenu} className="absolute right-3 top-3 grid h-11 w-11 place-items-center rounded-lg hover:bg-neutral-200"><X size={20} /></button>
+          {navigation}
+        </aside>
+      </div>}
+      <main className="min-w-0 px-4 py-7 lg:ml-60 lg:px-10 lg:py-10"><div key={activeTab} className="mx-auto max-w-6xl">{children}</div></main>
     </div>
   );
 };
@@ -147,8 +147,8 @@ const App: React.FC = () => {
   const isParentPortal = isLoggedIn && (user?.role === 'PARENT' || user?.role === 'STUDENT') && view !== 'verify' && view !== 'id-verify' && view !== 'apply' && view !== 'careers';
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-  }, [theme]);
+    document.documentElement.classList.toggle('dark', !isParentPortal && theme === 'dark');
+  }, [theme, isParentPortal]);
 
   useEffect(() => {
     initializeData();
@@ -266,7 +266,7 @@ const App: React.FC = () => {
   return (
     <>
       <NotificationHost />
-      {isLoggedIn && <AccessibilityToggle className={isParentPortal ? 'left-5 top-5' : 'left-4 bottom-4'} />}
+      {isLoggedIn && <AccessibilityToggle className={isParentPortal ? 'right-4 bottom-4' : 'left-4 bottom-4'} />}
       {!isParentPortal && <NoticesSlideOver />}
       {isParentPortal ? (
         <ParentPortalShell>
